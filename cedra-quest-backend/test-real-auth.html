@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Telegram Auth</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+</head>
+<body>
+    <h1>🧪 Test Telegram Authentication</h1>
+    <div id="status">Đang kiểm tra...</div>
+    <div id="result"></div>
+    
+    <script>
+        const tg = window.Telegram.WebApp;
+        
+        async function testAuth() {
+            const statusDiv = document.getElementById('status');
+            const resultDiv = document.getElementById('result');
+            
+            try {
+                // Lấy initData thật từ Telegram
+                const initData = tg.initData;
+                
+                if (!initData) {
+                    statusDiv.innerHTML = '❌ Không có initData từ Telegram';
+                    return;
+                }
+                
+                statusDiv.innerHTML = '📤 Đang gửi request...';
+                
+                // Gửi lên backend
+                const response = await fetch('http://localhost:9999/auth/verify', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        initData: initData
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    statusDiv.innerHTML = '✅ Xác thực thành công!';
+                    resultDiv.innerHTML = `
+                        <h3>User Info:</h3>
+                        <p><strong>ID:</strong> ${data.user.id}</p>
+                        <p><strong>Username:</strong> ${data.user.username}</p>
+                        <p><strong>Telegram ID:</strong> ${data.user.telegram_id}</p>
+                        <p><strong>Points:</strong> ${data.user.total_points}</p>
+                        <p><strong>Rank:</strong> ${data.user.current_rank}</p>
+                        <p><strong>Referral Code:</strong> ${data.user.referral_code}</p>
+                        <h3>JWT Token:</h3>
+                        <textarea style="width:100%;height:100px;">${data.access_token}</textarea>
+                    `;
+                    
+                    // Lưu token để test API khác
+                    localStorage.setItem('jwt_token', data.access_token);
+                    
+                } else {
+                    statusDiv.innerHTML = '❌ Xác thực thất bại';
+                    resultDiv.innerHTML = `<p>Error: ${data.message}</p>`;
+                }
+                
+            } catch (error) {
+                statusDiv.innerHTML = '❌ Lỗi kết nối';
+                resultDiv.innerHTML = `<p>Error: ${error.message}</p>`;
+            }
+        }
+        
+        // Tự động test khi load
+        testAuth();
+        
+        // Test API với JWT token
+        async function testProtectedAPI() {
+            const token = localStorage.getItem('jwt_token');
+            if (!token) {
+                alert('Chưa có JWT token. Hãy xác thực trước.');
+                return;
+            }
+            
+            try {
+                const response = await fetch('http://localhost:9999/users/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                alert('Profile API: ' + JSON.stringify(data, null, 2));
+                
+            } catch (error) {
+                alert('Error: ' + error.message);
+            }
+        }
+    </script>
+    
+    <button onclick="testAuth()">🔄 Test lại</button>
+    <button onclick="testProtectedAPI()">🔒 Test Protected API</button>
+    
+    <h3>📋 Hướng dẫn:</h3>
+    <ol>
+        <li>Mở file này trong Telegram Mini App</li>
+        <li>Xem kết quả xác thực</li>
+        <li>Copy JWT token để test API khác</li>
+    </ol>
+</body>
+</html>
