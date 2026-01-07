@@ -3,13 +3,14 @@
 import { useEffect, useCallback } from 'react';
 import { useAppStore, useQuests, useQuestsLoading } from '../../store/useAppStore';
 import { QuestCard } from './QuestCard';
-import { apiService } from '../../services/api.service';
+import { backendAPI, BackendAPIError } from '../../services/backend-api.service';
 import { telegramService } from '../../services/telegram.service';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
 /**
  * QuestScreen component
  * Split into Daily Login and Tasks sections
+ * Now connected to backend API
  */
 export function QuestScreen() {
   const quests = useQuests();
@@ -26,13 +27,23 @@ export function QuestScreen() {
     : 0;
   const completedCount = quests.filter(q => q.progress === 100).length;
 
-  // Load quests on mount - always reload to get latest data
+  // Load quests from backend on mount
   useEffect(() => {
     const loadQuests = async () => {
       setQuestsLoading(true);
       try {
-        const fetchedQuests = await apiService.getQuests();
-        setQuests(fetchedQuests);
+        // Try authenticated endpoint first, fallback to test endpoint
+        let backendQuests;
+        if (backendAPI.isAuthenticated()) {
+          backendQuests = await backendAPI.getQuests();
+        } else {
+          const testData = await backendAPI.getTestQuests();
+          backendQuests = testData.quests;
+        }
+
+        // Convert to frontend format
+        const frontendQuests = backendQuests.map((q) => backendAPI.backendQuestToQuest(q));
+        setQuests(frontendQuests);
       } catch (error) {
         console.error('Failed to load quests:', error);
       } finally {
@@ -41,42 +52,83 @@ export function QuestScreen() {
     };
 
     loadQuests();
-  }, []);
+  }, [setQuests, setQuestsLoading]);
 
-  // Handle quest selection/action
+  // Handle quest verification/completion
   const handleQuestSelect = useCallback(async (questId: string) => {
     const quest = quests.find((q) => q.id === questId);
     if (!quest) return;
 
     telegramService.triggerHapticFeedback('light');
 
+    // If already completed, do nothing
     if (quest.status === 'completed') {
-      try {
-        const result = await apiService.completeQuest(questId);
-        if (result.success && result.earnedReward) {
-          if (result.earnedReward.type === 'token') {
-            updateBalance(result.earnedReward.amount, 'token');
-          } else if (result.earnedReward.type === 'gem') {
-            updateBalance(result.earnedReward.amount, 'gem');
-          } else if (result.earnedReward.type === 'xp') {
-            addXP(result.earnedReward.amount);
-          }
-          updateQuest(questId, { status: 'completed', progress: 100 });
-          telegramService.triggerHapticFeedback('medium');
+      telegramService.triggerHapticFeedback('medium');
+      return;
+    }
+
+    // Check if authenticated before verifying
+    if (!backendAPI.isAuthenticated()) {
+      console.log('⚠️ Not authenticated, cannot verify quest');
+      // For now, just mark as completed locally (demo mode)
+      updateQuest(questId, { 
+        status: 'completed', 
+        progress: 100,
+        currentValue: quest.targetValue 
+      });
+      
+      if (quest.reward) {
+        if (quest.reward.type === 'token') {
+          updateBalance(quest.reward.amount, 'token');
+        } else if (quest.reward.type === 'gem') {
+          updateBalance(quest.reward.amount, 'gem');
+        } else if (quest.reward.type === 'xp') {
+          addXP(quest.reward.amount);
         }
-      } catch (error) {
-        console.error('Failed to claim quest reward:', error);
-        telegramService.triggerHapticFeedback('heavy');
       }
-    } else if (quest.status === 'active') {
+      
+      telegramService.triggerHapticFeedback('medium');
+      return;
+    }
+
+    // If active and authenticated, try to verify with backend
+    if (quest.status === 'active') {
       try {
-        const result = await apiService.completeQuest(questId);
+        const result = await backendAPI.verifyQuest(Number(questId));
+        
         if (result.success) {
-          updateQuest(questId, result.quest);
+          // Update quest status locally
+          updateQuest(questId, { 
+            status: 'completed', 
+            progress: 100,
+            currentValue: quest.targetValue 
+          });
+          
+          // Add reward to balance
+          if (quest.reward) {
+            if (quest.reward.type === 'token') {
+              updateBalance(quest.reward.amount, 'token');
+            } else if (quest.reward.type === 'gem') {
+              updateBalance(quest.reward.amount, 'gem');
+            } else if (quest.reward.type === 'xp') {
+              addXP(quest.reward.amount);
+            }
+          }
+          
           telegramService.triggerHapticFeedback('medium');
+          console.log('✅ Quest completed:', result.message);
+        } else {
+          console.log('❌ Quest verification failed:', result.message);
+          telegramService.triggerHapticFeedback('heavy');
         }
       } catch (error) {
-        console.error('Failed to complete quest:', error);
+        console.error('Failed to verify quest:', error);
+        
+        if (error instanceof BackendAPIError) {
+          console.log('Backend error:', error.message);
+        }
+        
+        telegramService.triggerHapticFeedback('heavy');
       }
     }
   }, [quests, updateQuest, updateBalance, addXP]);

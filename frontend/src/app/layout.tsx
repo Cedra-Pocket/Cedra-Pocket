@@ -47,7 +47,6 @@ export default function RootLayout({
           className="w-full overflow-hidden relative"
           style={{ 
             maxWidth: '100%',
-            minHeight: '100vh',
             minHeight: '100dvh',
             background: "url('/background.png') no-repeat center center",
             backgroundSize: 'cover'

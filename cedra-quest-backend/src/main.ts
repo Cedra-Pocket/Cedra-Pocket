@@ -8,10 +8,14 @@ async function bootstrap() {
   // Enable CORS với cấu hình chi tiết cho Telegram Mini App
   app.enableCors({
     origin: [
-      'https://your-frontend-domain.vercel.app',
-      'https://your-bot-domain.t.me',
+      'https://cedra-quest.vercel.app',
+      'https://cedra-quest-backend.onrender.com',
+      /\.vercel\.app$/,
+      /\.ngrok-free\.dev$/,
       'http://localhost:3000',
-      'http://localhost:5173', // Vite dev server
+      'http://localhost:3001',
+      'http://localhost:5173',
+      /^http:\/\/localhost:\d+$/,
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

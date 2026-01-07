@@ -2,15 +2,38 @@
 
 import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
+import { backendAPI } from '../../services/backend-api.service';
 
 export function WalletScreen() {
-  const { user } = useAppStore();
-  const [isConnected, setIsConnected] = useState(false);
-  const usdtBalance = 0.20; // Mock USDT balance
+  const { user, setUser } = useAppStore();
+  const [isConnecting, setIsConnecting] = useState(false);
+  const [walletAddress, setWalletAddress] = useState<string | null>(user?.walletAddress || null);
 
-  const handleConnectWallet = () => {
-    // TODO: Implement TON wallet connection
-    setIsConnected(true);
+  // Get balance from user data (from backend)
+  const tokenBalance = user?.tokenBalance || 0;
+
+  const handleConnectWallet = async () => {
+    setIsConnecting(true);
+    try {
+      // TODO: Implement actual TON wallet connection
+      // For now, simulate wallet connection
+      const mockWalletAddress = '0x' + Math.random().toString(16).slice(2, 42);
+      
+      if (backendAPI.isAuthenticated()) {
+        const updatedUser = await backendAPI.connectWallet(mockWalletAddress);
+        setWalletAddress(updatedUser.wallet_address);
+        // Update local user state
+        if (user) {
+          setUser({ ...user, walletAddress: updatedUser.wallet_address || undefined });
+        }
+      } else {
+        setWalletAddress(mockWalletAddress);
+      }
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   return (
@@ -45,52 +68,54 @@ export function WalletScreen() {
           }}
         >
           <span style={{ fontSize: '28px', fontWeight: '700', color: '#ffffff' }}>
-            ${usdtBalance.toFixed(2)}
+            {tokenBalance.toLocaleString()}
           </span>
-          <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: '500' }}>in</span>
-          {/* USDT Icon */}
-          <div 
-            className="flex items-center justify-center"
-            style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: '#26A17B',
-            }}
-          >
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '16px' }}>₮</span>
-          </div>
-          <span style={{ fontSize: '18px', fontWeight: '600', color: '#ffffff' }}>USDT</span>
+          <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: '500' }}>points</span>
         </div>
 
-        {/* Connect Wallet Button */}
-        <button
-          onClick={handleConnectWallet}
-          className="w-full flex items-center justify-center gap-3 transition-all hover:scale-[1.02]"
-          style={{
-            background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
-            borderRadius: '12px',
-            padding: '16px 20px',
-            border: 'none',
-            cursor: 'pointer',
-          }}
-        >
-          {/* TON Icon */}
-          <div 
-            className="flex items-center justify-center"
+        {/* Wallet Status */}
+        {walletAddress ? (
+          <div
+            className="w-full flex items-center justify-center gap-3"
             style={{
-              width: '28px',
-              height: '28px',
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.2)',
+              background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+              borderRadius: '12px',
+              padding: '16px 20px',
             }}
           >
-            <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>💎</span>
+            <span style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff' }}>
+              ✓ Connected: {walletAddress.slice(0, 6)}...{walletAddress.slice(-4)}
+            </span>
           </div>
-          <span style={{ fontSize: '16px', fontWeight: '700', color: '#ffffff', letterSpacing: '0.5px' }}>
-            CONNECT TON WALLET
-          </span>
-        </button>
+        ) : (
+          <button
+            onClick={handleConnectWallet}
+            disabled={isConnecting}
+            className="w-full flex items-center justify-center gap-3 transition-all hover:scale-[1.02] disabled:opacity-50"
+            style={{
+              background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
+              borderRadius: '12px',
+              padding: '16px 20px',
+              border: 'none',
+              cursor: isConnecting ? 'wait' : 'pointer',
+            }}
+          >
+            <div 
+              className="flex items-center justify-center"
+              style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)',
+              }}
+            >
+              <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>💎</span>
+            </div>
+            <span style={{ fontSize: '16px', fontWeight: '700', color: '#ffffff', letterSpacing: '0.5px' }}>
+              {isConnecting ? 'CONNECTING...' : 'CONNECT TON WALLET'}
+            </span>
+          </button>
+        )}
       </div>
 
       {/* Token Balance Section */}

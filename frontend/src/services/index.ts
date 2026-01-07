@@ -29,13 +29,15 @@ export {
   type ConnectionChangeCallback,
 } from './wallet.service';
 
-// API Service
+// Backend API Service (Real)
 export {
-  APIService,
-  apiService,
-  APIError,
-  type IAPIService,
-} from './api.service';
+  BackendAPIService,
+  backendAPI,
+  BackendAPIError,
+  type AuthResponse,
+  type BackendUser,
+  type BackendQuest,
+} from './backend-api.service';
 
 // Offline Queue Service
 export {

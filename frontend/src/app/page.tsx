@@ -10,30 +10,7 @@ import { SpinScreen } from '../components/spin';
 import { WalletScreen } from '../components/wallet';
 import { GameScreen } from '../components/game';
 import { useTelegram } from '../components/providers';
-
-// Mock leaderboard data
-const leaderboardData = [
-  { rank: 1, name: 'CryptoKing', score: 125000, avatar: '👑' },
-  { rank: 2, name: 'DiamondHands', score: 98500, avatar: '💎' },
-  { rank: 3, name: 'MoonWalker', score: 87200, avatar: '🚀' },
-  { rank: 4, name: 'TokenMaster', score: 76800, avatar: '🎯' },
-  { rank: 5, name: 'GemHunter', score: 65400, avatar: '💰' },
-  { rank: 6, name: 'StarPlayer', score: 54200, avatar: '⭐' },
-  { rank: 7, name: 'LuckyOne', score: 43100, avatar: '🍀' },
-  { rank: 8, name: 'ProGamer', score: 32500, avatar: '🎮' },
-  { rank: 9, name: 'FastTrader', score: 21800, avatar: '⚡' },
-  { rank: 10, name: 'NewRiser', score: 15200, avatar: '🌟' },
-  { rank: 11, name: 'CoinCollector', score: 14500, avatar: '🪙' },
-  { rank: 12, name: 'TreasureSeeker', score: 13800, avatar: '🏴‍☠️' },
-  { rank: 13, name: 'GoldDigger', score: 12900, avatar: '⛏️' },
-  { rank: 14, name: 'RichKid', score: 11500, avatar: '💵' },
-  { rank: 15, name: 'WealthBuilder', score: 10200, avatar: '🏦' },
-  { rank: 16, name: 'MoneyMaker', score: 9800, avatar: '💸' },
-  { rank: 17, name: 'CashFlow', score: 8900, avatar: '📈' },
-  { rank: 18, name: 'ProfitPro', score: 7600, avatar: '📊' },
-  { rank: 19, name: 'EarningEagle', score: 6500, avatar: '🦅' },
-  { rank: 20, name: 'BonusHunter', score: 5200, avatar: '🎯' },
-];
+import { backendAPI } from '../services/backend-api.service';
 
 export default function HomePage() {
   const user = useUser();
@@ -43,6 +20,8 @@ export default function HomePage() {
   const { isInitialized, isAvailable } = useTelegram();
   const [isAppReady, setIsAppReady] = useState(false);
   const [showLeaderboard, setShowLeaderboard] = useState(false);
+  const [leaderboardData, setLeaderboardData] = useState<Array<{rank: number; name: string; score: number}>>([]);
+  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -65,23 +44,43 @@ export default function HomePage() {
   useEffect(() => {
     if (!isInitialized) return;
     if (!user && !isAvailable) {
-      const guestUser = {
-        id: 'guest_user',
-        telegramId: 'guest',
-        username: 'Guest Player',
-        level: 1,
-        currentXP: 250,
-        requiredXP: 1000,
-        tokenBalance: 1500,
-        gemBalance: 50,
-        earningRate: 25,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      setUser(guestUser);
+      // No guest user - require Telegram authentication
+      console.log('⚠️ Telegram not available, waiting for authentication...');
     }
     setIsAppReady(true);
   }, [isInitialized, isAvailable, user, setUser]);
+
+  // Load leaderboard from backend when modal opens
+  useEffect(() => {
+    if (showLeaderboard && leaderboardData.length === 0) {
+      loadLeaderboard();
+    }
+  }, [showLeaderboard]);
+
+  const loadLeaderboard = async () => {
+    setLeaderboardLoading(true);
+    try {
+      // TODO: Add leaderboard endpoint to backend
+      // For now, fetch users and sort by points
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'https://cedra-quest-backend.onrender.com'}/users`);
+      if (response.ok) {
+        const users = await response.json();
+        const sorted = users
+          .sort((a: { total_points: number }, b: { total_points: number }) => Number(b.total_points) - Number(a.total_points))
+          .slice(0, 20)
+          .map((u: { username: string; total_points: number }, i: number) => ({
+            rank: i + 1,
+            name: u.username || `Player${i + 1}`,
+            score: Number(u.total_points)
+          }));
+        setLeaderboardData(sorted);
+      }
+    } catch (error) {
+      console.error('Failed to load leaderboard:', error);
+    } finally {
+      setLeaderboardLoading(false);
+    }
+  };
 
   if (isLoading || !isInitialized || !isAppReady) {
     return (
@@ -174,7 +173,7 @@ export default function HomePage() {
                   }}
                 >
                   <img 
-                    src="/icons/thongbao.png" 
+                    src="/icons/thongbao.PNG" 
                     alt="Thông báo" 
                     style={{ width: '60px', height: '60px', objectFit: 'contain' }}
                   />

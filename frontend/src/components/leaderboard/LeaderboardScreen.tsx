@@ -9,9 +9,44 @@ import {
 } from '../../store/useAppStore';
 import { LeaderboardList } from './LeaderboardList';
 import { LoadingSpinner } from '../shared';
-import { apiService } from '../../services/api.service';
 
 const LEADERBOARD_PAGE_SIZE = 20;
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cedra-quest-backend.onrender.com';
+
+// Fetch leaderboard from backend
+async function fetchLeaderboard(page: number, limit: number) {
+  try {
+    const response = await fetch(`${API_URL}/users`);
+    if (!response.ok) throw new Error('Failed to fetch');
+    
+    const users = await response.json();
+    const sorted = users
+      .sort((a: { total_points: number }, b: { total_points: number }) => 
+        Number(b.total_points) - Number(a.total_points)
+      );
+    
+    const totalCount = sorted.length;
+    const startIndex = (page - 1) * limit;
+    const entries = sorted
+      .slice(startIndex, startIndex + limit)
+      .map((u: { id: string; username: string; total_points: number }, i: number) => ({
+        userId: String(u.id),
+        username: u.username || `Player${startIndex + i + 1}`,
+        xp: Number(u.total_points),
+        level: Math.floor(Number(u.total_points) / 1000) + 1,
+        rank: startIndex + i + 1,
+      }));
+
+    return {
+      entries,
+      totalCount,
+      hasMore: startIndex + limit < totalCount,
+    };
+  } catch (error) {
+    console.error('Leaderboard fetch error:', error);
+    return { entries: [], totalCount: 0, hasMore: false };
+  }
+}
 
 /**
  * LeaderboardScreen component
@@ -38,7 +73,7 @@ export function LeaderboardScreen() {
       setInitialLoading(true);
       setError(null);
       try {
-        const response = await apiService.getLeaderboard(1, LEADERBOARD_PAGE_SIZE);
+        const response = await fetchLeaderboard(1, LEADERBOARD_PAGE_SIZE);
         setLeaderboard(response.entries, response.hasMore);
         setLeaderboardPage(1);
       } catch (err) {
@@ -65,7 +100,7 @@ export function LeaderboardScreen() {
     try {
       const currentPage = Math.ceil(leaderboard.length / LEADERBOARD_PAGE_SIZE);
       const nextPage = currentPage + 1;
-      const response = await apiService.getLeaderboard(nextPage, LEADERBOARD_PAGE_SIZE);
+      const response = await fetchLeaderboard(nextPage, LEADERBOARD_PAGE_SIZE);
       appendLeaderboard(response.entries, response.hasMore);
     } catch (err) {
       console.error('Failed to load more leaderboard entries:', err);
@@ -79,7 +114,7 @@ export function LeaderboardScreen() {
     setLoading(true);
     setError(null);
     try {
-      const response = await apiService.getLeaderboard(1, LEADERBOARD_PAGE_SIZE);
+      const response = await fetchLeaderboard(1, LEADERBOARD_PAGE_SIZE);
       setLeaderboard(response.entries, response.hasMore);
       setLeaderboardPage(1);
     } catch (err) {
