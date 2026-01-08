@@ -434,14 +434,14 @@ body {
 /* Mobile phone container for desktop viewing */
 @media (min-width: 500px) {
   html {
-    background: #000000;
+    background: linear-gradient(180deg, #87CEEB 0%, #E0F7FA 50%, #B2EBF2 100%);
     overflow: hidden;
     font-size: 16px;
   }
 
   body {
-    width: 390px;
-    max-width: 390px;
+    width: 100%;
+    max-width: 500px;
     height: 100vh;
     max-height: 100vh;
     margin: 0 auto;

@@ -37,8 +37,8 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-[360px] px-4 safe-area-inset-bottom"
-      style={{ paddingBottom: '12px' }}
+      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-[320px] px-4 safe-area-inset-bottom"
+      style={{ paddingBottom: '20px' }}
       role="navigation"
       aria-label="Main navigation"
     >
