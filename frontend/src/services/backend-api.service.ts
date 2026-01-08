@@ -294,11 +294,11 @@ export class BackendAPIService {
   /**
    * Convert backend user to frontend UserData format
    */
-  backendUserToUserData(backendUser: BackendUser, telegramUser?: { username?: string; photoUrl?: string }): UserData {
+  backendUserToUserData(backendUser: BackendUser, telegramUser?: { username?: string; firstName?: string; photoUrl?: string }): UserData {
     return {
       id: String(backendUser.id),
       telegramId: backendUser.telegram_id,
-      username: backendUser.username || telegramUser?.username || 'Player',
+      username: telegramUser?.username || telegramUser?.firstName || backendUser.username || 'Player',
       avatarUrl: telegramUser?.photoUrl,
       level: this.calculateLevel(Number(backendUser.total_points)),
       currentXP: Number(backendUser.total_points) % 1000,

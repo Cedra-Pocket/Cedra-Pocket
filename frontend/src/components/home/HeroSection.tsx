@@ -195,7 +195,7 @@ export function HeroSection({
           {/* Cua image - left side with walking animation */}
           <div className="absolute z-20 animate-crab-walk" style={{ left: '-15%', bottom: '-15%', width: '20%' }}>
             <img
-              src="/cua.png"
+              src="/cua.PNG"
               alt="Cua"
               className="w-full h-auto object-contain"
               style={{

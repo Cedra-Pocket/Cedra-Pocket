@@ -73,7 +73,8 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
       
       // Convert backend user to frontend format
       const userData = backendAPI.backendUserToUserData(response.user, {
-        username: tgUser?.username || tgUser?.firstName,
+        username: tgUser?.username,
+        firstName: tgUser?.firstName,
         photoUrl: tgUser?.photoUrl,
       });
 
@@ -126,6 +127,7 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         
         // Get user data from Telegram SDK
         const user = telegramService.getUserData();
+        console.log('📱 Telegram user data:', user);
         setTelegramUser(user);
 
         // Get initData for backend authentication
