@@ -37,8 +37,14 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
 
   return (
     <nav
-      className="fixed bottom-0 left-1/2 -translate-x-1/2 z-50 w-full max-w-[320px] px-4 safe-area-inset-bottom"
-      style={{ paddingBottom: '20px' }}
+      className="fixed z-50"
+      style={{ 
+        bottom: '15px',
+        left: '50%',
+        transform: 'translateX(-50%)',
+        width: 'calc(100% - 32px)',
+        maxWidth: '360px'
+      }}
       role="navigation"
       aria-label="Main navigation"
     >
@@ -55,7 +61,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
           transition-all duration-300
           ${activeTab === 'home' ? 'scale-110' : 'hover:scale-105'}
         `}
-        style={{ width: '64px', height: '64px' }}
+        style={{ width: '72px', height: '72px' }}
         >
           <div className="text-white drop-shadow-lg">
             <HomeIcon active={activeTab === 'home'} />
@@ -74,8 +80,8 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
             borderRadius: '24px 45px 24px 24px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-            height: '60px',
-            padding: '0 8px'
+            height: '75px',
+            padding: '0 16px'
           }}
         >
           <div className="flex items-center justify-evenly w-full">
@@ -120,7 +126,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
         </div>
 
         {/* Center spacer for Home button */}
-        <div style={{ width: '60px', flexShrink: 0 }} />
+        <div style={{ width: '70px', flexShrink: 0 }} />
 
         {/* Right nav section */}
         <div 
@@ -131,8 +137,8 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
             borderRadius: '45px 24px 24px 24px',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-            height: '60px',
-            padding: '0 8px'
+            height: '75px',
+            padding: '0 16px'
           }}
         >
           <div className="flex items-center justify-evenly w-full">

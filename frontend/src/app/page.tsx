@@ -142,54 +142,58 @@ export default function HomePage() {
                 </defs>
               </svg>
 
-              {/* Avatar floating above - outside clipPath */}
-              <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: '25px' }}>
-                <div className="flex items-center gap-2">
-                  <div 
-                    className="w-10 h-10 rounded-lg flex items-center justify-center"
-                    style={{ 
-                      background: 'linear-gradient(135deg, #1a4a3a 0%, #2d6b5a 100%)',
-                      border: '2px solid rgba(255,255,255,0.5)',
-                      boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
-                    }}
-                  >
-                    <span className="text-lg">👤</span>
-                  </div>
-                  <span className="text-base font-bold text-gray-800">{user.username}</span>
-                </div>
-              </div>
-
-              {/* Notification bell button - top right */}
-              <div className="absolute z-20" style={{ top: '25px', right: '25px' }}>
+              {/* Avatar - top left */}
+              <div className="absolute z-20" style={{ top: '35px', left: '25px' }}>
                 <button 
                   className="relative flex items-center justify-center transition-all hover:scale-105"
                   style={{
-                    width: '80px',
-                    height: '60px',
+                    width: '70px',
+                    height: '55px',
+                    borderRadius: '16px 50px 16px 16px',
+                    background: 'linear-gradient(135deg, rgba(0,180,220,0.6) 0%, rgba(100,200,230,0.4) 50%, rgba(255,255,255,0.3) 100%)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                    boxShadow: '0 4px 15px rgba(0,180,220,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
+                  }}
+                >
+                  <span className="text-3xl">👤</span>
+                </button>
+              </div>
+
+              {/* Username - center */}
+              <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: '30px' }}>
+                <span className="text-base font-bold text-gray-800">{user.username}</span>
+              </div>
+
+              {/* Notification bell button - top right */}
+              <div className="absolute z-20" style={{ top: '35px', right: '25px' }}>
+                <button 
+                  className="relative flex items-center justify-center transition-all hover:scale-105"
+                  style={{
+                    width: '70px',
+                    height: '55px',
                     borderRadius: '50px 16px 16px 16px',
-                    background: 'linear-gradient(90deg, rgba(255,255,255,0.3) 0%, rgba(255,200,50,0.7) 100%)',
-                    backdropFilter: 'blur(20px)',
-                    border: '1px solid rgba(255,255,255,0.3)',
-                    boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.5)'
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,220,100,0.4) 50%, rgba(255,180,50,0.6) 100%)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                    boxShadow: '0 4px 15px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
                   }}
                 >
                   <img 
                     src="/icons/thongbao.PNG" 
                     alt="Thông báo" 
-                    style={{ width: '60px', height: '60px', objectFit: 'contain' }}
+                    style={{ width: '45px', height: '45px', objectFit: 'contain' }}
                   />
                   {/* Notification badge */}
                   <div 
                     className="absolute flex items-center justify-center"
                     style={{
-                      bottom: '-4px',
-                      right: '-4px',
-                      width: '22px',
-                      height: '22px',
+                      bottom: '2px',
+                      right: '2px',
+                      width: '20px',
+                      height: '20px',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)',
                       border: '2px solid white',
-                      fontSize: '12px',
+                      fontSize: '11px',
                       fontWeight: 'bold',
                       color: 'white'
                     }}

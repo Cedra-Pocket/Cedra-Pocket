@@ -24,24 +24,27 @@ export function HeroSection({
       {/* Light rays - diagonal converging towards mascot */}
       {showAnimation && (
         <div 
-          className="absolute pointer-events-none overflow-hidden"
+          className="fixed pointer-events-none overflow-hidden"
           style={{
-            top: '-380px',
-            left: '-30px',
-            right: '-30px',
-            height: '550px',
-            zIndex: -1
+            top: '200px',
+            left: '0',
+            right: '0',
+            width: '100%',
+            maxWidth: '390px',
+            height: '350px',
+            zIndex: -1,
+            margin: '0 auto'
           }}
           aria-hidden="true"
         >
           {/* Diagonal light rays - angled towards center, closer together */}
-          <div className="light-ray-diagonal" style={{ left: '15%', transform: 'rotate(20deg)', width: '30px' }} />
           <div className="light-ray-diagonal" style={{ left: '25%', transform: 'rotate(15deg)', width: '25px' }} />
-          <div className="light-ray-diagonal" style={{ left: '35%', transform: 'rotate(8deg)', width: '40px' }} />
-          <div className="light-ray-diagonal" style={{ left: '48%', transform: 'rotate(0deg)', width: '45px' }} />
-          <div className="light-ray-diagonal" style={{ left: '60%', transform: 'rotate(-8deg)', width: '35px' }} />
-          <div className="light-ray-diagonal" style={{ left: '70%', transform: 'rotate(-15deg)', width: '28px' }} />
-          <div className="light-ray-diagonal" style={{ left: '80%', transform: 'rotate(-20deg)', width: '32px' }} />
+          <div className="light-ray-diagonal" style={{ left: '32%', transform: 'rotate(10deg)', width: '22px' }} />
+          <div className="light-ray-diagonal" style={{ left: '40%', transform: 'rotate(5deg)', width: '30px' }} />
+          <div className="light-ray-diagonal" style={{ left: '50%', transform: 'rotate(0deg) translateX(-50%)', width: '35px' }} />
+          <div className="light-ray-diagonal" style={{ left: '60%', transform: 'rotate(-5deg)', width: '28px' }} />
+          <div className="light-ray-diagonal" style={{ left: '68%', transform: 'rotate(-10deg)', width: '22px' }} />
+          <div className="light-ray-diagonal" style={{ left: '75%', transform: 'rotate(-15deg)', width: '25px' }} />
         </div>
       )}
 
