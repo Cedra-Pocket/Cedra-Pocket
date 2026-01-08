@@ -203,17 +203,18 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
 
         // Get initData for backend authentication
         const initData = getTelegramInitData();
+        console.log('🔑 initData available:', !!initData);
 
         if (initData && user) {
           // Authenticate with backend
           await authenticateWithBackend(initData, user);
         } else if (user) {
           // No initData but have user - create local user
-          console.log('⚠️ No initData available, using local user');
+          console.log('⚠️ No initData available, using local user from Telegram');
           const appUser = {
             id: `user_${user.id}`,
             telegramId: String(user.id),
-            username: user.username || user.firstName,
+            username: user.username || user.firstName || 'Player',
             avatarUrl: user.photoUrl,
             level: 1,
             currentXP: 0,
@@ -225,6 +226,24 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
             updatedAt: new Date(),
           };
           setUser(appUser);
+        } else {
+          // No Telegram user available - create anonymous user with timestamp
+          console.log('⚠️ No Telegram user available, creating anonymous user');
+          const anonymousUser = {
+            id: `anon_${Date.now()}`,
+            telegramId: `anon_${Date.now()}`,
+            username: 'Player',
+            avatarUrl: undefined,
+            level: 1,
+            currentXP: 0,
+            requiredXP: 1000,
+            tokenBalance: 0,
+            gemBalance: 0,
+            earningRate: 10,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          };
+          setUser(anonymousUser);
         }
       } catch (error) {
         console.error('Failed to initialize Telegram SDK:', error);

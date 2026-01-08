@@ -39,6 +39,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        {/* Telegram Web App Script - MUST be loaded before app */}
+        <script src="https://telegram.org/js/telegram-web-app.js" />
+      </head>
       <body
         className={`${bricolage.variable} font-sans antialiased min-h-screen-safe flex justify-center`}
         style={{ backgroundColor: '#0a0a1a' }}
