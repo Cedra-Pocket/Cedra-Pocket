@@ -171,34 +171,46 @@ export function WalletScreen() {
               onBlur={(e) => e.target.style.borderColor = 'rgba(0, 136, 204, 0.3)'}
             />
 
-            {/* Test Connect Button */}
-            <button
-              onClick={handleTestConnect}
-              disabled={isConnecting}
-              className="w-full flex items-center justify-center gap-3 transition-all hover:scale-[1.02] disabled:opacity-50"
-              style={{
-                background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
-                borderRadius: '12px',
-                padding: '16px 20px',
-                border: 'none',
-                cursor: isConnecting ? 'wait' : 'pointer',
-              }}
-            >
-              <div 
-                className="flex items-center justify-center"
+            {/* Buttons Row */}
+            <div className="flex gap-2">
+              {/* Test Connect Button */}
+              <button
+                onClick={handleTestConnect}
+                disabled={isConnecting}
+                className="flex-1 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50"
                 style={{
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: '50%',
-                  background: 'rgba(255,255,255,0.2)',
+                  background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
+                  borderRadius: '12px',
+                  padding: '14px 12px',
+                  border: 'none',
+                  cursor: isConnecting ? 'wait' : 'pointer',
                 }}
               >
-                <span style={{ color: 'white', fontWeight: 'bold', fontSize: '14px' }}>💎</span>
-              </div>
-              <span style={{ fontSize: '16px', fontWeight: '700', color: '#ffffff', letterSpacing: '0.5px' }}>
-                {isConnecting ? 'CONNECTING...' : 'TEST CONNECT'}
-              </span>
-            </button>
+                <span style={{ fontSize: '16px' }}>💎</span>
+                <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>
+                  {isConnecting ? 'CONNECTING...' : 'TEST'}
+                </span>
+              </button>
+
+              {/* Confirm Address Button */}
+              <button
+                onClick={handleTestConnect}
+                disabled={isConnecting || !inputWalletId.trim()}
+                className="flex-1 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50"
+                style={{
+                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
+                  borderRadius: '12px',
+                  padding: '14px 12px',
+                  border: 'none',
+                  cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
+                }}
+              >
+                <span style={{ fontSize: '16px' }}>✓</span>
+                <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>
+                  CONFIRM
+                </span>
+              </button>
+            </div>
 
             {/* Status Message */}
             {statusMessage && (
