@@ -164,6 +164,11 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
   useEffect(() => {
     const initialize = async () => {
       try {
+        // Debug: Log all Telegram WebApp data
+        const webApp = (window as unknown as { Telegram?: { WebApp?: unknown } }).Telegram?.WebApp;
+        console.log('🔍 Full Telegram WebApp object:', webApp);
+        console.log('🔍 window.Telegram:', (window as unknown as { Telegram?: unknown }).Telegram);
+        
         await telegramService.initialize();
         
         // Get user data from Telegram SDK (try both methods)
@@ -180,10 +185,16 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
         console.log('📱 Final Telegram user:', user);
         setTelegramUser(user);
         
-        // Clear old cached user if we have new Telegram user
-        if (user) {
-          console.log('🔄 Clearing old cached user data');
-          localStorage.removeItem('tg-mini-app-storage');
+        // Always clear old cached user on fresh load to prevent stale data
+        const cachedData = localStorage.getItem('tg-mini-app-storage');
+        if (cachedData) {
+          const parsed = JSON.parse(cachedData);
+          // If cached username is "Guest Player" or different from Telegram user, clear it
+          if (parsed?.state?.user?.username === 'Guest Player' || 
+              (user && parsed?.state?.user?.username !== user.username && parsed?.state?.user?.username !== user.firstName)) {
+            console.log('🔄 Clearing stale cached user data');
+            localStorage.removeItem('tg-mini-app-storage');
+          }
         }
 
         // Get initData for backend authentication
