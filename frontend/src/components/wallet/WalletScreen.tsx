@@ -88,7 +88,7 @@ export function WalletScreen() {
       >
         {/* USDT Balance Row */}
         <div 
-          className="flex items-center gap-3 mb-4"
+          className="flex items-center gap-3"
           style={{
             background: 'linear-gradient(90deg, #6a7080, #2a2f3a)',
             borderRadius: '12px',
@@ -100,7 +100,21 @@ export function WalletScreen() {
           </span>
           <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: '500' }}>points</span>
         </div>
+      </div>
 
+      {/* Wallet Connect Card - Separate */}
+      <div 
+        style={{
+          width: '90%',
+          maxWidth: '380px',
+          marginTop: '16px',
+          background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
+          borderRadius: '16px',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          padding: '20px',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+        }}
+      >
         {/* Wallet Status */}
         {walletAddress ? (
           <div className="flex flex-col gap-2">
