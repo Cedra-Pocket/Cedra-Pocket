@@ -103,25 +103,6 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
               <span className="text-sm font-semibold">Quest</span>
               {activeTab === 'quest' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-cyan-500 rounded-full" />}
             </button>
-
-            {/* Spin */}
-            <button
-              onClick={() => handleTabClick('spin')}
-              className={`
-                flex flex-col items-center justify-center px-4 py-2
-                transition-all duration-300 rounded-xl flex-1 relative overflow-hidden
-                hover:scale-105 hover:bg-white/30
-                ${activeTab === 'spin' ? 'text-cyan-500' : 'text-gray-700 hover:text-cyan-500'}
-              `}
-              style={{ gap: '2px', ...(activeTab === 'spin' ? { textShadow: '0 0 10px rgba(0,212,255,0.8)' } : {}) }}
-              aria-label="Spin"
-            >
-              <div className="w-8 h-8 flex items-center justify-center">
-                <img src="/icons/spin.PNG" alt="Spin" style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-              </div>
-              <span className="text-sm font-semibold">Spin</span>
-              {activeTab === 'spin' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-8 h-1 bg-cyan-500 rounded-full" />}
-            </button>
           </div>
         </div>
 

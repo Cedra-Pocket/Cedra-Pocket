@@ -21,7 +21,7 @@ import type {
 /**
  * Navigation tab types
  */
-export type NavigationTab = 'home' | 'quest' | 'spin' | 'wallet' | 'game';
+export type NavigationTab = 'home' | 'quest' | 'wallet' | 'game';
 
 /**
  * Currency types for balance updates

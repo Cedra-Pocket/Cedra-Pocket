@@ -6,12 +6,31 @@ import { HeroSection } from '../components/home';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { LoadingSpinner } from '../components/shared';
 import { QuestScreen } from '../components/quest';
-import { SpinScreen } from '../components/spin';
+import { SpinModal } from '../components/spin';
 import { WalletScreen } from '../components/wallet';
 import { GameScreen } from '../components/game';
 import { useTelegram } from '../components/providers';
+import { useSpinsLeft } from '../store/useAppStore';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cedra-quest-backend.onrender.com';
+// Rank tiers based on points
+const RANK_TIERS = [
+  { name: 'Shrimp', icon: '/icons/Shrimp-Bronze.png', minPoints: 0, bonus: 0, color: '#CD7F32' },
+  { name: 'Fish', icon: '/icons/Fish-Silver.png', minPoints: 1000, bonus: 0.1, color: '#C0C0C0' },
+  { name: 'Dolphin', icon: '/icons/Dolphin-Gold.png', minPoints: 5000, bonus: 0.3, color: '#FFD700' },
+  { name: 'Shark', icon: '/icons/Shark-Emerald.png', minPoints: 20000, bonus: 0.5, color: '#50C878' },
+  { name: 'Whale', icon: '/icons/Whale-Diamond.png', minPoints: 100000, bonus: 1, color: '#B9F2FF' },
+  { name: 'Leviathan', icon: '/icons/Leviathan-Obsidian.png', minPoints: 500000, bonus: 2, color: '#3D3D3D' },
+];
+
+// Get user rank tier based on points
+function getUserRankTier(points: number) {
+  for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
+    if (points >= RANK_TIERS[i].minPoints) {
+      return RANK_TIERS[i];
+    }
+  }
+  return RANK_TIERS[0];
+}
 
 export default function HomePage() {
   const user = useUser();
@@ -20,15 +39,14 @@ export default function HomePage() {
   const { activeTab, setActiveTab, setUser, setError } = useAppStore();
   const { isInitialized, isAvailable } = useTelegram();
   const [isAppReady, setIsAppReady] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [leaderboardData, setLeaderboardData] = useState<Array<{rank: number; name: string; score: number; odTelegramId?: string}>>([]);
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-  const [userRank, setUserRank] = useState<number | null>(null);
+  const [showRankModal, setShowRankModal] = useState(false);
+  const [showSpinModal, setShowSpinModal] = useState(false);
+  const spinsLeft = useSpinsLeft();
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      const validTabs: NavigationTab[] = ['home', 'quest', 'spin', 'wallet', 'game'];
+      const validTabs: NavigationTab[] = ['home', 'quest', 'wallet', 'game'];
       if (validTabs.includes(hash as NavigationTab)) {
         setActiveTab(hash as NavigationTab);
       }
@@ -46,59 +64,10 @@ export default function HomePage() {
   useEffect(() => {
     if (!isInitialized) return;
     if (!user && !isAvailable) {
-      // No guest user - require Telegram authentication
       console.log('⚠️ Telegram not available, waiting for authentication...');
     }
     setIsAppReady(true);
   }, [isInitialized, isAvailable, user, setUser]);
-
-  // Load leaderboard from backend when modal opens
-  useEffect(() => {
-    if (showLeaderboard && leaderboardData.length === 0) {
-      loadLeaderboard();
-    }
-  }, [showLeaderboard]);
-
-  // Load user rank on app start
-  useEffect(() => {
-    if (user?.telegramId && userRank === null) {
-      loadLeaderboard();
-    }
-  }, [user?.telegramId]);
-
-  const loadLeaderboard = async () => {
-    setLeaderboardLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/users`);
-      if (response.ok) {
-        const users = await response.json();
-        const sorted = users
-          .sort((a: { total_points: number }, b: { total_points: number }) => Number(b.total_points) - Number(a.total_points))
-          .slice(0, 20)
-          .map((u: { username: string; total_points: number; telegram_id: string }, i: number) => ({
-            rank: i + 1,
-            name: u.username || `Player${i + 1}`,
-            score: Number(u.total_points),
-            odTelegramId: u.telegram_id
-          }));
-        setLeaderboardData(sorted);
-        
-        // Find current user's rank
-        if (user?.telegramId) {
-          const allSorted = users
-            .sort((a: { total_points: number }, b: { total_points: number }) => Number(b.total_points) - Number(a.total_points));
-          const myRank = allSorted.findIndex((u: { telegram_id: string }) => u.telegram_id === user.telegramId);
-          if (myRank !== -1) {
-            setUserRank(myRank + 1);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load leaderboard:', error);
-    } finally {
-      setLeaderboardLoading(false);
-    }
-  };
 
   if (isLoading || !isInitialized || !isAppReady) {
     return (
@@ -266,21 +235,53 @@ export default function HomePage() {
             {/* Leaderboard Button and Quest Suggestion - Side by side */}
             <div className="flex justify-center gap-4" style={{ marginTop: '10px' }}>
               <button 
-                onClick={() => setShowLeaderboard(true)}
+                onClick={() => setShowRankModal(true)}
                 className="flex items-center justify-center gap-2 py-4 transition-all hover:scale-105"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(0,200,255,0.3), rgba(0,150,255,0.3))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0,200,255,0.4)',
-                  boxShadow: '0 4px 15px rgba(0,200,255,0.2)',
-                  width: '160px',
-                  borderRadius: '12px'
+                  background: 'linear-gradient(135deg, #7DD3FC, #38BDF8)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 4px 15px rgba(56,189,248,0.3)',
+                  width: '110px',
+                  borderRadius: '16px'
                 }}
               >
-                <span style={{ fontSize: '28px' }}>🏆</span>
-                <span className="text-white font-bold" style={{ fontSize: '18px' }}>
-                  #{userRank || '?'} Rank
+                <img src={getUserRankTier(user.tokenBalance).icon} alt="Rank" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                <span className="text-gray-700 font-bold" style={{ fontSize: '14px' }}>
+                  {getUserRankTier(user.tokenBalance).name}
                 </span>
+              </button>
+
+              {/* Spin Button */}
+              <button 
+                onClick={() => setShowSpinModal(true)}
+                className="flex items-center justify-center gap-2 py-4 transition-all hover:scale-105 relative"
+                style={{
+                  background: 'linear-gradient(135deg, #FECACA, #FCA5A5)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 4px 15px rgba(252,165,165,0.3)',
+                  width: '100px',
+                  borderRadius: '16px'
+                }}
+              >
+                <img src="/icons/spin.PNG" alt="Spin" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+                <span className="text-gray-700 font-bold" style={{ fontSize: '16px' }}>Spin</span>
+                {spinsLeft > 0 && (
+                  <div 
+                    className="absolute -top-2 -right-2 flex items-center justify-center"
+                    style={{
+                      width: '22px',
+                      height: '22px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #F87171, #EF4444)',
+                      border: '2px solid white',
+                      fontSize: '11px',
+                      fontWeight: 'bold',
+                      color: 'white'
+                    }}
+                  >
+                    {spinsLeft}
+                  </div>
+                )}
               </button>
 
               {/* Quest Suggestion Button */}
@@ -288,17 +289,15 @@ export default function HomePage() {
                 onClick={() => handleTabChange('quest')}
                 className="flex items-center justify-center gap-2 py-4 transition-all hover:scale-105"
                 style={{
-                  background: 'linear-gradient(135deg, rgba(255,200,0,0.3), rgba(255,150,0,0.3))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,200,0,0.4)',
-                  boxShadow: '0 4px 15px rgba(255,200,0,0.2)',
-                  width: '160px',
-                  borderRadius: '12px',
-                  paddingRight: '10px'
+                  background: 'linear-gradient(135deg, #D9F99D, #BEF264)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 4px 15px rgba(190,242,100,0.3)',
+                  width: '100px',
+                  borderRadius: '16px'
                 }}
               >
-                <span style={{ fontSize: '28px' }}>🎁</span>
-                <span className="text-white font-bold" style={{ fontSize: '18px' }}>Quest</span>
+                <span style={{ fontSize: '24px' }}>🎁</span>
+                <span className="text-gray-700 font-bold" style={{ fontSize: '16px' }}>Quest</span>
               </button>
             </div>
 
@@ -328,8 +327,6 @@ export default function HomePage() {
 
       case 'quest':
         return <QuestScreen />;
-      case 'spin':
-        return <SpinScreen />;
       case 'wallet':
         return <WalletScreen />;
       case 'game':
@@ -348,131 +345,156 @@ export default function HomePage() {
       <main className="flex-1 flex flex-col px-6" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {/* Leaderboard Modal */}
-      {showLeaderboard && (
+      {/* Rank Progress Modal */}
+      {showRankModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-          onClick={() => setShowLeaderboard(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setShowRankModal(false)}
         >
           <div 
-            className="w-11/12 max-w-sm overflow-hidden flex flex-col"
+            className="w-full max-w-sm overflow-hidden"
             style={{
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255,255,255,0.3)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-              maxHeight: '60vh'
+              background: 'linear-gradient(180deg, #2d4a6f 0%, #1e3a5f 100%)',
+              borderRadius: '28px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-4 text-center">
-              <h2 className="text-2xl font-bold text-white tracking-wider">
-                LEADERBOARD
-              </h2>
-            </div>
-
-            {/* Leaderboard List */}
-            <div 
-              className="flex flex-col gap-2 overflow-y-auto flex-1"
-              style={{ padding: '0 24px 16px 24px' }}
-            >
-              {leaderboardLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-white">Loading...</div>
-                </div>
-              ) : leaderboardData.map((player) => (
-                <div 
-                  key={player.rank}
-                  className="flex items-center gap-3"
-                >
-                  {/* Rank Number */}
-                  <div 
-                    className="flex items-center justify-center font-bold text-lg"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      background: player.rank === 1 
-                        ? 'linear-gradient(135deg, rgba(255,215,0,0.5), rgba(255,180,0,0.4))'
-                        : player.rank === 2 
-                        ? 'linear-gradient(135deg, rgba(180,210,255,0.6), rgba(140,180,220,0.5))'
-                        : player.rank === 3 
-                        ? 'linear-gradient(135deg, rgba(205,127,50,0.5), rgba(180,100,40,0.4))'
-                        : 'rgba(255,255,255,0.2)',
-                      border: player.rank === 1 
-                        ? '1px solid rgba(255,215,0,0.6)'
-                        : player.rank === 2 
-                        ? '1px solid rgba(180,210,255,0.7)'
-                        : player.rank === 3 
-                        ? '1px solid rgba(205,127,50,0.6)'
-                        : '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '8px',
-                      color: player.rank === 1 
-                        ? '#ffd700'
-                        : player.rank === 2 
-                        ? '#b0d4ff'
-                        : player.rank === 3 
-                        ? '#cd7f32'
-                        : '#ffffff',
-                    }}
-                  >
-                    {player.rank}
-                  </div>
-
-                  {/* Player Info */}
-                  <div 
-                    className="flex-1 flex items-center justify-between"
-                    style={{
-                      height: '40px',
-                      paddingLeft: '16px',
-                      paddingRight: '16px',
-                      background: player.rank === 1 
-                        ? 'linear-gradient(135deg, rgba(255,215,0,0.3), rgba(255,180,0,0.2))'
-                        : player.rank === 2 
-                        ? 'linear-gradient(135deg, rgba(180,210,255,0.4), rgba(140,180,220,0.3))'
-                        : player.rank === 3 
-                        ? 'linear-gradient(135deg, rgba(205,127,50,0.3), rgba(180,100,40,0.2))'
-                        : 'rgba(255,255,255,0.15)',
-                      border: player.rank === 1 
-                        ? '1px solid rgba(255,215,0,0.4)'
-                        : player.rank === 2 
-                        ? '1px solid rgba(180,210,255,0.5)'
-                        : player.rank === 3 
-                        ? '1px solid rgba(205,127,50,0.4)'
-                        : '1px solid rgba(255,255,255,0.25)',
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <span className="font-semibold text-white text-sm">
-                      {player.name}
-                    </span>
-                    <span className="font-bold text-white text-sm">
-                      {player.score.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Close Button */}
-            <div className="p-4 pt-2">
+            <div className="relative p-6 pb-4 text-center">
+              {/* Close button */}
               <button
-                onClick={() => setShowLeaderboard(false)}
-                className="w-full py-3 rounded-full font-bold text-white transition-all hover:scale-105"
-                style={{
-                  background: 'rgba(255,255,255,0.25)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                }}
+                onClick={() => setShowRankModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
+                style={{ background: 'rgba(255,255,255,0.1)' }}
               >
-                Close
+                <span className="text-white/60 text-lg">✕</span>
               </button>
+
+              <div className="text-cyan-400 text-xs font-semibold tracking-widest mb-4">YOUR RANK</div>
+              
+              {/* Current Rank Display */}
+              <div className="flex justify-center">
+                <img 
+                  src={getUserRankTier(user?.tokenBalance || 0).icon} 
+                  alt="Rank" 
+                  style={{ width: '80px', height: '80px', objectFit: 'contain' }} 
+                />
+              </div>
+              
+              <div className="text-white font-bold text-2xl mt-2">
+                {getUserRankTier(user?.tokenBalance || 0).name}
+              </div>
+              <div className="text-cyan-400 text-base mt-1">
+                {(user?.tokenBalance || 0).toLocaleString()} points
+              </div>
+            </div>
+
+            {/* Progress Section */}
+            {(() => {
+              const currentPoints = user?.tokenBalance || 0;
+              const currentTier = getUserRankTier(currentPoints);
+              const currentTierIndex = RANK_TIERS.findIndex(t => t.name === currentTier.name);
+              const nextTier = RANK_TIERS[currentTierIndex + 1];
+              
+              if (!nextTier) {
+                return (
+                  <div className="mx-5 mb-4 p-4 rounded-2xl text-center" style={{ background: 'rgba(251,191,36,0.15)' }}>
+                    <span className="text-2xl">👑</span>
+                    <span className="text-yellow-400 font-bold ml-2">MAX RANK ACHIEVED!</span>
+                  </div>
+                );
+              }
+              
+              const pointsNeeded = nextTier.minPoints - currentPoints;
+              const progressPercent = ((currentPoints - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100;
+              
+              return (
+                <div className="mb-4 p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)', marginLeft: '14px', marginRight: '14px' }}>
+                  {/* From -> To with progress bar in middle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-center" style={{ marginRight: '12px' }}>
+                      <img src={currentTier.icon} alt={currentTier.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                      <span className="text-white/60 text-xs mt-1">{currentTier.name}</span>
+                    </div>
+                    
+                    {/* Progress Bar with percentage inside */}
+                    <div className="flex-1">
+                      <div 
+                        className="w-full h-6 rounded-full overflow-hidden relative"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}
+                      >
+                        <div 
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ 
+                            width: `${Math.min(progressPercent, 100)}%`,
+                            background: 'linear-gradient(90deg, #06b6d4, #3b82f6)',
+                          }}
+                        />
+                        <span 
+                          className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold"
+                          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                        >
+                          {Math.round(progressPercent)}%
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center opacity-60" style={{ marginLeft: '12px' }}>
+                      <img src={nextTier.icon} alt={nextTier.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                      <span className="text-white/60 text-xs mt-1">{nextTier.name}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* All Ranks Grid */}
+            <div className="mx-6 mb-6" style={{ marginTop: '24px' }}>
+              <div className="text-white/40 text-xs font-semibold tracking-wider mb-3">ALL RANKS</div>
+              <div className="grid grid-cols-3 gap-3">
+                {RANK_TIERS.map((tier) => {
+                  const currentTier = getUserRankTier(user?.tokenBalance || 0);
+                  const isCurrentTier = tier.name === currentTier.name;
+                  const isUnlocked = (user?.tokenBalance || 0) >= tier.minPoints;
+                  
+                  return (
+                    <div 
+                      key={tier.name}
+                      className="flex flex-col items-center p-3 rounded-2xl"
+                      style={{ 
+                        background: isCurrentTier 
+                          ? `linear-gradient(135deg, ${tier.color}40, ${tier.color}20)`
+                          : 'rgba(255,255,255,0.03)',
+                        border: isCurrentTier 
+                          ? `2px solid ${tier.color}` 
+                          : '1px solid rgba(255,255,255,0.08)',
+                        opacity: isUnlocked ? 1 : 0.35,
+                      }}
+                    >
+                      <img src={tier.icon} alt={tier.name} style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                      <span className="text-white text-xs font-semibold mt-1">{tier.name}</span>
+                      <span className="text-white/40 text-[10px]">
+                        {tier.minPoints >= 1000 ? `${tier.minPoints/1000}K` : tier.minPoints}
+                      </span>
+                      {tier.bonus > 0 && (
+                        <span className="text-green-400 text-[10px] font-medium">
+                          +{tier.bonus}% bonus
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Spin Modal */}
+      <SpinModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
     </div>
   );
 }
