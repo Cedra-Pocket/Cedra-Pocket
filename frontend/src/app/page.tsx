@@ -408,7 +408,6 @@ export default function HomePage() {
                 );
               }
               
-              const pointsNeeded = nextTier.minPoints - currentPoints;
               const progressPercent = ((currentPoints - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100;
               
               return (
