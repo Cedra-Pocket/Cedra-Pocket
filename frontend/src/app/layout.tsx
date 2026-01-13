@@ -12,20 +12,21 @@ const bricolage = Bricolage_Grotesque({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  minimumScale: 0.5,
+  maximumScale: 3,
+  userScalable: true,
   viewportFit: "cover",
   themeColor: "#0a0a1a",
 };
 
 export const metadata: Metadata = {
-  title: "Telegram Web3 Gaming",
+  title: "Whale",
   description: "Play games, complete quests, and earn rewards in the Telegram Mini App",
-  applicationName: "Telegram Web3 Gaming",
+  applicationName: "Whale",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Web3 Gaming",
+    title: "Whale",
   },
   formatDetection: {
     telephone: false,

@@ -52,11 +52,11 @@ export function WalletScreen() {
   };
 
   return (
-    <div className="flex flex-col h-full items-center" style={{ paddingTop: 'clamp(50px, 12vw, 80px)', backgroundColor: 'transparent' }}>
+    <div className="flex flex-col h-full items-center" style={{ paddingTop: 'clamp(28px, 7vw, 44px)', backgroundColor: 'transparent' }}>
       {/* Title */}
       <h1 
         className="font-bold"
-        style={{ fontSize: 'clamp(18px, 5vw, 24px)', color: '#1a1a2e', marginBottom: 'clamp(16px, 5vw, 32px)' }}
+        style={{ fontSize: 'clamp(12px, 3.5vw, 16px)', color: '#1a1a2e', marginBottom: 'clamp(10px, 3vw, 18px)' }}
       >
         Your balance
       </h1>
@@ -64,12 +64,12 @@ export function WalletScreen() {
       {/* Balance Card */}
       <div 
         style={{
-          width: '90%',
-          maxWidth: 'clamp(280px, 80vw, 380px)',
+          width: '88%',
+          maxWidth: 'clamp(220px, 62vw, 280px)',
           background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-          borderRadius: 'clamp(12px, 3vw, 16px)',
+          borderRadius: 'clamp(8px, 2vw, 12px)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: 'clamp(12px, 4vw, 20px)',
+          padding: 'clamp(8px, 2vw, 12px)',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         }}
       >
@@ -78,32 +78,32 @@ export function WalletScreen() {
           className="flex items-center"
           style={{
             background: 'linear-gradient(90deg, #6a7080, #2a2f3a)',
-            borderRadius: 'clamp(8px, 2vw, 12px)',
-            padding: 'clamp(10px, 3vw, 16px) clamp(12px, 4vw, 20px)',
-            gap: 'clamp(8px, 2vw, 12px)',
+            borderRadius: 'clamp(6px, 1.5vw, 10px)',
+            padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 14px)',
+            gap: 'clamp(6px, 1.5vw, 10px)',
           }}
         >
-          <span style={{ fontSize: 'clamp(20px, 6vw, 28px)', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'clamp(14px, 4vw, 20px)', fontWeight: '700', color: '#ffffff' }}>
             {tokenBalance.toLocaleString()}
           </span>
-          <span style={{ fontSize: 'clamp(11px, 3vw, 14px)', color: '#ffffff', fontWeight: '500' }}>points</span>
+          <span style={{ fontSize: 'clamp(8px, 2vw, 11px)', color: '#ffffff', fontWeight: '500' }}>points</span>
         </div>
       </div>
 
       {/* Wallet Connect Card */}
       <div 
         style={{
-          width: '90%',
-          maxWidth: 'clamp(280px, 80vw, 380px)',
-          marginTop: 'clamp(10px, 3vw, 16px)',
+          width: '88%',
+          maxWidth: 'clamp(220px, 62vw, 280px)',
+          marginTop: 'clamp(8px, 2vw, 12px)',
           background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-          borderRadius: 'clamp(12px, 3vw, 16px)',
+          borderRadius: 'clamp(8px, 2vw, 12px)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: 'clamp(12px, 4vw, 20px)',
+          padding: 'clamp(8px, 2vw, 12px)',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         }}
       >
-        <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
+        <div className="flex flex-col" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
           {/* Wallet ID Input */}
           <input
             type="text"
@@ -112,11 +112,11 @@ export function WalletScreen() {
             placeholder="Enter wallet address..."
             style={{
               width: '100%',
-              padding: 'clamp(10px, 3vw, 14px) clamp(12px, 3vw, 16px)',
-              borderRadius: 'clamp(8px, 2vw, 12px)',
+              padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 14px)',
+              borderRadius: 'clamp(6px, 1.5vw, 10px)',
               border: '2px solid rgba(0, 136, 204, 0.3)',
               background: 'rgba(255, 255, 255, 0.9)',
-              fontSize: 'clamp(11px, 3vw, 14px)',
+              fontSize: 'clamp(8px, 2vw, 11px)',
               outline: 'none',
               transition: 'border-color 0.2s',
             }}
@@ -125,7 +125,7 @@ export function WalletScreen() {
           />
 
           {/* Buttons Row */}
-          <div className="flex" style={{ gap: 'clamp(6px, 2vw, 8px)' }}>
+          <div className="flex" style={{ gap: 'clamp(4px, 1vw, 8px)' }}>
             {/* Test Connect Button */}
             <button
               onClick={handleTestConnect}
@@ -133,15 +133,15 @@ export function WalletScreen() {
               className="flex-1 flex items-center justify-center transition-all hover:scale-[1.02] disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                padding: 'clamp(10px, 3vw, 14px) clamp(8px, 2vw, 12px)',
+                borderRadius: 'clamp(6px, 1.5vw, 10px)',
+                padding: 'clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 10px)',
                 border: 'none',
                 cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
-                gap: 'clamp(4px, 1vw, 8px)',
+                gap: 'clamp(3px, 0.8vw, 6px)',
               }}
             >
-              <span style={{ fontSize: 'clamp(12px, 3vw, 16px)' }}>💎</span>
-              <span style={{ fontSize: 'clamp(11px, 3vw, 14px)', fontWeight: '700', color: '#ffffff' }}>
+              <span style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}>💎</span>
+              <span style={{ fontSize: 'clamp(8px, 2vw, 11px)', fontWeight: '700', color: '#ffffff' }}>
                 {isConnecting ? 'TESTING...' : 'TEST'}
               </span>
             </button>
@@ -153,15 +153,15 @@ export function WalletScreen() {
               className="flex-1 flex items-center justify-center transition-all hover:scale-[1.02] disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                padding: 'clamp(10px, 3vw, 14px) clamp(8px, 2vw, 12px)',
+                borderRadius: 'clamp(6px, 1.5vw, 10px)',
+                padding: 'clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 10px)',
                 border: 'none',
                 cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
-                gap: 'clamp(4px, 1vw, 8px)',
+                gap: 'clamp(3px, 0.8vw, 6px)',
               }}
             >
-              <span style={{ fontSize: 'clamp(12px, 3vw, 16px)' }}>✓</span>
-              <span style={{ fontSize: 'clamp(11px, 3vw, 14px)', fontWeight: '700', color: '#ffffff' }}>
+              <span style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}>✓</span>
+              <span style={{ fontSize: 'clamp(8px, 2vw, 11px)', fontWeight: '700', color: '#ffffff' }}>
                 CONFIRM
               </span>
             </button>
@@ -171,8 +171,8 @@ export function WalletScreen() {
           {statusMessage && (
             <div
               style={{
-                padding: 'clamp(8px, 2vw, 10px) clamp(10px, 3vw, 14px)',
-                borderRadius: 'clamp(6px, 2vw, 8px)',
+                padding: 'clamp(6px, 1.5vw, 8px) clamp(8px, 2vw, 12px)',
+                borderRadius: 'clamp(5px, 1.2vw, 7px)',
                 background: connectStatus === 'success' 
                   ? 'rgba(34, 197, 94, 0.2)' 
                   : 'rgba(239, 68, 68, 0.2)',
@@ -180,7 +180,7 @@ export function WalletScreen() {
               }}
             >
               <span style={{ 
-                fontSize: 'clamp(10px, 3vw, 13px)', 
+                fontSize: 'clamp(7px, 2vw, 10px)', 
                 color: connectStatus === 'success' ? '#16a34a' : '#dc2626',
                 fontWeight: '500'
               }}>
@@ -194,20 +194,20 @@ export function WalletScreen() {
       {/* Token Balance Section */}
       <div 
         style={{
-          width: '90%',
-          maxWidth: 'clamp(280px, 80vw, 380px)',
-          marginTop: 'clamp(14px, 4vw, 24px)',
+          width: '88%',
+          maxWidth: 'clamp(220px, 62vw, 280px)',
+          marginTop: 'clamp(10px, 2.5vw, 16px)',
           background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-          borderRadius: 'clamp(12px, 3vw, 16px)',
-          padding: 'clamp(12px, 4vw, 20px)',
+          borderRadius: 'clamp(8px, 2vw, 12px)',
+          padding: 'clamp(8px, 2vw, 12px)',
         }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
-            <span style={{ fontSize: 'clamp(22px, 6vw, 32px)' }}>🪙</span>
-            <span style={{ fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
+          <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
+            <span style={{ fontSize: 'clamp(16px, 4vw, 22px)' }}>🪙</span>
+            <span style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
           </div>
-          <span style={{ fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'clamp(12px, 3vw, 16px)', fontWeight: '700', color: '#ffffff' }}>
             {user?.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ') || '0'}
           </span>
         </div>
@@ -218,9 +218,9 @@ export function WalletScreen() {
         className="text-center"
         style={{ 
           color: 'rgba(255,255,255,0.5)', 
-          fontSize: 'clamp(11px, 3vw, 14px)',
-          maxWidth: 'clamp(220px, 70vw, 300px)',
-          marginTop: 'clamp(14px, 4vw, 24px)'
+          fontSize: 'clamp(8px, 2vw, 11px)',
+          maxWidth: 'clamp(180px, 55vw, 240px)',
+          marginTop: 'clamp(10px, 2.5vw, 16px)'
         }}
       >
         Enter your wallet address to connect and withdraw earnings

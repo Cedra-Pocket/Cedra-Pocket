@@ -145,30 +145,30 @@ export function QuestScreen() {
     <div 
       className="flex flex-col hide-scrollbar" 
       style={{ 
-        paddingTop: 'clamp(30px, 8vw, 50px)', 
+        paddingTop: 'clamp(16px, 4vw, 26px)', 
         backgroundColor: 'transparent',
-        height: 'calc(100vh - clamp(60px, 12vw, 80px))',
+        height: 'calc(100vh - clamp(42px, 8vw, 56px))',
         overflowY: 'auto',
-        paddingBottom: 'clamp(12px, 3vw, 20px)'
+        paddingBottom: 'clamp(8px, 2vw, 12px)'
       }}
     >
       {/* Header */}
-      <header style={{ marginBottom: 'clamp(16px, 4vw, 32px)', paddingLeft: 'clamp(12px, 4vw, 24px)', paddingRight: 'clamp(12px, 4vw, 24px)', textAlign: 'center' }} className="flex-shrink-0">
-        <div className="flex justify-center" style={{ marginBottom: 'clamp(8px, 2vw, 12px)' }}>
+      <header style={{ marginBottom: 'clamp(8px, 2vw, 14px)', paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }} className="flex-shrink-0">
+        <div className="flex justify-center" style={{ marginBottom: 'clamp(4px, 1vw, 8px)' }}>
           <img 
             src="/icons/quest.png" 
             alt="Quest" 
             className="object-contain drop-shadow-lg animate-float-medium"
-            style={{ width: 'clamp(50px, 15vw, 80px)', height: 'clamp(50px, 15vw, 80px)' }}
+            style={{ width: 'clamp(32px, 9vw, 46px)', height: 'clamp(32px, 9vw, 46px)' }}
           />
         </div>
-        <h1 style={{ color: '#1a1a2e', fontSize: 'clamp(20px, 6vw, 30px)' }} className="font-extrabold drop-shadow-[0_0_15px_rgba(0,0,0,0.1)]">
+        <h1 style={{ color: '#1a1a2e', fontSize: 'clamp(14px, 4vw, 20px)' }} className="font-extrabold drop-shadow-[0_0_15px_rgba(0,0,0,0.1)]">
           Quests
         </h1>
 
         {/* Total Progress Bar */}
-        <div style={{ marginTop: 'clamp(10px, 3vw, 16px)', marginBottom: 'clamp(14px, 4vw, 24px)', paddingLeft: 'clamp(12px, 4vw, 24px)', paddingRight: 'clamp(12px, 4vw, 24px)' }}>
-          <div style={{ background: 'rgba(0, 0, 0, 0.1)', height: 'clamp(24px, 6vw, 32px)' }} className="w-full rounded-full overflow-hidden relative">
+        <div style={{ marginTop: 'clamp(6px, 1.5vw, 10px)', marginBottom: 'clamp(8px, 2vw, 12px)', paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)' }}>
+          <div style={{ background: 'rgba(0, 0, 0, 0.1)', height: 'clamp(16px, 4vw, 22px)' }} className="w-full rounded-full overflow-hidden relative">
             <div 
               className="h-full rounded-full transition-all duration-500"
               style={{ 
@@ -176,7 +176,7 @@ export function QuestScreen() {
                 background: 'linear-gradient(90deg, #FFD700, #FFA500)'
               }}
             />
-            <span style={{ color: '#1a1a2e', fontSize: 'clamp(10px, 3vw, 14px)' }} className="absolute inset-0 flex items-center justify-center font-bold drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
+            <span style={{ color: '#1a1a2e', fontSize: 'clamp(7px, 2vw, 10px)' }} className="absolute inset-0 flex items-center justify-center font-bold drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
               {completedCount}/{quests.length} completed
             </span>
           </div>
@@ -184,8 +184,8 @@ export function QuestScreen() {
       </header>
 
       {/* Daily Login Section - No title */}
-      <section style={{ marginBottom: 'clamp(14px, 4vw, 24px)', paddingLeft: 'clamp(12px, 4vw, 24px)', paddingRight: 'clamp(12px, 4vw, 24px)' }} className="flex-shrink-0">
-        <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
+      <section style={{ marginBottom: 'clamp(8px, 2vw, 12px)', paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)' }} className="flex-shrink-0">
+        <div className="flex flex-col" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
           {dailyQuests.map((quest) => (
             <QuestCard
               key={quest.id}
@@ -197,11 +197,11 @@ export function QuestScreen() {
       </section>
 
       {/* Tasks Section */}
-      <section style={{ paddingLeft: 'clamp(12px, 4vw, 24px)', paddingRight: 'clamp(12px, 4vw, 24px)' }} className="flex-shrink-0">
-        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(10px, 3vw, 16px)', fontSize: 'clamp(16px, 4vw, 20px)' }} className="font-extrabold flex items-center gap-2">
+      <section style={{ paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)' }} className="flex-shrink-0">
+        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(6px, 1.5vw, 10px)', fontSize: 'clamp(11px, 3vw, 14px)' }} className="font-extrabold flex items-center gap-2">
           ⚡ Tasks
         </h2>
-        <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
+        <div className="flex flex-col" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
           {taskQuests.map((quest) => (
             <QuestCard
               key={quest.id}

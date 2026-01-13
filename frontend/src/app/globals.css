@@ -57,13 +57,13 @@ body {
 }
 
 html {
-  font-size: 14px;
+  font-size: 16px;
 }
 
 /* Telegram Mini App viewport fix */
 @media (max-width: 499px) {
   html {
-    font-size: 14px;
+    font-size: 16px;
   }
   
   body {
@@ -858,3 +858,16 @@ body {
 .confetti-piece:nth-child(18) { left: 80%; animation: confetti-fall-1 2.9s ease-out forwards; animation-delay: 0.3s; }
 .confetti-piece:nth-child(19) { left: 90%; animation: confetti-fall-3 2.4s ease-out forwards; animation-delay: 0.1s; }
 .confetti-piece:nth-child(20) { left: 8%; animation: confetti-fall-2 2.6s ease-out forwards; animation-delay: 0.45s; }
+
+/* Wave left to right animation for logo */
+@keyframes waveLeftRight {
+  0%, 100% {
+    transform: skewX(0deg);
+  }
+  25% {
+    transform: skewX(-2deg);
+  }
+  75% {
+    transform: skewX(2deg);
+  }
+}
