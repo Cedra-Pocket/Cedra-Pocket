@@ -3,67 +3,146 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 model quests {
-  id            Int              @id @default(autoincrement())
-  title         String           @db.VarChar(255)
-  description   String?
-  type          quest_type
-  category      String?          @db.VarChar(50)
-  config        Json?            @default("{}")
-  reward_amount Decimal          @db.Decimal(20, 2)
-  reward_type   String?          @default("POINT") @db.VarChar(20)
-  frequency     quest_frequency? @default(ONCE)
-  is_active     Boolean?         @default(true)
-  created_at    DateTime?        @default(now()) @db.Timestamptz(6)
-  user_quests   user_quests[]
+  id              Int             @id @default(autoincrement())
+  title           String          @db.VarChar(255)
+  description     String?
+  type            quest_type
+  category        String?         @db.VarChar(50)
+  config          Json            @default("{}")
+  reward_amount   Int             @default(0)
+  frequency       quest_frequency @default(ONCE)
+  is_active       Boolean         @default(true)
+  created_at      DateTime        @default(now()) @db.Timestamptz(6)
+  end_date        DateTime?       @db.Timestamptz(6)
+  icon_url        String?         @db.VarChar(500)
+  max_completions Int?
+  start_date      DateTime?       @db.Timestamptz(6)
+  updated_at      DateTime        @default(now()) @db.Timestamptz(6)
+  xp_reward       Int             @default(0)
+  reward_type     reward_type     @default(POINT)
+
+  @@index([category])
+  @@index([is_active])
+  @@index([type])
 }
 
 model referral_logs {
-  id                BigInt    @id @default(autoincrement())
-  referrer_id       BigInt?
-  referee_id        BigInt?
-  source_action     String?   @db.VarChar(50)
-  commission_amount Decimal   @db.Decimal(20, 2)
-  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  id                BigInt   @id @default(autoincrement())
+  referrer_id       BigInt
+  referee_id        BigInt
+  commission_amount Int      @default(0)
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  bonus_type        String?  @db.VarChar(50)
+
+  @@index([created_at])
+  @@index([referee_id])
+  @@index([referrer_id])
 }
 
 model user_quests {
-  id           BigInt        @id @default(autoincrement())
+  id           BigInt       @id @default(autoincrement())
   user_id      BigInt
   quest_id     Int
-  status       quest_status? @default(PENDING)
+  status       quest_status @default(PENDING)
   proof_data   Json?
-  completed_at DateTime?     @db.Timestamptz(6)
-  claimed_at   DateTime?     @db.Timestamptz(6)
-  created_at   DateTime?     @default(now()) @db.Timestamptz(6)
-  users        users         @relation(fields: [user_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  quests       quests        @relation(fields: [quest_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  completed_at DateTime?    @db.Timestamptz(6)
+  claimed_at   DateTime?    @db.Timestamptz(6)
+  created_at   DateTime     @default(now()) @db.Timestamptz(6)
+  progress     Int          @default(0)
+
   @@unique([user_id, quest_id], map: "unique_user_quest")
+  @@index([quest_id])
+  @@index([status])
+  @@index([user_id])
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
-  id                  BigInt    @id @default(autoincrement())
-  telegram_id         String    @unique(map: "uq_telegram_id") @db.VarChar(255)
-  username            String?   @db.VarChar(255)
-  wallet_address      String?   @unique @db.VarChar(66)
-  is_wallet_connected Boolean?  @default(false)
-  total_points        Decimal?  @default(0) @db.Decimal(20, 2)
-  current_rank        String?   @default("BRONZE") @db.VarChar(50)
-  referral_code       String?   @unique @db.VarChar(20)
+  id                  BigInt      @id @default(autoincrement())
+  telegram_id         String      @unique(map: "uq_telegram_id") @db.VarChar(255)
+  username            String?     @db.VarChar(255)
+  wallet_address      String?     @unique @db.VarChar(66)
+  is_wallet_connected Boolean     @default(false)
+  total_points        BigInt      @default(0)
+  referral_code       String?     @unique @db.VarChar(20)
   referrer_id         BigInt?
-  created_at          DateTime? @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime? @default(now()) @db.Timestamptz(6)
-  users               users?    @relation("usersTousers", fields: [referrer_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "fk_referrer")
-  other_users         users[]   @relation("usersTousers")
-  user_quests         user_quests[]
+  created_at          DateTime    @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime    @default(now()) @db.Timestamptz(6)
+  avatar_url          String?     @db.VarChar(500)
+  current_xp          Int         @default(0)
+  daily_streak        Int         @default(0)
+  last_daily_claim    DateTime?   @db.Timestamptz(6)
+  last_spin_reset     DateTime?   @db.Timestamptz(6)
+  level               Int         @default(1)
+  role                user_role   @default(USER)
+  spins_left          Int         @default(3)
+  status              user_status @default(ACTIVE)
+  current_rank        user_rank   @default(BRONZE)
+  users               users?      @relation("usersTousers", fields: [referrer_id], references: [id], map: "fk_referrer")
+  other_users         users[]     @relation("usersTousers")
+  pet                 pets?
+
   @@index([referral_code], map: "idx_users_referral_code")
   @@index([telegram_id], map: "idx_users_telegram_id")
+  @@index([total_points(sort: Desc)])
+  @@index([wallet_address])
+}
+
+model pets {
+  id             BigInt   @id @default(autoincrement())
+  user_id        BigInt   @unique
+  level          Int      @default(1)
+  exp            Int      @default(0)
+  max_exp        Int      @default(100)
+  hunger         Int      @default(50)
+  happiness      Int      @default(50)
+  last_coin_time DateTime @default(now()) @db.Timestamptz(6)
+  pending_coins  Int      @default(0)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+  user           users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model daily_rewards {
+  id            BigInt      @id @default(autoincrement())
+  user_id       BigInt
+  day_number    Int
+  reward_amount Int
+  reward_type   reward_type @default(POINT)
+  claimed_at    DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@index([claimed_at])
+  @@index([user_id])
+}
+
+model point_transactions {
+  id           BigInt           @id @default(autoincrement())
+  user_id      BigInt
+  amount       Int
+  type         transaction_type
+  description  String?          @db.VarChar(255)
+  reference_id String?          @db.VarChar(100)
+  created_at   DateTime         @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at])
+  @@index([type])
+  @@index([user_id])
+}
+
+model spin_history {
+  id            BigInt      @id @default(autoincrement())
+  user_id       BigInt
+  reward_amount Int
+  reward_type   reward_type @default(POINT)
+  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+
+  @@index([created_at])
+  @@index([user_id])
 }
 
 enum quest_frequency {
@@ -92,4 +171,29 @@ enum user_role {
 enum user_status {
   ACTIVE
   BANNED
+  SUSPENDED
+}
+
+enum reward_type {
+  POINT
+  XP
+  SPIN
+  TOKEN
+}
+
+enum transaction_type {
+  QUEST_REWARD
+  SPIN_REWARD
+  DAILY_REWARD
+  REFERRAL_BONUS
+  ADMIN_ADJUSTMENT
+  WITHDRAWAL
+}
+
+enum user_rank {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
 }

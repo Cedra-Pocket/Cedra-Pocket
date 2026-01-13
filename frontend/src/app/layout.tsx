@@ -38,7 +38,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Telegram Web App Script - MUST be loaded before app */}
         <script src="https://telegram.org/js/telegram-web-app.js" />
@@ -46,6 +46,7 @@ export default function RootLayout({
       <body
         className={`${bricolage.variable} font-sans antialiased min-h-screen-safe flex justify-center`}
         style={{ backgroundColor: '#0a0a1a' }}
+        suppressHydrationWarning
       >
         <div 
           className="w-full overflow-hidden relative"

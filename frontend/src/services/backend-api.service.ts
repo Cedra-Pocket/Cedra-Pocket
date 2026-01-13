@@ -382,6 +382,80 @@ export class BackendAPIService {
       friends: [],
     };
   }
+
+  // ============ Pet API Methods ============
+
+  /**
+   * Pet data interface
+   */
+  
+
+  /**
+   * Get pet data
+   */
+  async getPet(): Promise<PetData> {
+    try {
+      const response = await this.client.get<PetData>('/pets');
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get pet',
+          error.response?.status || 500,
+          'PET_GET_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Update pet data
+   */
+  async updatePet(petData: Partial<PetData>): Promise<PetData> {
+    try {
+      const response = await this.client.put<PetData>('/pets', petData);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to update pet',
+          error.response?.status || 500,
+          'PET_UPDATE_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Claim pet coins
+   */
+  async claimPetCoins(coins: number): Promise<PetData> {
+    try {
+      const response = await this.client.post<PetData>('/pets/claim', { coins });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to claim coins',
+          error.response?.status || 500,
+          'PET_CLAIM_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+}
+
+export interface PetData {
+  level: number;
+  exp: number;
+  maxExp: number;
+  hunger: number;
+  happiness: number;
+  lastCoinTime: number;
+  pendingCoins: number;
 }
 
 // Singleton instance
