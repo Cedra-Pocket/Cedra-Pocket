@@ -126,7 +126,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
               aria-label="Pet"
             >
               <div className="flex items-center justify-center" style={{ width: 'clamp(18px, 4.5vw, 26px)', height: 'clamp(18px, 4.5vw, 26px)' }}>
-                <img src="/icons/pet.PNG" alt="Pet" style={{ width: 'clamp(20px, 5vw, 28px)', height: 'clamp(20px, 5vw, 28px)', objectFit: 'contain' }} />
+                <img src="/icons/pet.png" alt="Pet" style={{ width: 'clamp(20px, 5vw, 28px)', height: 'clamp(20px, 5vw, 28px)', objectFit: 'contain' }} />
               </div>
               <span style={{ fontSize: 'clamp(8px, 2vw, 11px)' }} className="font-semibold">Pet</span>
               {activeTab === 'pet' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(14px, 3.5vw, 20px)', height: 'clamp(2px, 0.4vw, 3px)' }} />}
