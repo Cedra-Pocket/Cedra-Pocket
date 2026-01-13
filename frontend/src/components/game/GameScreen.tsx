@@ -154,14 +154,14 @@ export function GameScreen() {
                 : 'linear-gradient(135deg, rgba(255,255,255,0.8), rgba(232,220,200,0.6))',
               border: '1px solid rgba(255,255,255,0.5)',
               color: '#1a1a2e',
-              fontSize: 'clamp(10px, 2.5vw, 13px)',
+              fontSize: 'clamp(12px, 3vw, 15px)',
               fontWeight: selectedCategory === cat.id ? '600' : '400',
-              padding: 'clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px)',
+              padding: 'clamp(5px, 1.2vw, 7px) clamp(10px, 2.5vw, 14px)',
               borderRadius: 'clamp(6px, 1.5vw, 8px)',
-              gap: 'clamp(3px, 0.8vw, 5px)',
+              gap: 'clamp(4px, 1vw, 6px)',
             }}
           >
-            <span style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}>{cat.icon}</span>
+            <span style={{ fontSize: 'clamp(12px, 3vw, 16px)' }}>{cat.icon}</span>
             <span>{cat.name}</span>
           </button>
         ))}
@@ -218,16 +218,16 @@ export function GameScreen() {
                   <div 
                     className="flex items-center justify-center"
                     style={{
-                      width: 'clamp(22px, 6vw, 30px)',
-                      height: 'clamp(22px, 6vw, 30px)',
+                      width: 'clamp(24px, 7vw, 32px)',
+                      height: 'clamp(24px, 7vw, 32px)',
                       borderRadius: 'clamp(6px, 1.5vw, 10px)',
                       background: 'rgba(255,255,255,0.25)',
-                      fontSize: 'clamp(12px, 3vw, 16px)',
+                      fontSize: 'clamp(14px, 3.5vw, 18px)',
                     }}
                   >
                     {game.image}
                   </div>
-                  <span className="font-bold" style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', color: '#1a1a2e' }}>{game.name}</span>
+                  <span className="font-bold" style={{ fontSize: 'clamp(12px, 3vw, 15px)', color: '#1a1a2e' }}>{game.name}</span>
                 </div>
                 <button
                   onClick={() => handlePlayGame(game.name)}
@@ -235,9 +235,9 @@ export function GameScreen() {
                   style={{
                     background: 'linear-gradient(135deg, #FFD700, #FFA500)',
                     color: '#1a1a2e',
-                    fontSize: 'clamp(9px, 2.2vw, 11px)',
+                    fontSize: 'clamp(11px, 2.8vw, 13px)',
                     boxShadow: '0 4px 15px rgba(255,200,0,0.3)',
-                    padding: 'clamp(5px, 1.2vw, 7px) clamp(10px, 2.5vw, 14px)',
+                    padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
                     borderRadius: 'clamp(5px, 1.2vw, 7px)',
                   }}
                 >
@@ -262,8 +262,8 @@ export function GameScreen() {
           paddingBottom: 'clamp(60px, 16vw, 80px)',
         }}
       >  <div className="flex items-center justify-between" style={{ marginBottom: 'clamp(8px, 2vw, 12px)' }}>
-          <h2 className="font-bold" style={{ fontSize: 'clamp(12px, 3vw, 15px)', color: '#1a1a2e' }}>Trending games</h2>
-          <span style={{ color: 'rgba(0,0,0,0.5)', fontSize: 'clamp(10px, 2.5vw, 13px)', cursor: 'pointer' }}>View all</span>
+          <h2 className="font-bold" style={{ fontSize: 'clamp(14px, 3.5vw, 17px)', color: '#1a1a2e' }}>Trending games</h2>
+          <span style={{ color: 'rgba(0,0,0,0.5)', fontSize: 'clamp(12px, 3vw, 15px)', cursor: 'pointer' }}>View all</span>
         </div>
 
         {/* Games List */}
@@ -284,11 +284,11 @@ export function GameScreen() {
               <div 
                 className="flex items-center justify-center flex-shrink-0"
                 style={{
-                  width: 'clamp(32px, 9vw, 44px)',
-                  height: 'clamp(32px, 9vw, 44px)',
+                  width: 'clamp(36px, 10vw, 48px)',
+                  height: 'clamp(36px, 10vw, 48px)',
                   borderRadius: 'clamp(8px, 2vw, 12px)',
                   background: 'linear-gradient(135deg, rgba(255,255,255,0.8), rgba(232,220,200,0.5))',
-                  fontSize: 'clamp(16px, 4.5vw, 22px)',
+                  fontSize: 'clamp(18px, 5vw, 24px)',
                   boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3)',
                 }}
               >
@@ -297,12 +297,12 @@ export function GameScreen() {
 
               {/* Game Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-bold" style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', marginBottom: 'clamp(2px, 0.5vw, 3px)', color: '#1a1a2e' }}>
+                <h3 className="font-bold" style={{ fontSize: 'clamp(12px, 3vw, 15px)', marginBottom: 'clamp(2px, 0.5vw, 3px)', color: '#1a1a2e' }}>
                   {game.name}
                 </h3>
                 <p 
                   className="truncate"
-                  style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: 'rgba(0,0,0,0.6)' }}
+                  style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: 'rgba(0,0,0,0.6)' }}
                 >
                   {game.description}
                 </p>
@@ -315,9 +315,9 @@ export function GameScreen() {
                 style={{
                   background: 'linear-gradient(135deg, #FFD700, #FFA500)',
                   color: '#1a1a2e',
-                  fontSize: 'clamp(9px, 2.2vw, 11px)',
+                  fontSize: 'clamp(11px, 2.8vw, 13px)',
                   boxShadow: '0 4px 15px rgba(255,200,0,0.3)',
-                  padding: 'clamp(5px, 1.2vw, 7px) clamp(10px, 2.5vw, 14px)',
+                  padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
                   borderRadius: 'clamp(5px, 1.2vw, 7px)',
                   marginRight: 'clamp(2px, 0.5vw, 4px)',
                 }}

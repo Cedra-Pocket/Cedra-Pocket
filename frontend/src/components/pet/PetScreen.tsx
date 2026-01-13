@@ -273,7 +273,7 @@ export function PetScreen() {
       >
         {/* Pet Name & Level */}
         <div className="text-center" style={{ marginBottom: 'clamp(10px, 2.5vw, 14px)' }}>
-          <h2 style={{ fontSize: 'clamp(14px, 4vw, 18px)', fontWeight: '700', color: '#1a1a2e' }}>
+          <h2 style={{ fontSize: 'clamp(16px, 4.5vw, 20px)', fontWeight: '700', color: '#1a1a2e' }}>
             {petName}
           </h2>
           <div className="flex items-center justify-center" style={{ gap: 'clamp(8px, 2vw, 12px)', marginTop: 'clamp(4px, 1vw, 6px)' }}>
@@ -282,14 +282,14 @@ export function PetScreen() {
                 background: 'linear-gradient(135deg, #FFD700, #FFA500)',
                 padding: 'clamp(3px, 0.8vw, 5px) clamp(8px, 2vw, 12px)',
                 borderRadius: 'clamp(8px, 2vw, 12px)',
-                fontSize: 'clamp(10px, 2.5vw, 12px)', 
+                fontSize: 'clamp(12px, 3vw, 14px)', 
                 fontWeight: '600', 
                 color: '#fff' 
               }}
             >
               Lv.{pet.level}
             </span>
-            <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>
+            <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>
               EXP: {pet.exp}/{pet.maxExp}
             </span>
           </div>
@@ -307,8 +307,8 @@ export function PetScreen() {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center" style={{ gap: 'clamp(4px, 1vw, 6px)' }}>
-              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>🪙</span>
-              <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: '600', color: '#1a1a2e' }}>
+              <span style={{ fontSize: 'clamp(16px, 4vw, 20px)' }}>🪙</span>
+              <span style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '600', color: '#1a1a2e' }}>
                 {coinsPerMin}/min
               </span>
             </div>
@@ -328,18 +328,18 @@ export function PetScreen() {
                   gap: 'clamp(3px, 0.8vw, 5px)',
                 }}
               >
-                <span style={{ fontSize: 'clamp(10px, 2.5vw, 13px)' }}>🎁</span>
-                <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', fontWeight: '700', color: '#fff' }}>
+                <span style={{ fontSize: 'clamp(12px, 3vw, 15px)' }}>🎁</span>
+                <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: '700', color: '#fff' }}>
                   +{pet.pendingCoins}
                 </span>
               </button>
             ) : (
               <div className="flex items-center" style={{ gap: 'clamp(4px, 1vw, 6px)' }}>
-                <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>
+                <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>
                   Next:
                 </span>
                 <span style={{ 
-                  fontSize: 'clamp(11px, 2.8vw, 13px)', 
+                  fontSize: 'clamp(13px, 3.2vw, 15px)', 
                   fontWeight: '700', 
                   color: '#FFA500',
                   fontFamily: 'monospace'
@@ -356,8 +356,8 @@ export function PetScreen() {
           {/* Hunger */}
           <div>
             <div className="flex justify-between" style={{ marginBottom: 'clamp(2px, 0.5vw, 4px)' }}>
-              <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>🍖 Hunger</span>
-              <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>{pet.hunger}%</span>
+              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>🍖 Hunger</span>
+              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>{pet.hunger}%</span>
             </div>
             <div style={{ height: 'clamp(6px, 1.5vw, 8px)', background: 'rgba(0,0,0,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{ width: `${pet.hunger}%`, height: '100%', background: 'linear-gradient(90deg, #FF6B6B, #FF8E53)', transition: 'width 0.3s' }} />
@@ -367,8 +367,8 @@ export function PetScreen() {
           {/* Happiness */}
           <div>
             <div className="flex justify-between" style={{ marginBottom: 'clamp(2px, 0.5vw, 4px)' }}>
-              <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>😊 Happiness</span>
-              <span style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>{pet.happiness}%</span>
+              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>😊 Happiness</span>
+              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>{pet.happiness}%</span>
             </div>
             <div style={{ height: 'clamp(6px, 1.5vw, 8px)', background: 'rgba(0,0,0,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{ width: `${pet.happiness}%`, height: '100%', background: 'linear-gradient(90deg, #FFD700, #FFA500)', transition: 'width 0.3s' }} />
@@ -394,9 +394,9 @@ export function PetScreen() {
               cursor: (user?.tokenBalance || 0) < 10 || pet.hunger >= 100 ? 'not-allowed' : 'pointer',
             }}
           >
-            <span style={{ fontSize: 'clamp(20px, 5vw, 26px)' }}>🍖</span>
-            <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: '600', color: '#fff', marginTop: 'clamp(3px, 0.8vw, 5px)' }}>Feed</span>
-            <span style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: 'rgba(255,255,255,0.8)' }}>-10 🪙 | +5 EXP</span>
+            <span style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>🍖</span>
+            <span style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '600', color: '#fff', marginTop: 'clamp(3px, 0.8vw, 5px)' }}>Feed</span>
+            <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: 'rgba(255,255,255,0.8)' }}>-10 🪙 | +5 EXP</span>
           </button>
 
           {/* Play Button */}
@@ -412,9 +412,9 @@ export function PetScreen() {
               cursor: (user?.tokenBalance || 0) < 20 || pet.happiness >= 100 ? 'not-allowed' : 'pointer',
             }}
           >
-            <span style={{ fontSize: 'clamp(20px, 5vw, 26px)' }}>🎾</span>
-            <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', fontWeight: '600', color: '#fff', marginTop: 'clamp(3px, 0.8vw, 5px)' }}>Play</span>
-            <span style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: 'rgba(255,255,255,0.8)' }}>-20 🪙 | +10 EXP</span>
+            <span style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>🎾</span>
+            <span style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '600', color: '#fff', marginTop: 'clamp(3px, 0.8vw, 5px)' }}>Play</span>
+            <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: 'rgba(255,255,255,0.8)' }}>-20 🪙 | +10 EXP</span>
           </button>
         </div>
       </div>
@@ -427,10 +427,10 @@ export function PetScreen() {
           padding: '0 clamp(12px, 3vw, 16px)',
         }}
       >
-        <p style={{ fontSize: 'clamp(9px, 2.2vw, 11px)', color: '#666' }}>
+        <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>
           🎯 Level up to earn more coins!
         </p>
-        <p style={{ fontSize: 'clamp(8px, 2vw, 10px)', color: '#999', marginTop: '4px' }}>
+        <p style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#999', marginTop: '4px' }}>
           Next level: {getCoinsPerMinute(pet.level + 1)} 🪙/min
         </p>
       </div>

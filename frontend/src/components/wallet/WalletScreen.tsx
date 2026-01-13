@@ -56,7 +56,7 @@ export function WalletScreen() {
       {/* Title */}
       <h1 
         className="font-bold"
-        style={{ fontSize: 'clamp(14px, 4vw, 18px)', color: '#1a1a2e', marginBottom: 'clamp(12px, 3vw, 20px)' }}
+        style={{ fontSize: 'clamp(16px, 4.5vw, 20px)', color: '#1a1a2e', marginBottom: 'clamp(12px, 3vw, 20px)' }}
       >
         Your balance
       </h1>
@@ -83,10 +83,10 @@ export function WalletScreen() {
             gap: 'clamp(8px, 2vw, 12px)',
           }}
         >
-          <span style={{ fontSize: 'clamp(16px, 4.5vw, 22px)', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: '700', color: '#ffffff' }}>
             {tokenBalance.toLocaleString()}
           </span>
-          <span style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', color: '#ffffff', fontWeight: '500' }}>points</span>
+          <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', color: '#ffffff', fontWeight: '500' }}>points</span>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ export function WalletScreen() {
               borderRadius: 'clamp(8px, 2vw, 12px)',
               border: '2px solid rgba(0, 136, 204, 0.3)',
               background: 'rgba(255, 255, 255, 0.9)',
-              fontSize: 'clamp(10px, 2.5vw, 13px)',
+              fontSize: 'clamp(12px, 3vw, 15px)',
               outline: 'none',
               transition: 'border-color 0.2s',
             }}
@@ -140,8 +140,8 @@ export function WalletScreen() {
                 gap: 'clamp(4px, 1vw, 8px)',
               }}
             >
-              <span style={{ fontSize: 'clamp(12px, 3vw, 16px)' }}>💎</span>
-              <span style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', fontWeight: '700', color: '#ffffff' }}>
+              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>💎</span>
+              <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '700', color: '#ffffff' }}>
                 {isConnecting ? 'TESTING...' : 'TEST'}
               </span>
             </button>
@@ -160,8 +160,8 @@ export function WalletScreen() {
                 gap: 'clamp(4px, 1vw, 8px)',
               }}
             >
-              <span style={{ fontSize: 'clamp(12px, 3vw, 16px)' }}>✓</span>
-              <span style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', fontWeight: '700', color: '#ffffff' }}>
+              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>✓</span>
+              <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '700', color: '#ffffff' }}>
                 CONFIRM
               </span>
             </button>
@@ -180,7 +180,7 @@ export function WalletScreen() {
               }}
             >
               <span style={{ 
-                fontSize: 'clamp(9px, 2.2vw, 12px)', 
+                fontSize: 'clamp(11px, 2.8vw, 14px)', 
                 color: connectStatus === 'success' ? '#16a34a' : '#dc2626',
                 fontWeight: '500'
               }}>
@@ -204,10 +204,10 @@ export function WalletScreen() {
       >
         <div className="flex items-center justify-between">
           <div className="flex items-center" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
-            <span style={{ fontSize: 'clamp(18px, 5vw, 24px)' }}>🪙</span>
-            <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
+            <span style={{ fontSize: 'clamp(20px, 5.5vw, 26px)' }}>🪙</span>
+            <span style={{ fontSize: 'clamp(14px, 3.5vw, 17px)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
           </div>
-          <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontWeight: '700', color: '#ffffff' }}>
             {user?.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ') || '0'}
           </span>
         </div>
@@ -218,7 +218,7 @@ export function WalletScreen() {
         className="text-center"
         style={{ 
           color: 'rgba(255,255,255,0.5)', 
-          fontSize: 'clamp(10px, 2.5vw, 13px)',
+          fontSize: 'clamp(12px, 3vw, 15px)',
           maxWidth: 'clamp(220px, 65vw, 280px)',
           marginTop: 'clamp(12px, 3vw, 18px)'
         }}

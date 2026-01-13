@@ -159,16 +159,16 @@ export function QuestScreen() {
             src="/icons/quest.png" 
             alt="Quest" 
             className="object-contain drop-shadow-lg animate-float-medium"
-            style={{ width: 'clamp(36px, 10vw, 50px)', height: 'clamp(36px, 10vw, 50px)' }}
+            style={{ width: 'clamp(40px, 11vw, 54px)', height: 'clamp(40px, 11vw, 54px)' }}
           />
         </div>
-        <h1 style={{ color: '#1a1a2e', fontSize: 'clamp(16px, 4.5vw, 22px)' }} className="font-extrabold drop-shadow-[0_0_15px_rgba(0,0,0,0.1)]">
+        <h1 style={{ color: '#1a1a2e', fontSize: 'clamp(18px, 5vw, 24px)' }} className="font-extrabold drop-shadow-[0_0_15px_rgba(0,0,0,0.1)]">
           Quests
         </h1>
 
         {/* Total Progress Bar */}
         <div style={{ marginTop: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(10px, 2.5vw, 14px)', paddingLeft: 'clamp(10px, 2.5vw, 14px)', paddingRight: 'clamp(10px, 2.5vw, 14px)' }}>
-          <div style={{ background: 'rgba(0, 0, 0, 0.1)', height: 'clamp(18px, 5vw, 24px)' }} className="w-full rounded-full overflow-hidden relative">
+          <div style={{ background: 'rgba(0, 0, 0, 0.1)', height: 'clamp(20px, 5.5vw, 26px)' }} className="w-full rounded-full overflow-hidden relative">
             <div 
               className="h-full rounded-full transition-all duration-500"
               style={{ 
@@ -176,7 +176,7 @@ export function QuestScreen() {
                 background: 'linear-gradient(90deg, #FFD700, #FFA500)'
               }}
             />
-            <span style={{ color: '#1a1a2e', fontSize: 'clamp(9px, 2.5vw, 12px)' }} className="absolute inset-0 flex items-center justify-center font-bold drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
+            <span style={{ color: '#1a1a2e', fontSize: 'clamp(11px, 3vw, 14px)' }} className="absolute inset-0 flex items-center justify-center font-bold drop-shadow-[0_1px_2px_rgba(255,255,255,0.8)]">
               {completedCount}/{quests.length} completed
             </span>
           </div>
@@ -198,7 +198,7 @@ export function QuestScreen() {
 
       {/* Tasks Section */}
       <section style={{ paddingLeft: 'clamp(10px, 2.5vw, 14px)', paddingRight: 'clamp(10px, 2.5vw, 14px)' }} className="flex-shrink-0">
-        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(8px, 2vw, 12px)', fontSize: 'clamp(13px, 3.5vw, 16px)' }} className="font-extrabold flex items-center gap-2">
+        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(8px, 2vw, 12px)', fontSize: 'clamp(15px, 4vw, 18px)' }} className="font-extrabold flex items-center gap-2">
           ⚡ Tasks
         </h2>
         <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>

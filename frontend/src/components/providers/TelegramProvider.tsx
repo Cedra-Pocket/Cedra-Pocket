@@ -119,6 +119,10 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
       });
       console.log('👤 Converted user data:', userData);
       console.log(`💰 Backend balance: ${userData.tokenBalance}`);
+      console.log(`💰 Raw backend total_points: ${response.user.total_points}`);
+      
+      // Clear local storage to ensure backend is source of truth
+      localStorage.removeItem('tg-mini-app-storage');
       
       // Always use backend balance as source of truth
       setUser(userData);

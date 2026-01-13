@@ -250,23 +250,50 @@ export const useAppStore = create<AppStore>()(
 
         if (currency === 'token') {
           // Update local state immediately
+          const newBalance = user.tokenBalance + amount;
           set({
             user: {
               ...user,
-              tokenBalance: user.tokenBalance + amount,
+              tokenBalance: newBalance,
               updatedAt: new Date(),
             },
           });
           
-          // Sync to backend (fire and forget, don't block UI)
+          // Sync to backend
           if (amount !== 0) {
-            import('../services/backend-api.service').then(({ backendAPI }) => {
+            try {
+              const { backendAPI } = await import('../services/backend-api.service');
               if (backendAPI.isAuthenticated()) {
-                backendAPI.addPoints(amount).catch((err) => {
-                  console.error('❌ Failed to sync points to backend:', err);
+                console.log(`💰 Syncing points to backend: ${amount > 0 ? '+' : ''}${amount}`);
+                const result = await backendAPI.addPoints(amount);
+                console.log(`✅ Backend sync success. New total: ${result.total_points}`);
+                
+                // Update local state with backend's authoritative value
+                const currentUser = get().user;
+                if (currentUser) {
+                  set({
+                    user: {
+                      ...currentUser,
+                      tokenBalance: Number(result.total_points),
+                    },
+                  });
+                }
+              } else {
+                console.log('⚠️ Not authenticated, points saved locally only');
+              }
+            } catch (err) {
+              console.error('❌ Failed to sync points to backend:', err);
+              // Revert local change on error
+              const currentUser = get().user;
+              if (currentUser) {
+                set({
+                  user: {
+                    ...currentUser,
+                    tokenBalance: currentUser.tokenBalance - amount,
+                  },
                 });
               }
-            });
+            }
           }
         } else {
           set({
