@@ -119,7 +119,7 @@ export default function HomePage() {
             <div 
               className="text-center"
               style={{ 
-                height: 'clamp(45px, 12vw, 65px)', 
+                height: 'clamp(55px, 15vw, 80px)', 
                 marginBottom: 'clamp(4px, 1vw, 8px)',
                 display: 'flex',
                 alignItems: 'center',
@@ -127,10 +127,10 @@ export default function HomePage() {
               }}
             >
               <img 
-                src="/whale.PNG" 
+                src="/whale.png" 
                 alt="Whale" 
                 style={{ 
-                  height: 'clamp(45px, 12vw, 65px)',
+                  height: 'clamp(55px, 15vw, 80px)',
                   objectFit: 'contain',
                   filter: 'drop-shadow(0 2px 8px rgba(56,189,248,0.4))',
                   animation: 'waveLeftRight 2s ease-in-out infinite'
@@ -150,34 +150,34 @@ export default function HomePage() {
               </svg>
 
               {/* Avatar - top left */}
-              <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 22px)', left: 'clamp(10px, 3vw, 16px)' }}>
+              <div className="absolute z-20" style={{ top: 'clamp(16px, 5vw, 26px)', left: 'clamp(12px, 3.5vw, 18px)' }}>
                 <button 
                   className="relative flex items-center justify-center transition-all hover:scale-105"
                   style={{
-                    width: 'clamp(36px, 10vw, 48px)',
-                    height: 'clamp(28px, 8vw, 38px)',
+                    width: 'clamp(42px, 12vw, 56px)',
+                    height: 'clamp(32px, 9vw, 42px)',
                     borderRadius: '10px 30px 10px 10px',
                     background: 'linear-gradient(135deg, rgba(0,180,220,0.6) 0%, rgba(100,200,230,0.4) 50%, rgba(255,255,255,0.3) 100%)',
                     border: '1px solid rgba(255,255,255,0.5)',
                     boxShadow: '0 4px 15px rgba(0,180,220,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
                   }}
                 >
-                  <span style={{ fontSize: 'clamp(16px, 4.5vw, 22px)' }}>👤</span>
+                  <span style={{ fontSize: 'clamp(18px, 5vw, 24px)' }}>👤</span>
                 </button>
               </div>
 
               {/* Username - center */}
-              <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: 'clamp(12px, 3.5vw, 18px)' }}>
-                <span style={{ fontSize: 'clamp(10px, 2.8vw, 13px)' }} className="font-bold text-gray-800">{user.username}</span>
+              <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: 'clamp(14px, 4vw, 20px)' }}>
+                <span style={{ fontSize: 'clamp(11px, 3.2vw, 15px)' }} className="font-bold text-gray-800">{user.username}</span>
               </div>
 
               {/* Notification bell button - top right */}
-              <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 22px)', right: 'clamp(10px, 3vw, 16px)' }}>
+              <div className="absolute z-20" style={{ top: 'clamp(16px, 5vw, 26px)', right: 'clamp(12px, 3.5vw, 18px)' }}>
                 <button 
                   className="relative flex items-center justify-center transition-all hover:scale-105"
                   style={{
-                    width: 'clamp(36px, 10vw, 48px)',
-                    height: 'clamp(28px, 8vw, 38px)',
+                    width: 'clamp(42px, 12vw, 56px)',
+                    height: 'clamp(32px, 9vw, 42px)',
                     borderRadius: '30px 10px 10px 10px',
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,220,100,0.4) 50%, rgba(255,180,50,0.6) 100%)',
                     border: '1px solid rgba(255,255,255,0.5)',
@@ -187,7 +187,7 @@ export default function HomePage() {
                   <img 
                     src="/icons/thongbao.PNG" 
                     alt="Notification" 
-                    style={{ width: 'clamp(20px, 6vw, 28px)', height: 'clamp(20px, 6vw, 28px)', objectFit: 'contain' }}
+                    style={{ width: 'clamp(24px, 7vw, 32px)', height: 'clamp(24px, 7vw, 32px)', objectFit: 'contain' }}
                   />
                   {/* Notification badge */}
                   <div 
@@ -195,12 +195,12 @@ export default function HomePage() {
                     style={{
                       bottom: '1px',
                       right: '1px',
-                      width: 'clamp(12px, 3vw, 15px)',
-                      height: 'clamp(12px, 3vw, 15px)',
+                      width: 'clamp(14px, 4vw, 18px)',
+                      height: 'clamp(14px, 4vw, 18px)',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)',
                       border: '1.5px solid white',
-                      fontSize: 'clamp(7px, 2vw, 9px)',
+                      fontSize: 'clamp(8px, 2.5vw, 10px)',
                       fontWeight: 'bold',
                       color: 'white'
                     }}
@@ -215,11 +215,11 @@ export default function HomePage() {
                 style={{
                   background: 'rgba(255,255,255,0.5)',
                   backdropFilter: 'blur(20px)',
-                  borderRadius: 'clamp(10px, 3vw, 16px)',
+                  borderRadius: 'clamp(12px, 3.5vw, 18px)',
                   clipPath: 'url(#notchClipTop)',
-                  padding: 'clamp(8px, 2vw, 12px)',
-                  minHeight: 'clamp(55px, 16vw, 80px)',
-                  marginTop: 'clamp(8px, 2.5vw, 14px)',
+                  padding: 'clamp(10px, 2.5vw, 14px)',
+                  minHeight: 'clamp(65px, 18vw, 90px)',
+                  marginTop: 'clamp(10px, 3vw, 16px)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -227,17 +227,17 @@ export default function HomePage() {
                 }}
               >
                 {/* Empty top row - space for notch */}
-                <div style={{ height: 'clamp(14px, 4vw, 20px)' }} />
+                <div style={{ height: 'clamp(16px, 5vw, 24px)' }} />
 
                 {/* LVL + EXP Bar - Inside glass at bottom */}
                 <div className="px-1">
                   <div className="text-center mb-1">
-                    <span style={{ fontSize: 'clamp(8px, 2.2vw, 11px)' }} className="text-gray-600 font-semibold">LVL {user.level}/10</span>
+                    <span style={{ fontSize: 'clamp(9px, 2.5vw, 12px)' }} className="text-gray-600 font-semibold">LVL {user.level}/10</span>
                   </div>
                   <div 
                     className="w-full rounded-full overflow-hidden"
                     style={{ 
-                      height: 'clamp(3px, 1vw, 5px)',
+                      height: 'clamp(4px, 1.2vw, 6px)',
                       background: 'rgba(100,150,200,0.3)'
                     }}
                   >
@@ -254,12 +254,12 @@ export default function HomePage() {
             </div>
 
             {/* Big Coin Display */}
-            <div className="flex justify-center items-center" style={{ marginTop: 'clamp(2px, 0.8vw, 6px)', marginBottom: 'clamp(2px, 0.8vw, 6px)' }}>
-              <div className="flex items-center" style={{ gap: 'clamp(4px, 1.2vw, 8px)' }}>
-                <span style={{ fontSize: 'clamp(18px, 5vw, 26px)' }}>🪙</span>
+            <div className="flex justify-center items-center" style={{ marginTop: 'clamp(4px, 1vw, 8px)', marginBottom: 'clamp(4px, 1vw, 8px)' }}>
+              <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
+                <span style={{ fontSize: 'clamp(22px, 6vw, 30px)' }}>🪙</span>
                 <span 
                   style={{ 
-                    fontSize: 'clamp(18px, 5vw, 26px)', 
+                    fontSize: 'clamp(22px, 6vw, 30px)', 
                     fontWeight: '800',
                     color: '#1a1a2e',
                     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
@@ -271,7 +271,7 @@ export default function HomePage() {
             </div>
 
             {/* Left Side Buttons - Vertical below coin */}
-            <div className="flex flex-col" style={{ marginLeft: 'clamp(2px, 0.8vw, 6px)', zIndex: 10, gap: 'clamp(3px, 1vw, 5px)' }}>
+            <div className="flex flex-col" style={{ marginLeft: 'clamp(4px, 1vw, 8px)', zIndex: 10, gap: 'clamp(4px, 1.2vw, 6px)' }}>
               <button 
                 onClick={() => setShowRankModal(true)}
                 className="flex items-center transition-all hover:scale-105"
@@ -279,15 +279,15 @@ export default function HomePage() {
                   background: 'linear-gradient(135deg, #7DD3FC, #38BDF8)',
                   border: '1px solid rgba(255,255,255,0.4)',
                   boxShadow: '0 4px 15px rgba(56,189,248,0.3)',
-                  width: 'clamp(56px, 15vw, 72px)',
-                  height: 'clamp(20px, 5.5vw, 26px)',
-                  borderRadius: 'clamp(10px, 2.5vw, 13px)',
-                  paddingLeft: 'clamp(4px, 1vw, 6px)',
-                  gap: 'clamp(3px, 1vw, 5px)'
+                  width: 'clamp(65px, 18vw, 85px)',
+                  height: 'clamp(24px, 6.5vw, 30px)',
+                  borderRadius: 'clamp(12px, 3vw, 15px)',
+                  paddingLeft: 'clamp(5px, 1.2vw, 7px)',
+                  gap: 'clamp(4px, 1.2vw, 6px)'
                 }}
               >
-                <img src={getUserRankTier(user.tokenBalance).icon} alt="Rank" style={{ width: 'clamp(12px, 3vw, 15px)', height: 'clamp(12px, 3vw, 15px)', objectFit: 'contain' }} />
-                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(7px, 2vw, 9px)' }}>
+                <img src={getUserRankTier(user.tokenBalance).icon} alt="Rank" style={{ width: 'clamp(14px, 4vw, 18px)', height: 'clamp(14px, 4vw, 18px)', objectFit: 'contain' }} />
+                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(9px, 2.5vw, 11px)' }}>
                   {getUserRankTier(user.tokenBalance).name}
                 </span>
               </button>
@@ -300,25 +300,25 @@ export default function HomePage() {
                   background: 'linear-gradient(135deg, #FECACA, #FCA5A5)',
                   border: '1px solid rgba(255,255,255,0.4)',
                   boxShadow: '0 4px 15px rgba(252,165,165,0.3)',
-                  width: 'clamp(56px, 15vw, 72px)',
-                  height: 'clamp(20px, 5.5vw, 26px)',
-                  borderRadius: 'clamp(10px, 2.5vw, 13px)',
-                  paddingLeft: 'clamp(4px, 1vw, 6px)',
-                  gap: 'clamp(3px, 1vw, 5px)'
+                  width: 'clamp(65px, 18vw, 85px)',
+                  height: 'clamp(24px, 6.5vw, 30px)',
+                  borderRadius: 'clamp(12px, 3vw, 15px)',
+                  paddingLeft: 'clamp(5px, 1.2vw, 7px)',
+                  gap: 'clamp(4px, 1.2vw, 6px)'
                 }}
               >
-                <img src="/icons/spin.PNG" alt="Spin" style={{ width: 'clamp(12px, 3vw, 15px)', height: 'clamp(12px, 3vw, 15px)', objectFit: 'contain' }} />
-                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(7px, 2vw, 9px)' }}>Spin</span>
+                <img src="/icons/spin.PNG" alt="Spin" style={{ width: 'clamp(14px, 4vw, 18px)', height: 'clamp(14px, 4vw, 18px)', objectFit: 'contain' }} />
+                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(9px, 2.5vw, 11px)' }}>Spin</span>
                 {spinsLeft > 0 && (
                   <div 
                     className="absolute -top-1 -right-1 flex items-center justify-center"
                     style={{
-                      width: 'clamp(10px, 2.5vw, 13px)',
-                      height: 'clamp(10px, 2.5vw, 13px)',
+                      width: 'clamp(12px, 3.5vw, 16px)',
+                      height: 'clamp(12px, 3.5vw, 16px)',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #F87171, #EF4444)',
                       border: '1.5px solid white',
-                      fontSize: 'clamp(6px, 1.5vw, 7px)',
+                      fontSize: 'clamp(7px, 2vw, 9px)',
                       fontWeight: 'bold',
                       color: 'white'
                     }}
@@ -336,15 +336,15 @@ export default function HomePage() {
                   background: 'linear-gradient(135deg, #D9F99D, #BEF264)',
                   border: '1px solid rgba(255,255,255,0.4)',
                   boxShadow: '0 4px 15px rgba(190,242,100,0.3)',
-                  width: 'clamp(56px, 15vw, 72px)',
-                  height: 'clamp(20px, 5.5vw, 26px)',
-                  borderRadius: 'clamp(10px, 2.5vw, 13px)',
-                  paddingLeft: 'clamp(4px, 1vw, 6px)',
-                  gap: 'clamp(3px, 1vw, 5px)'
+                  width: 'clamp(65px, 18vw, 85px)',
+                  height: 'clamp(24px, 6.5vw, 30px)',
+                  borderRadius: 'clamp(12px, 3vw, 15px)',
+                  paddingLeft: 'clamp(5px, 1.2vw, 7px)',
+                  gap: 'clamp(4px, 1.2vw, 6px)'
                 }}
               >
-                <span style={{ fontSize: 'clamp(10px, 2.5vw, 13px)', lineHeight: 1, width: 'clamp(12px, 3vw, 15px)', textAlign: 'center' }}>🎁</span>
-                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(7px, 2vw, 9px)' }}>Quest</span>
+                <span style={{ fontSize: 'clamp(12px, 3.5vw, 16px)', lineHeight: 1, width: 'clamp(14px, 4vw, 18px)', textAlign: 'center' }}>🎁</span>
+                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(9px, 2.5vw, 11px)' }}>Quest</span>
               </button>
             </div>            {/* Hero Section */}
             <div className="flex-1 flex items-center justify-center">
