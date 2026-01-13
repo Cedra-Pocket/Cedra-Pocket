@@ -13,7 +13,7 @@ export interface BottomNavigationProps {
  */
 const HomeIcon = ({ active }: { active: boolean }) => (
   <svg
-    style={{ width: 'clamp(26px, 7vw, 36px)', height: 'clamp(26px, 7vw, 36px)' }}
+    style={{ width: 'clamp(18px, 5vw, 24px)', height: 'clamp(18px, 5vw, 24px)' }}
     viewBox="0 0 24 24"
     fill={active ? 'currentColor' : 'none'}
     stroke="currentColor"
@@ -38,11 +38,11 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
     <nav
       className="fixed z-50"
       style={{ 
-        bottom: 'clamp(12px, 3vw, 20px)',
+        bottom: 'clamp(6px, 1.5vw, 10px)',
         left: '50%',
         transform: 'translateX(-50%)',
-        width: 'calc(100% - clamp(24px, 6vw, 40px))',
-        maxWidth: 'clamp(360px, 95vw, 450px)'
+        width: 'calc(100% - clamp(16px, 4vw, 24px))',
+        maxWidth: 'clamp(300px, 85vw, 380px)'
       }}
       role="navigation"
       aria-label="Main navigation"
@@ -51,7 +51,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
       <button
         onClick={() => handleTabClick('home')}
         className="absolute left-1/2 -translate-x-1/2 z-20"
-        style={{ top: 'clamp(-20px, -6vw, -28px)' }}
+        style={{ top: 'clamp(-12px, -3.5vw, -18px)' }}
         aria-label="Home"
       >
         <div className={`
@@ -61,7 +61,7 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
           transition-all duration-300
           ${activeTab === 'home' ? 'scale-110' : 'hover:scale-105'}
         `}
-        style={{ width: 'clamp(62px, 18vw, 82px)', height: 'clamp(62px, 18vw, 82px)' }}
+        style={{ width: 'clamp(42px, 11vw, 54px)', height: 'clamp(42px, 11vw, 54px)' }}
         >
           <div className="text-white drop-shadow-lg">
             <HomeIcon active={activeTab === 'home'} />
@@ -70,18 +70,18 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
       </button>
 
       {/* Split nav bars */}
-      <div className="flex items-center justify-center" style={{ gap: 'clamp(66px, 19vw, 88px)' }}>
+      <div className="flex items-center justify-center" style={{ gap: 'clamp(44px, 12vw, 58px)' }}>
         {/* Left nav section - Quest + Pet */}
         <div 
           className="flex items-center justify-center"
           style={{
             background: 'rgba(255, 255, 255, 0.35)',
             backdropFilter: 'blur(24px)',
-            borderRadius: 'clamp(18px, 5vw, 26px) clamp(28px, 8vw, 40px) clamp(18px, 5vw, 26px) clamp(18px, 5vw, 26px)',
+            borderRadius: 'clamp(12px, 3.5vw, 18px) clamp(20px, 5.5vw, 28px) clamp(12px, 3.5vw, 18px) clamp(12px, 3.5vw, 18px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-            height: 'clamp(68px, 19vw, 90px)',
-            padding: '0 clamp(10px, 3vw, 16px)',
+            height: 'clamp(48px, 13vw, 62px)',
+            padding: '0 clamp(4px, 1.5vw, 8px)',
             flex: 1,
           }}
         >
@@ -96,17 +96,17 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
                 ${activeTab === 'quest' ? 'text-cyan-500' : 'text-gray-700 hover:text-cyan-500'}
               `}
               style={{ 
-                gap: 'clamp(4px, 1vw, 6px)', 
-                padding: 'clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 16px)',
+                gap: 'clamp(1px, 0.3vw, 2px)', 
+                padding: 'clamp(3px, 0.8vw, 5px) clamp(4px, 1.2vw, 8px)',
                 ...(activeTab === 'quest' ? { textShadow: '0 0 10px rgba(0,212,255,0.8)' } : {}) 
               }}
               aria-label="Quest"
             >
-              <div className="flex items-center justify-center" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)' }}>
-                <img src="/icons/quest1.PNG" alt="Quest" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)', objectFit: 'contain' }} />
+              <div className="flex items-center justify-center" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)' }}>
+                <img src="/icons/quest1.PNG" alt="Quest" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)', objectFit: 'contain' }} />
               </div>
-              <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }} className="font-semibold">Quest</span>
-              {activeTab === 'quest' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(4px, 1vw, 6px)' }} />}
+              <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }} className="font-semibold">Quest</span>
+              {activeTab === 'quest' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(14px, 4vw, 18px)', height: 'clamp(2px, 0.6vw, 3px)' }} />}
             </button>
 
             {/* Pet */}
@@ -119,17 +119,17 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
                 ${activeTab === 'pet' ? 'text-cyan-500' : 'text-gray-700 hover:text-cyan-500'}
               `}
               style={{ 
-                gap: 'clamp(4px, 1vw, 6px)', 
-                padding: 'clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 16px)',
+                gap: 'clamp(1px, 0.3vw, 2px)', 
+                padding: 'clamp(3px, 0.8vw, 5px) clamp(4px, 1.2vw, 8px)',
                 ...(activeTab === 'pet' ? { textShadow: '0 0 10px rgba(0,212,255,0.8)' } : {}) 
               }}
               aria-label="Pet"
             >
-              <div className="flex items-center justify-center" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)' }}>
-                <img src="/icons/pet.png" alt="Pet" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)', objectFit: 'contain' }} />
+              <div className="flex items-center justify-center" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)' }}>
+                <img src="/icons/pet.png" alt="Pet" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)', objectFit: 'contain' }} />
               </div>
-              <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }} className="font-semibold">Pet</span>
-              {activeTab === 'pet' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(4px, 1vw, 6px)' }} />}
+              <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }} className="font-semibold">Pet</span>
+              {activeTab === 'pet' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(14px, 4vw, 18px)', height: 'clamp(2px, 0.6vw, 3px)' }} />}
             </button>
           </div>
         </div>
@@ -140,11 +140,11 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
           style={{
             background: 'rgba(255, 255, 255, 0.35)',
             backdropFilter: 'blur(24px)',
-            borderRadius: 'clamp(28px, 8vw, 40px) clamp(18px, 5vw, 26px) clamp(18px, 5vw, 26px) clamp(18px, 5vw, 26px)',
+            borderRadius: 'clamp(20px, 5.5vw, 28px) clamp(12px, 3.5vw, 18px) clamp(12px, 3.5vw, 18px) clamp(12px, 3.5vw, 18px)',
             border: '1px solid rgba(255, 255, 255, 0.3)',
             boxShadow: 'inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-            height: 'clamp(68px, 19vw, 90px)',
-            padding: '0 clamp(10px, 3vw, 16px)',
+            height: 'clamp(48px, 13vw, 62px)',
+            padding: '0 clamp(4px, 1.5vw, 8px)',
             flex: 1,
           }}
         >
@@ -159,17 +159,17 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
                 ${activeTab === 'wallet' ? 'text-cyan-500' : 'text-gray-700 hover:text-cyan-500'}
               `}
               style={{ 
-                gap: 'clamp(4px, 1vw, 6px)', 
-                padding: 'clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 16px)',
+                gap: 'clamp(1px, 0.3vw, 2px)', 
+                padding: 'clamp(3px, 0.8vw, 5px) clamp(4px, 1.2vw, 8px)',
                 ...(activeTab === 'wallet' ? { textShadow: '0 0 10px rgba(0,212,255,0.8)' } : {}) 
               }}
               aria-label="Wallet"
             >
-              <div className="flex items-center justify-center" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)' }}>
-                <img src="/icons/wallet.PNG" alt="Wallet" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)', objectFit: 'contain' }} />
+              <div className="flex items-center justify-center" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)' }}>
+                <img src="/icons/wallet.PNG" alt="Wallet" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)', objectFit: 'contain' }} />
               </div>
-              <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }} className="font-semibold">Wallet</span>
-              {activeTab === 'wallet' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(4px, 1vw, 6px)' }} />}
+              <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }} className="font-semibold">Wallet</span>
+              {activeTab === 'wallet' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(14px, 4vw, 18px)', height: 'clamp(2px, 0.6vw, 3px)' }} />}
             </button>
 
             {/* Game */}
@@ -182,17 +182,17 @@ export function BottomNavigation({ activeTab, onTabChange }: BottomNavigationPro
                 ${activeTab === 'game' ? 'text-cyan-500' : 'text-gray-700 hover:text-cyan-500'}
               `}
               style={{ 
-                gap: 'clamp(4px, 1vw, 6px)', 
-                padding: 'clamp(6px, 1.5vw, 10px) clamp(10px, 2.5vw, 16px)',
+                gap: 'clamp(1px, 0.3vw, 2px)', 
+                padding: 'clamp(3px, 0.8vw, 5px) clamp(4px, 1.2vw, 8px)',
                 ...(activeTab === 'game' ? { textShadow: '0 0 10px rgba(0,212,255,0.8)' } : {}) 
               }}
               aria-label="Game"
             >
-              <div className="flex items-center justify-center" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)' }}>
-                <img src="/icons/game.png" alt="Game" style={{ width: 'clamp(30px, 8vw, 42px)', height: 'clamp(30px, 8vw, 42px)', objectFit: 'contain' }} />
+              <div className="flex items-center justify-center" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)' }}>
+                <img src="/icons/game.png" alt="Game" style={{ width: 'clamp(20px, 5.5vw, 26px)', height: 'clamp(20px, 5.5vw, 26px)', objectFit: 'contain' }} />
               </div>
-              <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }} className="font-semibold">Game</span>
-              {activeTab === 'game' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(4px, 1vw, 6px)' }} />}
+              <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }} className="font-semibold">Game</span>
+              {activeTab === 'game' && <div className="absolute bottom-0 left-1/2 -translate-x-1/2 bg-cyan-500 rounded-full" style={{ width: 'clamp(14px, 4vw, 18px)', height: 'clamp(2px, 0.6vw, 3px)' }} />}
             </button>
           </div>
         </div>
