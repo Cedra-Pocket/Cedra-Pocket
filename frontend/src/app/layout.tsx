@@ -12,20 +12,21 @@ const bricolage = Bricolage_Grotesque({
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
-  maximumScale: 1,
-  userScalable: false,
+  minimumScale: 0.5,
+  maximumScale: 3,
+  userScalable: true,
   viewportFit: "cover",
   themeColor: "#0a0a1a",
 };
 
 export const metadata: Metadata = {
-  title: "Telegram Web3 Gaming",
+  title: "Whale",
   description: "Play games, complete quests, and earn rewards in the Telegram Mini App",
-  applicationName: "Telegram Web3 Gaming",
+  applicationName: "Whale",
   appleWebApp: {
     capable: true,
     statusBarStyle: "black-translucent",
-    title: "Web3 Gaming",
+    title: "Whale",
   },
   formatDetection: {
     telephone: false,
@@ -38,7 +39,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {/* Telegram Web App Script - MUST be loaded before app */}
         <script src="https://telegram.org/js/telegram-web-app.js" />
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body
         className={`${bricolage.variable} font-sans antialiased min-h-screen-safe flex justify-center`}
         style={{ backgroundColor: '#0a0a1a' }}
+        suppressHydrationWarning
       >
         <div 
           className="w-full overflow-hidden relative"

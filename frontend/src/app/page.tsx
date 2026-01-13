@@ -6,12 +6,32 @@ import { HeroSection } from '../components/home';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { LoadingSpinner } from '../components/shared';
 import { QuestScreen } from '../components/quest';
-import { SpinScreen } from '../components/spin';
+import { SpinModal } from '../components/spin';
 import { WalletScreen } from '../components/wallet';
 import { GameScreen } from '../components/game';
+import { PetScreen } from '../components/pet/PetScreen';
 import { useTelegram } from '../components/providers';
+import { useSpinsLeft } from '../store/useAppStore';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://cedra-quest-backend.onrender.com';
+// Rank tiers based on points
+const RANK_TIERS = [
+  { name: 'Shrimp', icon: '/icons/Shrimp-Bronze.png', minPoints: 0, bonus: 0, color: '#CD7F32' },
+  { name: 'Fish', icon: '/icons/Fish-Silver.png', minPoints: 1000, bonus: 0.1, color: '#C0C0C0' },
+  { name: 'Dolphin', icon: '/icons/Dolphin-Gold.png', minPoints: 5000, bonus: 0.3, color: '#FFD700' },
+  { name: 'Shark', icon: '/icons/Shark-Emerald.png', minPoints: 20000, bonus: 0.5, color: '#50C878' },
+  { name: 'Whale', icon: '/icons/Whale-Diamond.png', minPoints: 100000, bonus: 1, color: '#B9F2FF' },
+  { name: 'Leviathan', icon: '/icons/Leviathan-Obsidian.png', minPoints: 500000, bonus: 2, color: '#3D3D3D' },
+];
+
+// Get user rank tier based on points
+function getUserRankTier(points: number) {
+  for (let i = RANK_TIERS.length - 1; i >= 0; i--) {
+    if (points >= RANK_TIERS[i].minPoints) {
+      return RANK_TIERS[i];
+    }
+  }
+  return RANK_TIERS[0];
+}
 
 export default function HomePage() {
   const user = useUser();
@@ -20,15 +40,14 @@ export default function HomePage() {
   const { activeTab, setActiveTab, setUser, setError } = useAppStore();
   const { isInitialized, isAvailable } = useTelegram();
   const [isAppReady, setIsAppReady] = useState(false);
-  const [showLeaderboard, setShowLeaderboard] = useState(false);
-  const [leaderboardData, setLeaderboardData] = useState<Array<{rank: number; name: string; score: number; odTelegramId?: string}>>([]);
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-  const [userRank, setUserRank] = useState<number | null>(null);
+  const [showRankModal, setShowRankModal] = useState(false);
+  const [showSpinModal, setShowSpinModal] = useState(false);
+  const spinsLeft = useSpinsLeft();
 
   useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      const validTabs: NavigationTab[] = ['home', 'quest', 'spin', 'wallet', 'game'];
+      const validTabs: NavigationTab[] = ['home', 'quest', 'pet', 'wallet', 'game'];
       if (validTabs.includes(hash as NavigationTab)) {
         setActiveTab(hash as NavigationTab);
       }
@@ -46,59 +65,10 @@ export default function HomePage() {
   useEffect(() => {
     if (!isInitialized) return;
     if (!user && !isAvailable) {
-      // No guest user - require Telegram authentication
       console.log('⚠️ Telegram not available, waiting for authentication...');
     }
     setIsAppReady(true);
   }, [isInitialized, isAvailable, user, setUser]);
-
-  // Load leaderboard from backend when modal opens
-  useEffect(() => {
-    if (showLeaderboard && leaderboardData.length === 0) {
-      loadLeaderboard();
-    }
-  }, [showLeaderboard]);
-
-  // Load user rank on app start
-  useEffect(() => {
-    if (user?.telegramId && userRank === null) {
-      loadLeaderboard();
-    }
-  }, [user?.telegramId]);
-
-  const loadLeaderboard = async () => {
-    setLeaderboardLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/users`);
-      if (response.ok) {
-        const users = await response.json();
-        const sorted = users
-          .sort((a: { total_points: number }, b: { total_points: number }) => Number(b.total_points) - Number(a.total_points))
-          .slice(0, 20)
-          .map((u: { username: string; total_points: number; telegram_id: string }, i: number) => ({
-            rank: i + 1,
-            name: u.username || `Player${i + 1}`,
-            score: Number(u.total_points),
-            odTelegramId: u.telegram_id
-          }));
-        setLeaderboardData(sorted);
-        
-        // Find current user's rank
-        if (user?.telegramId) {
-          const allSorted = users
-            .sort((a: { total_points: number }, b: { total_points: number }) => Number(b.total_points) - Number(a.total_points));
-          const myRank = allSorted.findIndex((u: { telegram_id: string }) => u.telegram_id === user.telegramId);
-          if (myRank !== -1) {
-            setUserRank(myRank + 1);
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Failed to load leaderboard:', error);
-    } finally {
-      setLeaderboardLoading(false);
-    }
-  };
 
   if (isLoading || !isInitialized || !isAppReady) {
     return (
@@ -144,12 +114,32 @@ export default function HomePage() {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="flex-1 flex flex-col px-2" style={{ paddingTop: '20px' }}>
-            {/* Page Title - placeholder for future name */}
-            <div style={{ height: '44px', marginBottom: '16px' }} />
+          <div className="flex-1 flex flex-col px-3" style={{ paddingTop: 'clamp(6px, 2vw, 10px)' }}>
+            {/* Page Title - WHALE */}
+            <div 
+              className="text-center"
+              style={{ 
+                height: 'clamp(50px, 14vw, 70px)', 
+                marginBottom: 'clamp(2px, 1vw, 4px)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+            >
+              <img 
+                src="/whale.png" 
+                alt="Whale" 
+                style={{ 
+                  height: 'clamp(50px, 14vw, 70px)',
+                  objectFit: 'contain',
+                  filter: 'drop-shadow(0 2px 8px rgba(56,189,248,0.4))',
+                  animation: 'waveLeftRight 2s ease-in-out infinite'
+                }}
+              />
+            </div>
 
             {/* Top Bar - Glass Container with top notch */}
-            <div className="relative mb-4" style={{ marginLeft: '10px', marginRight: '10px' }}>
+            <div className="relative mb-2" style={{ marginLeft: 'clamp(2px, 1vw, 4px)', marginRight: 'clamp(2px, 1vw, 4px)' }}>
               {/* SVG for clip-path definition - top center notch like inverted trapezoid */}
               <svg width="0" height="0" style={{ position: 'absolute' }}>
                 <defs>
@@ -160,57 +150,57 @@ export default function HomePage() {
               </svg>
 
               {/* Avatar - top left */}
-              <div className="absolute z-20" style={{ top: '35px', left: '25px' }}>
+              <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', left: 'clamp(8px, 2.5vw, 12px)' }}>
                 <button 
                   className="relative flex items-center justify-center transition-all hover:scale-105"
                   style={{
-                    width: '70px',
-                    height: '55px',
-                    borderRadius: '16px 50px 16px 16px',
+                    width: 'clamp(36px, 10vw, 46px)',
+                    height: 'clamp(28px, 7.5vw, 36px)',
+                    borderRadius: '8px 20px 8px 8px',
                     background: 'linear-gradient(135deg, rgba(0,180,220,0.6) 0%, rgba(100,200,230,0.4) 50%, rgba(255,255,255,0.3) 100%)',
                     border: '1px solid rgba(255,255,255,0.5)',
-                    boxShadow: '0 4px 15px rgba(0,180,220,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
+                    boxShadow: '0 2px 10px rgba(0,180,220,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
                   }}
                 >
-                  <span className="text-3xl">👤</span>
+                  <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }}>👤</span>
                 </button>
               </div>
 
               {/* Username - center */}
-              <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: '30px' }}>
-                <span className="text-base font-bold text-gray-800">{user.username}</span>
+              <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: 'clamp(12px, 3.5vw, 18px)' }}>
+                <span style={{ fontSize: 'clamp(12px, 3.5vw, 15px)' }} className="font-bold text-gray-800">{user.username}</span>
               </div>
 
               {/* Notification bell button - top right */}
-              <div className="absolute z-20" style={{ top: '35px', right: '25px' }}>
+              <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', right: 'clamp(8px, 2.5vw, 12px)' }}>
                 <button 
                   className="relative flex items-center justify-center transition-all hover:scale-105"
                   style={{
-                    width: '70px',
-                    height: '55px',
-                    borderRadius: '50px 16px 16px 16px',
+                    width: 'clamp(36px, 10vw, 46px)',
+                    height: 'clamp(28px, 7.5vw, 36px)',
+                    borderRadius: '20px 8px 8px 8px',
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,220,100,0.4) 50%, rgba(255,180,50,0.6) 100%)',
                     border: '1px solid rgba(255,255,255,0.5)',
-                    boxShadow: '0 4px 15px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
+                    boxShadow: '0 2px 10px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
                   }}
                 >
                   <img 
                     src="/icons/thongbao.PNG" 
-                    alt="Thông báo" 
-                    style={{ width: '45px', height: '45px', objectFit: 'contain' }}
+                    alt="Notification" 
+                    style={{ width: 'clamp(18px, 5vw, 24px)', height: 'clamp(18px, 5vw, 24px)', objectFit: 'contain' }}
                   />
                   {/* Notification badge */}
                   <div 
                     className="absolute flex items-center justify-center"
                     style={{
-                      bottom: '2px',
-                      right: '2px',
-                      width: '20px',
-                      height: '20px',
+                      bottom: '1px',
+                      right: '1px',
+                      width: 'clamp(12px, 3.2vw, 15px)',
+                      height: 'clamp(12px, 3.2vw, 15px)',
                       borderRadius: '50%',
                       background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)',
-                      border: '2px solid white',
-                      fontSize: '11px',
+                      border: '1.5px solid white',
+                      fontSize: 'clamp(7px, 2vw, 9px)',
                       fontWeight: 'bold',
                       color: 'white'
                     }}
@@ -225,11 +215,11 @@ export default function HomePage() {
                 style={{
                   background: 'rgba(255,255,255,0.5)',
                   backdropFilter: 'blur(20px)',
-                  borderRadius: '24px',
+                  borderRadius: 'clamp(10px, 3vw, 14px)',
                   clipPath: 'url(#notchClipTop)',
-                  padding: '16px 16px 12px 16px',
-                  minHeight: '120px',
-                  marginTop: '20px',
+                  padding: 'clamp(8px, 2vw, 10px)',
+                  minHeight: 'clamp(56px, 15vw, 72px)',
+                  marginTop: 'clamp(8px, 2.5vw, 12px)',
                   display: 'flex',
                   flexDirection: 'column',
                   justifyContent: 'space-between',
@@ -237,17 +227,17 @@ export default function HomePage() {
                 }}
               >
                 {/* Empty top row - space for notch */}
-                <div style={{ height: '30px' }} />
+                <div style={{ height: 'clamp(14px, 4vw, 20px)' }} />
 
                 {/* LVL + EXP Bar - Inside glass at bottom */}
                 <div className="px-2">
                   <div className="text-center mb-1">
-                    <span className="text-sm text-gray-600 font-semibold">LVL {user.level}/10</span>
+                    <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }} className="text-gray-600 font-semibold">LVL {user.level}/10</span>
                   </div>
                   <div 
                     className="w-full rounded-full overflow-hidden"
                     style={{ 
-                      height: '6px',
+                      height: 'clamp(3px, 1vw, 5px)',
                       background: 'rgba(100,150,200,0.3)'
                     }}
                   >
@@ -263,52 +253,13 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Leaderboard Button and Quest Suggestion - Side by side */}
-            <div className="flex justify-center gap-4" style={{ marginTop: '10px' }}>
-              <button 
-                onClick={() => setShowLeaderboard(true)}
-                className="flex items-center justify-center gap-2 py-4 transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(0,200,255,0.3), rgba(0,150,255,0.3))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(0,200,255,0.4)',
-                  boxShadow: '0 4px 15px rgba(0,200,255,0.2)',
-                  width: '160px',
-                  borderRadius: '12px'
-                }}
-              >
-                <span style={{ fontSize: '28px' }}>🏆</span>
-                <span className="text-white font-bold" style={{ fontSize: '18px' }}>
-                  #{userRank || '?'} Rank
-                </span>
-              </button>
-
-              {/* Quest Suggestion Button */}
-              <button 
-                onClick={() => handleTabChange('quest')}
-                className="flex items-center justify-center gap-2 py-4 transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, rgba(255,200,0,0.3), rgba(255,150,0,0.3))',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,200,0,0.4)',
-                  boxShadow: '0 4px 15px rgba(255,200,0,0.2)',
-                  width: '160px',
-                  borderRadius: '12px',
-                  paddingRight: '10px'
-                }}
-              >
-                <span style={{ fontSize: '28px' }}>🎁</span>
-                <span className="text-white font-bold" style={{ fontSize: '18px' }}>Quest</span>
-              </button>
-            </div>
-
-            {/* Big Coin Display - Below rank */}
-            <div className="flex justify-center items-center" style={{ marginTop: '10px', marginBottom: '10px' }}>
-              <div className="flex items-center gap-3">
-                <span style={{ fontSize: '42px' }}>🪙</span>
+            {/* Big Coin Display */}
+            <div className="flex justify-center items-center" style={{ marginTop: 'clamp(4px, 1vw, 6px)', marginBottom: 'clamp(4px, 1vw, 6px)' }}>
+              <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 8px)' }}>
+                <span style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>🪙</span>
                 <span 
                   style={{ 
-                    fontSize: '42px', 
+                    fontSize: 'clamp(22px, 6vw, 28px)', 
                     fontWeight: '800',
                     color: '#1a1a2e',
                     textShadow: '0 2px 4px rgba(0,0,0,0.1)'
@@ -319,7 +270,83 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Hero Section */}
+            {/* Left Side Buttons - Vertical below coin */}
+            <div className="flex flex-col" style={{ marginLeft: 'clamp(2px, 1vw, 4px)', zIndex: 10, gap: 'clamp(4px, 1vw, 6px)' }}>
+              <button 
+                onClick={() => setShowRankModal(true)}
+                className="flex items-center transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #7DD3FC, #38BDF8)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 2px 8px rgba(56,189,248,0.3)',
+                  width: 'clamp(72px, 20vw, 90px)',
+                  height: 'clamp(26px, 7vw, 32px)',
+                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
+                  paddingLeft: 'clamp(6px, 1.5vw, 8px)',
+                  gap: 'clamp(4px, 1vw, 6px)'
+                }}
+              >
+                <img src={getUserRankTier(user.tokenBalance).icon} alt="Rank" style={{ width: 'clamp(16px, 4.5vw, 20px)', height: 'clamp(16px, 4.5vw, 20px)', objectFit: 'contain' }} />
+                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }}>
+                  {getUserRankTier(user.tokenBalance).name}
+                </span>
+              </button>
+
+              {/* Spin Button */}
+              <button 
+                onClick={() => setShowSpinModal(true)}
+                className="flex items-center transition-all hover:scale-105 relative"
+                style={{
+                  background: 'linear-gradient(135deg, #FECACA, #FCA5A5)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 2px 8px rgba(252,165,165,0.3)',
+                  width: 'clamp(72px, 20vw, 90px)',
+                  height: 'clamp(26px, 7vw, 32px)',
+                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
+                  paddingLeft: 'clamp(6px, 1.5vw, 8px)',
+                  gap: 'clamp(4px, 1vw, 6px)'
+                }}
+              >
+                <img src="/icons/spin.PNG" alt="Spin" style={{ width: 'clamp(16px, 4.5vw, 20px)', height: 'clamp(16px, 4.5vw, 20px)', objectFit: 'contain' }} />
+                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }}>Spin</span>
+                {spinsLeft > 0 && (
+                  <div 
+                    className="absolute -top-1 -right-1 flex items-center justify-center"
+                    style={{
+                      width: 'clamp(14px, 3.5vw, 18px)',
+                      height: 'clamp(14px, 3.5vw, 18px)',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #F87171, #EF4444)',
+                      border: '1.5px solid white',
+                      fontSize: 'clamp(8px, 2.2vw, 10px)',
+                      fontWeight: 'bold',
+                      color: 'white'
+                    }}
+                  >
+                    {spinsLeft}
+                  </div>
+                )}
+              </button>
+
+              {/* Quest Button */}
+              <button 
+                onClick={() => handleTabChange('quest')}
+                className="flex items-center transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #D9F99D, #BEF264)',
+                  border: '1px solid rgba(255,255,255,0.4)',
+                  boxShadow: '0 2px 8px rgba(190,242,100,0.3)',
+                  width: 'clamp(72px, 20vw, 90px)',
+                  height: 'clamp(26px, 7vw, 32px)',
+                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
+                  paddingLeft: 'clamp(6px, 1.5vw, 8px)',
+                  gap: 'clamp(4px, 1vw, 6px)'
+                }}
+              >
+                <span style={{ fontSize: 'clamp(14px, 4vw, 18px)', lineHeight: 1, width: 'clamp(16px, 4.5vw, 20px)', textAlign: 'center' }}>🎁</span>
+                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }}>Quest</span>
+              </button>
+            </div>            {/* Hero Section */}
             <div className="flex-1 flex items-center justify-center">
               <HeroSection mascotImageUrl="/mascot.png" showAnimation={true} />
             </div>
@@ -328,8 +355,8 @@ export default function HomePage() {
 
       case 'quest':
         return <QuestScreen />;
-      case 'spin':
-        return <SpinScreen />;
+      case 'pet':
+        return <PetScreen />;
       case 'wallet':
         return <WalletScreen />;
       case 'game':
@@ -348,131 +375,155 @@ export default function HomePage() {
       <main className="flex-1 flex flex-col px-6" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
-      {/* Leaderboard Modal */}
-      {showLeaderboard && (
+      {/* Rank Progress Modal */}
+      {showRankModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center"
-          style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}
-          onClick={() => setShowLeaderboard(false)}
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
+          onClick={() => setShowRankModal(false)}
         >
           <div 
-            className="w-11/12 max-w-sm overflow-hidden flex flex-col"
+            className="w-full max-w-sm overflow-hidden"
             style={{
-              background: 'rgba(255,255,255,0.15)',
-              backdropFilter: 'blur(20px)',
-              WebkitBackdropFilter: 'blur(20px)',
-              borderRadius: '16px',
-              border: '1px solid rgba(255,255,255,0.3)',
-              boxShadow: '0 20px 60px rgba(0,0,0,0.3)',
-              maxHeight: '60vh'
+              background: 'linear-gradient(180deg, #2d4a6f 0%, #1e3a5f 100%)',
+              borderRadius: '28px',
+              border: '1px solid rgba(255,255,255,0.15)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Header */}
-            <div className="p-4 text-center">
-              <h2 className="text-2xl font-bold text-white tracking-wider">
-                LEADERBOARD
-              </h2>
-            </div>
-
-            {/* Leaderboard List */}
-            <div 
-              className="flex flex-col gap-2 overflow-y-auto flex-1"
-              style={{ padding: '0 24px 16px 24px' }}
-            >
-              {leaderboardLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <div className="text-white">Loading...</div>
-                </div>
-              ) : leaderboardData.map((player) => (
-                <div 
-                  key={player.rank}
-                  className="flex items-center gap-3"
-                >
-                  {/* Rank Number */}
-                  <div 
-                    className="flex items-center justify-center font-bold text-lg"
-                    style={{
-                      width: '40px',
-                      height: '40px',
-                      background: player.rank === 1 
-                        ? 'linear-gradient(135deg, rgba(255,215,0,0.5), rgba(255,180,0,0.4))'
-                        : player.rank === 2 
-                        ? 'linear-gradient(135deg, rgba(180,210,255,0.6), rgba(140,180,220,0.5))'
-                        : player.rank === 3 
-                        ? 'linear-gradient(135deg, rgba(205,127,50,0.5), rgba(180,100,40,0.4))'
-                        : 'rgba(255,255,255,0.2)',
-                      border: player.rank === 1 
-                        ? '1px solid rgba(255,215,0,0.6)'
-                        : player.rank === 2 
-                        ? '1px solid rgba(180,210,255,0.7)'
-                        : player.rank === 3 
-                        ? '1px solid rgba(205,127,50,0.6)'
-                        : '1px solid rgba(255,255,255,0.3)',
-                      borderRadius: '8px',
-                      color: player.rank === 1 
-                        ? '#ffd700'
-                        : player.rank === 2 
-                        ? '#b0d4ff'
-                        : player.rank === 3 
-                        ? '#cd7f32'
-                        : '#ffffff',
-                    }}
-                  >
-                    {player.rank}
-                  </div>
-
-                  {/* Player Info */}
-                  <div 
-                    className="flex-1 flex items-center justify-between"
-                    style={{
-                      height: '40px',
-                      paddingLeft: '16px',
-                      paddingRight: '16px',
-                      background: player.rank === 1 
-                        ? 'linear-gradient(135deg, rgba(255,215,0,0.3), rgba(255,180,0,0.2))'
-                        : player.rank === 2 
-                        ? 'linear-gradient(135deg, rgba(180,210,255,0.4), rgba(140,180,220,0.3))'
-                        : player.rank === 3 
-                        ? 'linear-gradient(135deg, rgba(205,127,50,0.3), rgba(180,100,40,0.2))'
-                        : 'rgba(255,255,255,0.15)',
-                      border: player.rank === 1 
-                        ? '1px solid rgba(255,215,0,0.4)'
-                        : player.rank === 2 
-                        ? '1px solid rgba(180,210,255,0.5)'
-                        : player.rank === 3 
-                        ? '1px solid rgba(205,127,50,0.4)'
-                        : '1px solid rgba(255,255,255,0.25)',
-                      borderRadius: '8px',
-                    }}
-                  >
-                    <span className="font-semibold text-white text-sm">
-                      {player.name}
-                    </span>
-                    <span className="font-bold text-white text-sm">
-                      {player.score.toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Close Button */}
-            <div className="p-4 pt-2">
+            <div className="relative p-6 pb-4 text-center">
+              {/* Close button */}
               <button
-                onClick={() => setShowLeaderboard(false)}
-                className="w-full py-3 rounded-full font-bold text-white transition-all hover:scale-105"
-                style={{
-                  background: 'rgba(255,255,255,0.25)',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                }}
+                onClick={() => setShowRankModal(false)}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
+                style={{ background: 'rgba(255,255,255,0.1)' }}
               >
-                Close
+                <span className="text-white/60 text-lg">✕</span>
               </button>
+
+              <div className="text-cyan-400 text-xs font-semibold tracking-widest mb-4">YOUR RANK</div>
+              
+              {/* Current Rank Display */}
+              <div className="flex justify-center">
+                <img 
+                  src={getUserRankTier(user?.tokenBalance || 0).icon} 
+                  alt="Rank" 
+                  style={{ width: '80px', height: '80px', objectFit: 'contain' }} 
+                />
+              </div>
+              
+              <div className="text-white font-bold text-2xl mt-2">
+                {getUserRankTier(user?.tokenBalance || 0).name}
+              </div>
+              <div className="text-cyan-400 text-base mt-1">
+                {(user?.tokenBalance || 0).toLocaleString()} points
+              </div>
+            </div>
+
+            {/* Progress Section */}
+            {(() => {
+              const currentPoints = user?.tokenBalance || 0;
+              const currentTier = getUserRankTier(currentPoints);
+              const currentTierIndex = RANK_TIERS.findIndex(t => t.name === currentTier.name);
+              const nextTier = RANK_TIERS[currentTierIndex + 1];
+              
+              if (!nextTier) {
+                return (
+                  <div className="mx-5 mb-4 p-4 rounded-2xl text-center" style={{ background: 'rgba(251,191,36,0.15)' }}>
+                    <span className="text-2xl">👑</span>
+                    <span className="text-yellow-400 font-bold ml-2">MAX RANK ACHIEVED!</span>
+                  </div>
+                );
+              }
+              
+              const progressPercent = ((currentPoints - currentTier.minPoints) / (nextTier.minPoints - currentTier.minPoints)) * 100;
+              
+              return (
+                <div className="mb-4 p-5 rounded-2xl" style={{ background: 'rgba(255,255,255,0.05)', marginLeft: '14px', marginRight: '14px' }}>
+                  {/* From -> To with progress bar in middle */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex flex-col items-center" style={{ marginRight: '12px' }}>
+                      <img src={currentTier.icon} alt={currentTier.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                      <span className="text-white/60 text-xs mt-1">{currentTier.name}</span>
+                    </div>
+                    
+                    {/* Progress Bar with percentage inside */}
+                    <div className="flex-1">
+                      <div 
+                        className="w-full h-6 rounded-full overflow-hidden relative"
+                        style={{ background: 'rgba(0,0,0,0.4)' }}
+                      >
+                        <div 
+                          className="h-full rounded-full transition-all duration-700"
+                          style={{ 
+                            width: `${Math.min(progressPercent, 100)}%`,
+                            background: 'linear-gradient(90deg, #06b6d4, #3b82f6)',
+                          }}
+                        />
+                        <span 
+                          className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold"
+                          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                        >
+                          {Math.round(progressPercent)}%
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col items-center opacity-60" style={{ marginLeft: '12px' }}>
+                      <img src={nextTier.icon} alt={nextTier.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
+                      <span className="text-white/60 text-xs mt-1">{nextTier.name}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {/* All Ranks Grid */}
+            <div className="mx-6 mb-6" style={{ marginTop: '24px' }}>
+              <div className="text-white/40 text-xs font-semibold tracking-wider mb-3">ALL RANKS</div>
+              <div className="grid grid-cols-3 gap-3">
+                {RANK_TIERS.map((tier) => {
+                  const currentTier = getUserRankTier(user?.tokenBalance || 0);
+                  const isCurrentTier = tier.name === currentTier.name;
+                  const isUnlocked = (user?.tokenBalance || 0) >= tier.minPoints;
+                  
+                  return (
+                    <div 
+                      key={tier.name}
+                      className="flex flex-col items-center p-3 rounded-2xl"
+                      style={{ 
+                        background: isCurrentTier 
+                          ? `linear-gradient(135deg, ${tier.color}40, ${tier.color}20)`
+                          : 'rgba(255,255,255,0.03)',
+                        border: isCurrentTier 
+                          ? `2px solid ${tier.color}` 
+                          : '1px solid rgba(255,255,255,0.08)',
+                        opacity: isUnlocked ? 1 : 0.35,
+                      }}
+                    >
+                      <img src={tier.icon} alt={tier.name} style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
+                      <span className="text-white text-xs font-semibold mt-1">{tier.name}</span>
+                      <span className="text-white/40 text-[10px]">
+                        {tier.minPoints >= 1000 ? `${tier.minPoints/1000}K` : tier.minPoints}
+                      </span>
+                      {tier.bonus > 0 && (
+                        <span className="text-green-400 text-[10px] font-medium">
+                          +{tier.bonus}% bonus
+                        </span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
           </div>
         </div>
       )}
+
+      {/* Spin Modal */}
+      <SpinModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
     </div>
   );
 }

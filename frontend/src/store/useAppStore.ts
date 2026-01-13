@@ -21,7 +21,7 @@ import type {
 /**
  * Navigation tab types
  */
-export type NavigationTab = 'home' | 'quest' | 'spin' | 'wallet' | 'game';
+export type NavigationTab = 'home' | 'quest' | 'pet' | 'wallet' | 'game';
 
 /**
  * Currency types for balance updates
@@ -65,6 +65,17 @@ export interface AppState {
 
   // Spin State
   spinsLeft: number;
+
+  // Pet State
+  pet: {
+    level: number;
+    exp: number;
+    maxExp: number;
+    hunger: number;
+    happiness: number;
+    lastCoinTime: number; // timestamp khi lần cuối nhả coin
+    pendingCoins: number;
+  };
 }
 
 /**
@@ -73,7 +84,7 @@ export interface AppState {
 export interface AppActions {
   // User Actions
   setUser: (user: UserData | null) => void;
-  updateBalance: (amount: number, currency: CurrencyType) => void;
+  updateBalance: (amount: number, currency: CurrencyType) => Promise<void>;
   addXP: (amount: number) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
@@ -113,6 +124,10 @@ export interface AppActions {
   // Spin Actions
   setSpinsLeft: (spins: number) => void;
   decrementSpins: () => void;
+
+  // Pet Actions
+  setPet: (pet: Partial<AppState['pet']>) => void;
+  claimPetCoins: () => void;
 
   // Global Actions
   reset: () => void;
@@ -171,6 +186,17 @@ const initialState: AppState = {
 
   // Spin State
   spinsLeft: 3,
+
+  // Pet State
+  pet: {
+    level: 1,
+    exp: 0,
+    maxExp: 100,
+    hunger: 50,
+    happiness: 50,
+    lastCoinTime: Date.now(),
+    pendingCoins: 0,
+  },
 };
 
 
@@ -188,6 +214,7 @@ const PERSISTED_KEYS: (keyof AppState)[] = [
   'wallet',
   'activeTab',
   'spinsLeft',
+  'pet',
 ];
 
 /**
@@ -217,18 +244,57 @@ export const useAppStore = create<AppStore>()(
       // User Actions
       setUser: (user) => set({ user }),
 
-      updateBalance: (amount, currency) => {
+      updateBalance: async (amount, currency) => {
         const { user } = get();
         if (!user) return;
 
         if (currency === 'token') {
+          // Update local state immediately
+          const newBalance = user.tokenBalance + amount;
           set({
             user: {
               ...user,
-              tokenBalance: user.tokenBalance + amount,
+              tokenBalance: newBalance,
               updatedAt: new Date(),
             },
           });
+          
+          // Sync to backend
+          if (amount !== 0) {
+            try {
+              const { backendAPI } = await import('../services/backend-api.service');
+              if (backendAPI.isAuthenticated()) {
+                console.log(`💰 Syncing points to backend: ${amount > 0 ? '+' : ''}${amount}`);
+                const result = await backendAPI.addPoints(amount);
+                console.log(`✅ Backend sync success. New total: ${result.total_points}`);
+                
+                // Update local state with backend's authoritative value
+                const currentUser = get().user;
+                if (currentUser) {
+                  set({
+                    user: {
+                      ...currentUser,
+                      tokenBalance: Number(result.total_points),
+                    },
+                  });
+                }
+              } else {
+                console.log('⚠️ Not authenticated, points saved locally only');
+              }
+            } catch (err) {
+              console.error('❌ Failed to sync points to backend:', err);
+              // Revert local change on error
+              const currentUser = get().user;
+              if (currentUser) {
+                set({
+                  user: {
+                    ...currentUser,
+                    tokenBalance: currentUser.tokenBalance - amount,
+                  },
+                });
+              }
+            }
+          }
         } else {
           set({
             user: {
@@ -485,6 +551,25 @@ export const useAppStore = create<AppStore>()(
         }
       },
 
+      // Pet Actions
+      setPet: (petUpdates) => {
+        const { pet } = get();
+        set({ pet: { ...pet, ...petUpdates } });
+      },
+      claimPetCoins: () => {
+        const { pet } = get();
+        if (pet.pendingCoins > 0) {
+          get().updateBalance(pet.pendingCoins, 'token');
+          set({ 
+            pet: { 
+              ...pet, 
+              pendingCoins: 0, 
+              lastCoinTime: Date.now() 
+            } 
+          });
+        }
+      },
+
       // Global Actions
       reset: () => set(initialState),
     }),
@@ -569,6 +654,7 @@ export const useReferralStats = () => useAppStore((state) => state.referralStats
 export const useWallet = () => useAppStore((state) => state.wallet);
 export const useActiveTab = () => useAppStore((state) => state.activeTab);
 export const useSpinsLeft = () => useAppStore((state) => state.spinsLeft);
+export const usePet = () => useAppStore((state) => state.pet);
 
 /**
  * Action hooks for cleaner component code

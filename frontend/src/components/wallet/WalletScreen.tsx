@@ -7,8 +7,7 @@ import { backendAPI } from '../../services/backend-api.service';
 export function WalletScreen() {
   const { user, setUser } = useAppStore();
   const [isConnecting, setIsConnecting] = useState(false);
-  const [walletAddress, setWalletAddress] = useState<string | null>(user?.walletAddress || null);
-  const [inputWalletId, setInputWalletId] = useState('');
+  const [inputWalletId, setInputWalletId] = useState(user?.walletAddress || '');
   const [connectStatus, setConnectStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [statusMessage, setStatusMessage] = useState('');
 
@@ -29,7 +28,6 @@ export function WalletScreen() {
     try {
       if (backendAPI.isAuthenticated()) {
         const updatedUser = await backendAPI.connectWallet(inputWalletId.trim());
-        setWalletAddress(updatedUser.wallet_address);
         // Update local user state
         if (user) {
           setUser({ ...user, walletAddress: updatedUser.wallet_address || undefined });
@@ -38,14 +36,12 @@ export function WalletScreen() {
         setStatusMessage('Wallet connected successfully!');
       } else {
         // Not authenticated - just save locally
-        setWalletAddress(inputWalletId.trim());
         if (user) {
           setUser({ ...user, walletAddress: inputWalletId.trim() });
         }
         setConnectStatus('success');
         setStatusMessage('Wallet saved locally (not authenticated)');
       }
-      setInputWalletId('');
     } catch (error) {
       console.error('Failed to connect wallet:', error);
       setConnectStatus('error');
@@ -55,21 +51,12 @@ export function WalletScreen() {
     }
   };
 
-  const handleDisconnect = () => {
-    setWalletAddress(null);
-    if (user) {
-      setUser({ ...user, walletAddress: undefined });
-    }
-    setConnectStatus('idle');
-    setStatusMessage('');
-  };
-
   return (
-    <div className="flex flex-col h-full items-center" style={{ paddingTop: '80px', backgroundColor: 'transparent' }}>
+    <div className="flex flex-col h-full items-center" style={{ paddingTop: 'clamp(20px, 5vw, 32px)', backgroundColor: 'transparent', paddingBottom: 'clamp(60px, 16vw, 80px)' }}>
       {/* Title */}
       <h1 
-        className="font-bold mb-8"
-        style={{ fontSize: '24px', color: '#1a1a2e' }}
+        className="font-bold"
+        style={{ fontSize: 'clamp(16px, 4.5vw, 20px)', color: '#1a1a2e', marginBottom: 'clamp(12px, 3vw, 20px)' }}
       >
         Your balance
       </h1>
@@ -78,182 +65,149 @@ export function WalletScreen() {
       <div 
         style={{
           width: '90%',
-          maxWidth: '380px',
+          maxWidth: 'clamp(260px, 72vw, 320px)',
           background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-          borderRadius: '16px',
+          borderRadius: 'clamp(10px, 2.5vw, 14px)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: '20px',
+          padding: 'clamp(10px, 2.5vw, 14px)',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         }}
       >
         {/* USDT Balance Row */}
         <div 
-          className="flex items-center gap-3"
+          className="flex items-center"
           style={{
             background: 'linear-gradient(90deg, #6a7080, #2a2f3a)',
-            borderRadius: '12px',
-            padding: '16px 20px',
+            borderRadius: 'clamp(8px, 2vw, 12px)',
+            padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+            gap: 'clamp(8px, 2vw, 12px)',
           }}
         >
-          <span style={{ fontSize: '28px', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: '700', color: '#ffffff' }}>
             {tokenBalance.toLocaleString()}
           </span>
-          <span style={{ fontSize: '14px', color: '#ffffff', fontWeight: '500' }}>points</span>
+          <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', color: '#ffffff', fontWeight: '500' }}>points</span>
         </div>
       </div>
 
-      {/* Wallet Connect Card - Separate */}
+      {/* Wallet Connect Card */}
       <div 
         style={{
           width: '90%',
-          maxWidth: '380px',
-          marginTop: '16px',
+          maxWidth: 'clamp(260px, 72vw, 320px)',
+          marginTop: 'clamp(10px, 2.5vw, 14px)',
           background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-          borderRadius: '16px',
+          borderRadius: 'clamp(10px, 2.5vw, 14px)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          padding: '20px',
+          padding: 'clamp(10px, 2.5vw, 14px)',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
         }}
       >
-        {/* Wallet Status */}
-        {walletAddress ? (
-          <div className="flex flex-col gap-2">
-            <div
-              className="w-full flex items-center justify-center gap-3"
+        <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
+          {/* Wallet ID Input */}
+          <input
+            type="text"
+            value={inputWalletId}
+            onChange={(e) => setInputWalletId(e.target.value)}
+            placeholder="Enter wallet address..."
+            style={{
+              width: '100%',
+              padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
+              borderRadius: 'clamp(8px, 2vw, 12px)',
+              border: '2px solid rgba(0, 136, 204, 0.3)',
+              background: 'rgba(255, 255, 255, 0.9)',
+              fontSize: 'clamp(12px, 3vw, 15px)',
+              outline: 'none',
+              transition: 'border-color 0.2s',
+            }}
+            onFocus={(e) => e.target.style.borderColor = '#0088CC'}
+            onBlur={(e) => e.target.style.borderColor = 'rgba(0, 136, 204, 0.3)'}
+          />
+
+          {/* Buttons Row */}
+          <div className="flex" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
+            {/* Test Connect Button */}
+            <button
+              onClick={handleTestConnect}
+              disabled={isConnecting || !inputWalletId.trim()}
+              className="flex-1 flex items-center justify-center transition-all hover:scale-[1.02] disabled:opacity-50"
+              style={{
+                background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
+                borderRadius: 'clamp(8px, 2vw, 12px)',
+                padding: 'clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px)',
+                border: 'none',
+                cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
+                gap: 'clamp(4px, 1vw, 8px)',
+              }}
+            >
+              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>💎</span>
+              <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '700', color: '#ffffff' }}>
+                {isConnecting ? 'TESTING...' : 'TEST'}
+              </span>
+            </button>
+
+            {/* Confirm Address Button */}
+            <button
+              onClick={handleTestConnect}
+              disabled={isConnecting || !inputWalletId.trim()}
+              className="flex-1 flex items-center justify-center transition-all hover:scale-[1.02] disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                borderRadius: '12px',
-                padding: '16px 20px',
-              }}
-            >
-              <span style={{ fontSize: '14px', fontWeight: '600', color: '#ffffff' }}>
-                ✓ Connected: {walletAddress.length > 20 
-                  ? `${walletAddress.slice(0, 10)}...${walletAddress.slice(-6)}`
-                  : walletAddress}
-              </span>
-            </div>
-            <button
-              onClick={handleDisconnect}
-              className="w-full transition-all hover:opacity-80"
-              style={{
-                background: 'rgba(239, 68, 68, 0.8)',
-                borderRadius: '8px',
-                padding: '10px',
+                borderRadius: 'clamp(8px, 2vw, 12px)',
+                padding: 'clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px)',
                 border: 'none',
-                cursor: 'pointer',
-                color: 'white',
-                fontSize: '14px',
-                fontWeight: '600',
+                cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
+                gap: 'clamp(4px, 1vw, 8px)',
               }}
             >
-              Disconnect
+              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>✓</span>
+              <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '700', color: '#ffffff' }}>
+                CONFIRM
+              </span>
             </button>
           </div>
-        ) : (
-          <div className="flex flex-col gap-3">
-            {/* Wallet ID Input */}
-            <input
-              type="text"
-              value={inputWalletId}
-              onChange={(e) => setInputWalletId(e.target.value)}
-              placeholder="Enter wallet address..."
+
+          {/* Status Message */}
+          {statusMessage && (
+            <div
               style={{
-                width: '100%',
-                padding: '14px 16px',
-                borderRadius: '12px',
-                border: '2px solid rgba(0, 136, 204, 0.3)',
-                background: 'rgba(255, 255, 255, 0.9)',
-                fontSize: '14px',
-                outline: 'none',
-                transition: 'border-color 0.2s',
+                padding: 'clamp(8px, 2vw, 10px) clamp(10px, 2.5vw, 14px)',
+                borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                background: connectStatus === 'success' 
+                  ? 'rgba(34, 197, 94, 0.2)' 
+                  : 'rgba(239, 68, 68, 0.2)',
+                border: `1px solid ${connectStatus === 'success' ? '#22c55e' : '#ef4444'}`,
               }}
-              onFocus={(e) => e.target.style.borderColor = '#0088CC'}
-              onBlur={(e) => e.target.style.borderColor = 'rgba(0, 136, 204, 0.3)'}
-            />
-
-            {/* Buttons Row */}
-            <div className="flex gap-2">
-              {/* Test Connect Button */}
-              <button
-                onClick={handleTestConnect}
-                disabled={isConnecting}
-                className="flex-1 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50"
-                style={{
-                  background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
-                  borderRadius: '12px',
-                  padding: '14px 12px',
-                  border: 'none',
-                  cursor: isConnecting ? 'wait' : 'pointer',
-                }}
-              >
-                <span style={{ fontSize: '16px' }}>💎</span>
-                <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>
-                  {isConnecting ? 'CONNECTING...' : 'TEST'}
-                </span>
-              </button>
-
-              {/* Confirm Address Button */}
-              <button
-                onClick={handleTestConnect}
-                disabled={isConnecting || !inputWalletId.trim()}
-                className="flex-1 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] disabled:opacity-50"
-                style={{
-                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                  borderRadius: '12px',
-                  padding: '14px 12px',
-                  border: 'none',
-                  cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
-                }}
-              >
-                <span style={{ fontSize: '16px' }}>✓</span>
-                <span style={{ fontSize: '14px', fontWeight: '700', color: '#ffffff' }}>
-                  CONFIRM
-                </span>
-              </button>
+            >
+              <span style={{ 
+                fontSize: 'clamp(11px, 2.8vw, 14px)', 
+                color: connectStatus === 'success' ? '#16a34a' : '#dc2626',
+                fontWeight: '500'
+              }}>
+                {statusMessage}
+              </span>
             </div>
-
-            {/* Status Message */}
-            {statusMessage && (
-              <div
-                style={{
-                  padding: '10px 14px',
-                  borderRadius: '8px',
-                  background: connectStatus === 'success' 
-                    ? 'rgba(34, 197, 94, 0.2)' 
-                    : 'rgba(239, 68, 68, 0.2)',
-                  border: `1px solid ${connectStatus === 'success' ? '#22c55e' : '#ef4444'}`,
-                }}
-              >
-                <span style={{ 
-                  fontSize: '13px', 
-                  color: connectStatus === 'success' ? '#16a34a' : '#dc2626',
-                  fontWeight: '500'
-                }}>
-                  {statusMessage}
-                </span>
-              </div>
-            )}
-          </div>
-        )}
+          )}
+        </div>
       </div>
 
       {/* Token Balance Section */}
       <div 
         style={{
           width: '90%',
-          maxWidth: '380px',
-          marginTop: '24px',
+          maxWidth: 'clamp(260px, 72vw, 320px)',
+          marginTop: 'clamp(12px, 3vw, 18px)',
           background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-          borderRadius: '16px',
-          padding: '20px',
+          borderRadius: 'clamp(10px, 2.5vw, 14px)',
+          padding: 'clamp(10px, 2.5vw, 14px)',
         }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span style={{ fontSize: '32px' }}>🪙</span>
-            <span style={{ fontSize: '18px', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
+          <div className="flex items-center" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
+            <span style={{ fontSize: 'clamp(20px, 5.5vw, 26px)' }}>🪙</span>
+            <span style={{ fontSize: 'clamp(14px, 3.5vw, 17px)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
           </div>
-          <span style={{ fontSize: '24px', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontWeight: '700', color: '#ffffff' }}>
             {user?.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ') || '0'}
           </span>
         </div>
@@ -261,11 +215,12 @@ export function WalletScreen() {
 
       {/* Info Text */}
       <p 
-        className="text-center mt-6"
+        className="text-center"
         style={{ 
           color: 'rgba(255,255,255,0.5)', 
-          fontSize: '14px',
-          maxWidth: '300px'
+          fontSize: 'clamp(12px, 3vw, 15px)',
+          maxWidth: 'clamp(220px, 65vw, 280px)',
+          marginTop: 'clamp(12px, 3vw, 18px)'
         }}
       >
         Enter your wallet address to connect and withdraw earnings

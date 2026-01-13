@@ -26,12 +26,12 @@ export function HeroSection({
         <div 
           className="fixed pointer-events-none overflow-hidden"
           style={{
-            top: '200px',
+            top: '130px',
             left: '0',
             right: '0',
             width: '100%',
             maxWidth: '390px',
-            height: '350px',
+            height: '450px',
             zIndex: -1,
             margin: '0 auto'
           }}

@@ -10,6 +10,7 @@ import { BlockchainModule } from './blockchain/blockchain.module';
 import { SocialModule } from './social/social.module';
 import { RewardsModule } from './rewards/rewards.module';
 import { BotModule } from './bot/bot.module';
+import { PetsModule } from './pets/pets.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { BotModule } from './bot/bot.module';
     SocialModule,
     RewardsModule,
     BotModule,
+    PetsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

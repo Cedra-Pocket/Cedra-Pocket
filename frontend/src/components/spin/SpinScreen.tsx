@@ -69,8 +69,10 @@ export function SpinScreen() {
       setIsSpinning(false);
 
       // Sync points with backend
+      console.log('🔄 Attempting to sync points, isAuthenticated:', backendAPI.isAuthenticated());
       if (backendAPI.isAuthenticated()) {
         try {
+          console.log('📤 Calling addPoints API with:', prize.value);
           const updatedUser = await backendAPI.addPoints(prize.value);
           console.log('✅ Points synced with backend:', updatedUser.total_points);
           // Update local user with backend data
@@ -80,6 +82,8 @@ export function SpinScreen() {
         } catch (error) {
           console.error('❌ Failed to sync points with backend:', error);
         }
+      } else {
+        console.log('⚠️ Not authenticated - points saved locally only');
       }
 
       // Ẩn kết quả sau 2.5 giây
