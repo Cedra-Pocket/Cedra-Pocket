@@ -99,20 +99,20 @@ export function SpinModal({ isOpen, onClose }: SpinModalProps) {
             border: '1px solid rgba(255,255,255,0.3)',
           }}
         >
-          <span className="text-white" style={{ fontSize: 'clamp(11px, 2.8vw, 14px)' }}>✕</span>
+          <span className="text-white" style={{ fontSize: 'var(--fs-sm)' }}>✕</span>
         </button>
 
         {/* Wheel Container */}
-        <div className="relative" style={{ marginBottom: 'clamp(8px, 2vw, 12px)' }}>
+        <div className="relative" style={{ marginBottom: 'clamp(12px, 3vw, 18px)' }}>
           {/* Pointer */}
           <div 
             className="absolute top-0 left-1/2 -translate-x-1/2 z-10"
             style={{
               width: 0,
               height: 0,
-              borderLeft: 'clamp(6px, 1.5vw, 10px) solid transparent',
-              borderRight: 'clamp(6px, 1.5vw, 10px) solid transparent',
-              borderTop: 'clamp(10px, 3vw, 16px) solid #FFD700',
+              borderLeft: 'clamp(10px, 2.5vw, 14px) solid transparent',
+              borderRight: 'clamp(10px, 2.5vw, 14px) solid transparent',
+              borderTop: 'clamp(16px, 4vw, 22px) solid #FFD700',
               filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.3))'
             }}
           />
@@ -120,12 +120,12 @@ export function SpinModal({ isOpen, onClose }: SpinModalProps) {
           {/* Wheel Outer Ring */}
           <div
             style={{
-              width: 'clamp(150px, 42vw, 200px)',
-              height: 'clamp(150px, 42vw, 200px)',
+              width: 'clamp(240px, 65vw, 300px)',
+              height: 'clamp(240px, 65vw, 300px)',
               borderRadius: '50%',
               background: 'linear-gradient(135deg, #FFD700, #FFA500, #FFD700)',
-              padding: 'clamp(4px, 1vw, 6px)',
-              boxShadow: '0 0 30px rgba(255,215,0,0.4)',
+              padding: 'clamp(6px, 1.5vw, 10px)',
+              boxShadow: '0 0 40px rgba(255,215,0,0.5)',
             }}
           >
             {/* Wheel */}
@@ -182,15 +182,15 @@ export function SpinModal({ isOpen, onClose }: SpinModalProps) {
               <div 
                 className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full flex items-center justify-center cursor-pointer"
                 style={{
-                  width: 'clamp(28px, 8vw, 40px)',
-                  height: 'clamp(28px, 8vw, 40px)',
+                  width: 'clamp(44px, 12vw, 60px)',
+                  height: 'clamp(44px, 12vw, 60px)',
                   background: 'linear-gradient(135deg, #00BFFF, #1E90FF)',
                   boxShadow: '0 4px 15px rgba(0,0,0,0.3)',
-                  border: 'clamp(1.5px, 0.4vw, 2.5px) solid rgba(255,255,255,0.8)',
+                  border: 'clamp(2px, 0.5vw, 3px) solid rgba(255,255,255,0.8)',
                 }}
                 onClick={spinWheel}
               >
-                <span className="text-white font-bold" style={{ fontSize: 'clamp(7px, 2vw, 10px)' }}>SPIN</span>
+                <span className="text-white font-bold" style={{ fontSize: 'var(--fs-sm)' }}>SPIN</span>
               </div>
             </div>
           </div>
@@ -202,12 +202,12 @@ export function SpinModal({ isOpen, onClose }: SpinModalProps) {
           style={{
             background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
             border: '2px solid rgba(255,255,255,0.3)',
-            padding: 'clamp(5px, 1.2vw, 8px) clamp(10px, 3vw, 18px)',
+            padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)',
             boxShadow: '0 4px 15px rgba(255,107,107,0.4)',
           }}
         >
-          <span className="text-white font-semibold" style={{ fontSize: 'clamp(8px, 2vw, 11px)' }}>Spins: </span>
-          <span className="text-white font-bold" style={{ fontSize: 'clamp(9px, 2.5vw, 12px)' }}>{spinsLeft}</span>
+          <span className="text-white font-semibold" style={{ fontSize: 'var(--fs-sm)' }}>Spins: </span>
+          <span className="text-white font-bold" style={{ fontSize: 'var(--fs-md)' }}>{spinsLeft}</span>
         </div>
 
         {/* Result */}
@@ -216,13 +216,13 @@ export function SpinModal({ isOpen, onClose }: SpinModalProps) {
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-2xl z-30"
             style={{
               background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-              border: 'clamp(1.5px, 0.4vw, 2.5px) solid rgba(255,255,255,0.5)',
+              border: 'clamp(2px, 0.5vw, 3px) solid rgba(255,255,255,0.5)',
               boxShadow: '0 8px 30px rgba(255,215,0,0.5)',
               animation: 'pulse 0.5s ease-in-out infinite',
-              padding: 'clamp(8px, 2vw, 12px) clamp(14px, 4vw, 22px)',
+              padding: 'clamp(12px, 3vw, 18px) clamp(20px, 5vw, 30px)',
             }}
           >
-            <span className="font-bold text-white" style={{ fontSize: 'clamp(12px, 3.5vw, 18px)', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
+            <span className="font-bold text-white" style={{ fontSize: 'var(--fs-xl)', textShadow: '0 2px 4px rgba(0,0,0,0.3)' }}>
               +{result} 🪙
             </span>
           </div>
@@ -230,7 +230,7 @@ export function SpinModal({ isOpen, onClose }: SpinModalProps) {
 
         {/* No spins message */}
         {spinsLeft === 0 && (
-          <p className="text-white/70 text-center" style={{ marginTop: 'clamp(6px, 1.5vw, 10px)', fontSize: 'clamp(8px, 2vw, 11px)' }}>
+          <p className="text-white/70 text-center" style={{ marginTop: 'clamp(8px, 2vw, 12px)', fontSize: 'var(--fs-sm)' }}>
             Complete quests to get more spins!
           </p>
         )}

@@ -114,32 +114,9 @@ export default function HomePage() {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="flex-1 flex flex-col px-3" style={{ paddingTop: 'clamp(6px, 2vw, 10px)' }}>
-            {/* Page Title - WHALE */}
-            <div 
-              className="text-center"
-              style={{ 
-                height: 'clamp(50px, 14vw, 70px)', 
-                marginBottom: 'clamp(2px, 1vw, 4px)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}
-            >
-              <img 
-                src="/whale.png" 
-                alt="Whale" 
-                style={{ 
-                  height: 'clamp(50px, 14vw, 70px)',
-                  objectFit: 'contain',
-                  filter: 'drop-shadow(0 2px 8px rgba(56,189,248,0.4))',
-                  animation: 'waveLeftRight 2s ease-in-out infinite'
-                }}
-              />
-            </div>
-
+          <div className="flex-1 flex flex-col px-3" style={{ paddingTop: 'clamp(6px, 2vw, 10px)', position: 'relative', zIndex: 1 }}>
             {/* Top Bar - Glass Container with top notch */}
-            <div className="relative mb-2" style={{ marginLeft: 'clamp(2px, 1vw, 4px)', marginRight: 'clamp(2px, 1vw, 4px)' }}>
+            <div className="relative mb-2" style={{ marginLeft: 'clamp(2px, 1vw, 4px)', marginRight: 'clamp(2px, 1vw, 4px)', zIndex: 10 }}>
               {/* SVG for clip-path definition - top center notch like inverted trapezoid */}
               <svg width="0" height="0" style={{ position: 'absolute' }}>
                 <defs>
@@ -152,7 +129,7 @@ export default function HomePage() {
               {/* Avatar - top left */}
               <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', left: 'clamp(8px, 2.5vw, 12px)' }}>
                 <button 
-                  className="relative flex items-center justify-center transition-all hover:scale-105"
+                  className="relative flex items-center justify-center transition-all hover:scale-105 overflow-hidden"
                   style={{
                     width: 'clamp(36px, 10vw, 46px)',
                     height: 'clamp(28px, 7.5vw, 36px)',
@@ -162,52 +139,51 @@ export default function HomePage() {
                     boxShadow: '0 2px 10px rgba(0,180,220,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
                   }}
                 >
-                  <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }}>👤</span>
+                  {user.avatarUrl ? (
+                    <img 
+                      src={user.avatarUrl} 
+                      alt="Avatar"
+                      style={{ 
+                        width: '100%', 
+                        height: '100%', 
+                        objectFit: 'cover'
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontSize: 'clamp(14px, 4vw, 18px)' }}>👤</span>
+                  )}
                 </button>
               </div>
 
               {/* Username - center */}
               <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: 'clamp(12px, 3.5vw, 18px)' }}>
-                <span style={{ fontSize: 'clamp(12px, 3.5vw, 15px)' }} className="font-bold text-gray-800">{user.username}</span>
+                <span style={{ fontSize: 'var(--fs-base)' }} className="font-bold text-gray-800">{user.username}</span>
               </div>
 
-              {/* Notification bell button - top right */}
+              {/* Points display - top right (replacing notification bell) */}
               <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', right: 'clamp(8px, 2.5vw, 12px)' }}>
-                <button 
-                  className="relative flex items-center justify-center transition-all hover:scale-105"
+                <div 
+                  className="flex items-center transition-all"
                   style={{
-                    width: 'clamp(36px, 10vw, 46px)',
-                    height: 'clamp(28px, 7.5vw, 36px)',
-                    borderRadius: '20px 8px 8px 8px',
                     background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,220,100,0.4) 50%, rgba(255,180,50,0.6) 100%)',
                     border: '1px solid rgba(255,255,255,0.5)',
-                    boxShadow: '0 2px 10px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)'
+                    boxShadow: '0 2px 10px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)',
+                    borderRadius: '20px 8px 8px 8px',
+                    padding: 'clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px)',
+                    gap: 'clamp(4px, 1vw, 6px)'
                   }}
                 >
-                  <img 
-                    src="/icons/thongbao.PNG" 
-                    alt="Notification" 
-                    style={{ width: 'clamp(18px, 5vw, 24px)', height: 'clamp(18px, 5vw, 24px)', objectFit: 'contain' }}
-                  />
-                  {/* Notification badge */}
-                  <div 
-                    className="absolute flex items-center justify-center"
-                    style={{
-                      bottom: '1px',
-                      right: '1px',
-                      width: 'clamp(12px, 3.2vw, 15px)',
-                      height: 'clamp(12px, 3.2vw, 15px)',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #ff6b6b 0%, #ee5a5a 100%)',
-                      border: '1.5px solid white',
-                      fontSize: 'clamp(7px, 2vw, 9px)',
-                      fontWeight: 'bold',
-                      color: 'white'
+                  <span style={{ fontSize: 'var(--fs-sm)' }}>🪙</span>
+                  <span 
+                    style={{ 
+                      fontSize: 'var(--fs-sm)', 
+                      fontWeight: '700',
+                      color: '#1a1a2e'
                     }}
                   >
-                    3
-                  </div>
-                </button>
+                    {user.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ')}
+                  </span>
+                </div>
               </div>
 
               {/* Glass background */}
@@ -232,7 +208,7 @@ export default function HomePage() {
                 {/* LVL + EXP Bar - Inside glass at bottom */}
                 <div className="px-2">
                   <div className="text-center mb-1">
-                    <span style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }} className="text-gray-600 font-semibold">LVL {user.level}/10</span>
+                    <span style={{ fontSize: 'var(--fs-sm)' }} className="text-gray-600 font-semibold">LVL {user.level}/10</span>
                   </div>
                   <div 
                     className="w-full rounded-full overflow-hidden"
@@ -253,74 +229,135 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Big Coin Display */}
-            <div className="flex justify-center items-center" style={{ marginTop: 'clamp(4px, 1vw, 6px)', marginBottom: 'clamp(4px, 1vw, 6px)' }}>
-              <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 8px)' }}>
-                <span style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>🪙</span>
-                <span 
-                  style={{ 
-                    fontSize: 'clamp(22px, 6vw, 28px)', 
-                    fontWeight: '800',
-                    color: '#1a1a2e',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            {/* Big Coin Display - removed, now shown in top bar */}
+
+            {/* Left Side Buttons - Vertical */}
+            <div className="flex flex-col items-start" style={{ marginLeft: '0', marginTop: 'clamp(10px, 3vw, 2px)', paddingLeft: 'clamp(4px, 1vw, 6px)', zIndex: 10, gap: 'clamp(10px, 2.5vw, 14px)' }}>
+              {/* Rank Button with icon on top */}
+              <button
+                onClick={() => setShowRankModal(true)}
+                className="flex flex-col transition-all hover:scale-105"
+                style={{ 
+                  gap: '0', 
+                  width: 'clamp(70px, 19vw, 85px)', 
+                  animation: 'bubble-float 3s ease-in-out infinite',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 'clamp(4px, 1vw, 6px)',
+                  cursor: 'pointer',
+                }}
+              >
+                <div 
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 'clamp(36px, 10vw, 46px)',
+                    height: 'clamp(36px, 10vw, 46px)',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.4)',
+                    backdropFilter: 'blur(20px)',
+                    border: '2px solid rgba(255, 255, 255, 0.5)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    alignSelf: 'center',
+                    marginBottom: 'clamp(-8px, -2vw, -6px)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
                   }}
                 >
-                  {user.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ')}
-                </span>
-              </div>
-            </div>
-
-            {/* Left Side Buttons - Vertical below coin */}
-            <div className="flex flex-col" style={{ marginLeft: 'clamp(2px, 1vw, 4px)', zIndex: 10, gap: 'clamp(4px, 1vw, 6px)' }}>
-              <button 
-                onClick={() => setShowRankModal(true)}
-                className="flex items-center transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, #7DD3FC, #38BDF8)',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                  boxShadow: '0 2px 8px rgba(56,189,248,0.3)',
-                  width: 'clamp(72px, 20vw, 90px)',
-                  height: 'clamp(26px, 7vw, 32px)',
-                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
-                  paddingLeft: 'clamp(6px, 1.5vw, 8px)',
-                  gap: 'clamp(4px, 1vw, 6px)'
-                }}
-              >
-                <img src={getUserRankTier(user.tokenBalance).icon} alt="Rank" style={{ width: 'clamp(16px, 4.5vw, 20px)', height: 'clamp(16px, 4.5vw, 20px)', objectFit: 'contain' }} />
-                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }}>
-                  {getUserRankTier(user.tokenBalance).name}
-                </span>
+                  <img 
+                    src={getUserRankTier(user.tokenBalance).icon} 
+                    alt="Rank" 
+                    style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(22px, 6vw, 30px)', objectFit: 'contain' }} 
+                  />
+                </div>
+                <div 
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.35)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                    width: '100%',
+                    height: 'clamp(26px, 7vw, 32px)',
+                    borderRadius: 'clamp(13px, 3.5vw, 16px)',
+                    paddingTop: 'clamp(8px, 2vw, 10px)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <span className="font-bold" style={{ fontSize: 'var(--fs-xs)', color: '#1e3a5f' }}>
+                    Rank
+                  </span>
+                </div>
               </button>
 
-              {/* Spin Button */}
-              <button 
+              {/* Spin Button with icon on top */}
+              <button
                 onClick={() => setShowSpinModal(true)}
-                className="flex items-center transition-all hover:scale-105 relative"
-                style={{
-                  background: 'linear-gradient(135deg, #FECACA, #FCA5A5)',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                  boxShadow: '0 2px 8px rgba(252,165,165,0.3)',
-                  width: 'clamp(72px, 20vw, 90px)',
-                  height: 'clamp(26px, 7vw, 32px)',
-                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
-                  paddingLeft: 'clamp(6px, 1.5vw, 8px)',
-                  gap: 'clamp(4px, 1vw, 6px)'
+                className="flex flex-col relative transition-all hover:scale-105"
+                style={{ 
+                  gap: '0', 
+                  width: 'clamp(70px, 19vw, 85px)', 
+                  animation: 'bubble-float-delayed 3.5s ease-in-out infinite',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 'clamp(4px, 1vw, 6px)',
+                  cursor: 'pointer',
                 }}
               >
-                <img src="/icons/spin.PNG" alt="Spin" style={{ width: 'clamp(16px, 4.5vw, 20px)', height: 'clamp(16px, 4.5vw, 20px)', objectFit: 'contain' }} />
-                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }}>Spin</span>
+                <div 
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 'clamp(36px, 10vw, 46px)',
+                    height: 'clamp(36px, 10vw, 46px)',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.4)',
+                    backdropFilter: 'blur(20px)',
+                    border: '2px solid rgba(255, 255, 255, 0.5)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    alignSelf: 'center',
+                    marginBottom: 'clamp(-8px, -2vw, -6px)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <img 
+                    src="/icons/spin.PNG" 
+                    alt="Spin" 
+                    style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(22px, 6vw, 30px)', objectFit: 'contain' }} 
+                  />
+                </div>
+                <div 
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.35)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                    width: '100%',
+                    height: 'clamp(26px, 7vw, 32px)',
+                    borderRadius: 'clamp(13px, 3.5vw, 16px)',
+                    paddingTop: 'clamp(8px, 2vw, 10px)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <span className="font-bold" style={{ fontSize: 'var(--fs-xs)', color: '#1e3a5f' }}>Spin</span>
+                </div>
                 {spinsLeft > 0 && (
                   <div 
-                    className="absolute -top-1 -right-1 flex items-center justify-center"
+                    className="absolute flex items-center justify-center"
                     style={{
-                      width: 'clamp(14px, 3.5vw, 18px)',
-                      height: 'clamp(14px, 3.5vw, 18px)',
+                      top: 'clamp(4px, 1vw, 6px)',
+                      right: 'clamp(10px, 2.5vw, 14px)',
+                      width: 'clamp(16px, 4vw, 20px)',
+                      height: 'clamp(16px, 4vw, 20px)',
                       borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #F87171, #EF4444)',
-                      border: '1.5px solid white',
-                      fontSize: 'clamp(8px, 2.2vw, 10px)',
+                      background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+                      border: '2px solid white',
+                      fontSize: 'var(--fs-xs)',
                       fontWeight: 'bold',
-                      color: 'white'
+                      color: 'white',
+                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                      zIndex: 3,
+                      pointerEvents: 'none',
                     }}
                   >
                     {spinsLeft}
@@ -328,26 +365,57 @@ export default function HomePage() {
                 )}
               </button>
 
-              {/* Quest Button */}
-              <button 
+              {/* Quest Button with icon on top */}
+              <button
                 onClick={() => handleTabChange('quest')}
-                className="flex items-center transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, #D9F99D, #BEF264)',
-                  border: '1px solid rgba(255,255,255,0.4)',
-                  boxShadow: '0 2px 8px rgba(190,242,100,0.3)',
-                  width: 'clamp(72px, 20vw, 90px)',
-                  height: 'clamp(26px, 7vw, 32px)',
-                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
-                  paddingLeft: 'clamp(6px, 1.5vw, 8px)',
-                  gap: 'clamp(4px, 1vw, 6px)'
+                className="flex flex-col transition-all hover:scale-105"
+                style={{ 
+                  gap: '0', 
+                  width: 'clamp(70px, 19vw, 85px)', 
+                  animation: 'bubble-float-slow 4s ease-in-out infinite',
+                  background: 'transparent',
+                  border: 'none',
+                  padding: 'clamp(4px, 1vw, 6px)',
+                  cursor: 'pointer',
                 }}
               >
-                <span style={{ fontSize: 'clamp(14px, 4vw, 18px)', lineHeight: 1, width: 'clamp(16px, 4.5vw, 20px)', textAlign: 'center' }}>🎁</span>
-                <span className="text-gray-700 font-bold" style={{ fontSize: 'clamp(10px, 2.8vw, 12px)' }}>Quest</span>
+                <div 
+                  className="flex items-center justify-center"
+                  style={{
+                    width: 'clamp(36px, 10vw, 46px)',
+                    height: 'clamp(36px, 10vw, 46px)',
+                    borderRadius: '50%',
+                    background: 'rgba(255, 255, 255, 0.4)',
+                    backdropFilter: 'blur(20px)',
+                    border: '2px solid rgba(255, 255, 255, 0.5)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
+                    alignSelf: 'center',
+                    marginBottom: 'clamp(-8px, -2vw, -6px)',
+                    zIndex: 2,
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <span style={{ fontSize: 'clamp(20px, 5.5vw, 26px)', lineHeight: 1 }}>🎁</span>
+                </div>
+                <div 
+                  className="flex items-center justify-center"
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.35)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255, 255, 255, 0.3)',
+                    boxShadow: '0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
+                    width: '100%',
+                    height: 'clamp(26px, 7vw, 32px)',
+                    borderRadius: 'clamp(13px, 3.5vw, 16px)',
+                    paddingTop: 'clamp(8px, 2vw, 10px)',
+                    pointerEvents: 'none',
+                  }}
+                >
+                  <span className="font-bold" style={{ fontSize: 'var(--fs-xs)', color: '#1e3a5f' }}>Quest</span>
+                </div>
               </button>
             </div>            {/* Hero Section */}
-            <div className="flex-1 flex items-center justify-center">
+            <div className="flex-1 flex items-center justify-center" style={{ marginTop: 'clamp(-80px, -20vw, -40px)', transform: 'scale(0.8)' }}>
               <HeroSection mascotImageUrl="/mascot.png" showAnimation={true} />
             </div>
           </div>
@@ -372,6 +440,28 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen-safe flex flex-col pb-24 safe-area-inset-top relative">
+      {/* Light rays - absolute at top, behind glass bar */}
+      {activeTab === 'home' && (
+        <div 
+          className="absolute pointer-events-none"
+          style={{
+            top: 0,
+            left: 0,
+            right: 0,
+            height: '600px',
+            zIndex: 0,
+          }}
+          aria-hidden="true"
+        >
+          <div className="light-ray-diagonal" style={{ left: '10%', transform: 'rotate(15deg)', width: '20px' }} />
+          <div className="light-ray-diagonal" style={{ left: '22%', transform: 'rotate(10deg)', width: '18px' }} />
+          <div className="light-ray-diagonal" style={{ left: '35%', transform: 'rotate(5deg)', width: '25px' }} />
+          <div className="light-ray-diagonal" style={{ left: '50%', transform: 'rotate(0deg) translateX(-50%)', width: '28px' }} />
+          <div className="light-ray-diagonal" style={{ left: '65%', transform: 'rotate(-5deg)', width: '22px' }} />
+          <div className="light-ray-diagonal" style={{ left: '78%', transform: 'rotate(-10deg)', width: '18px' }} />
+          <div className="light-ray-diagonal" style={{ left: '90%', transform: 'rotate(-15deg)', width: '20px' }} />
+        </div>
+      )}
       <main className="flex-1 flex flex-col px-6" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -403,7 +493,7 @@ export default function HomePage() {
                 <span className="text-white/60 text-lg">✕</span>
               </button>
 
-              <div className="text-cyan-400 text-xs font-semibold tracking-widest mb-4">YOUR RANK</div>
+              <div className="text-cyan-400 font-semibold tracking-widest mb-4" style={{ fontSize: 'var(--fs-xs)' }}>YOUR RANK</div>
               
               {/* Current Rank Display */}
               <div className="flex justify-center">
@@ -414,10 +504,10 @@ export default function HomePage() {
                 />
               </div>
               
-              <div className="text-white font-bold text-2xl mt-2">
+              <div className="text-white font-bold" style={{ fontSize: 'var(--fs-lg)', marginTop: '8px' }}>
                 {getUserRankTier(user?.tokenBalance || 0).name}
               </div>
-              <div className="text-cyan-400 text-base mt-1">
+              <div className="text-cyan-400" style={{ fontSize: 'var(--fs-sm)', marginTop: '4px' }}>
                 {(user?.tokenBalance || 0).toLocaleString()} points
               </div>
             </div>
@@ -446,7 +536,7 @@ export default function HomePage() {
                   <div className="flex items-center justify-between">
                     <div className="flex flex-col items-center" style={{ marginRight: '12px' }}>
                       <img src={currentTier.icon} alt={currentTier.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
-                      <span className="text-white/60 text-xs mt-1">{currentTier.name}</span>
+                      <span className="text-white/60" style={{ fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{currentTier.name}</span>
                     </div>
                     
                     {/* Progress Bar with percentage inside */}
@@ -463,8 +553,8 @@ export default function HomePage() {
                           }}
                         />
                         <span 
-                          className="absolute inset-0 flex items-center justify-center text-white text-xs font-semibold"
-                          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+                          className="absolute inset-0 flex items-center justify-center text-white font-semibold"
+                          style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)', fontSize: 'var(--fs-xs)' }}
                         >
                           {Math.round(progressPercent)}%
                         </span>
@@ -473,7 +563,7 @@ export default function HomePage() {
                     
                     <div className="flex flex-col items-center opacity-60" style={{ marginLeft: '12px' }}>
                       <img src={nextTier.icon} alt={nextTier.name} style={{ width: '50px', height: '50px', objectFit: 'contain' }} />
-                      <span className="text-white/60 text-xs mt-1">{nextTier.name}</span>
+                      <span className="text-white/60" style={{ fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{nextTier.name}</span>
                     </div>
                   </div>
                 </div>
@@ -482,7 +572,7 @@ export default function HomePage() {
 
             {/* All Ranks Grid */}
             <div className="mx-6 mb-6" style={{ marginTop: '24px' }}>
-              <div className="text-white/40 text-xs font-semibold tracking-wider mb-3">ALL RANKS</div>
+              <div className="text-white/40 font-semibold tracking-wider mb-3" style={{ fontSize: 'var(--fs-xs)' }}>ALL RANKS</div>
               <div className="grid grid-cols-3 gap-3">
                 {RANK_TIERS.map((tier) => {
                   const currentTier = getUserRankTier(user?.tokenBalance || 0);
@@ -504,12 +594,12 @@ export default function HomePage() {
                       }}
                     >
                       <img src={tier.icon} alt={tier.name} style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-                      <span className="text-white text-xs font-semibold mt-1">{tier.name}</span>
-                      <span className="text-white/40 text-[10px]">
+                      <span className="text-white font-semibold" style={{ fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{tier.name}</span>
+                      <span className="text-white/40" style={{ fontSize: 'var(--fs-xs)' }}>
                         {tier.minPoints >= 1000 ? `${tier.minPoints/1000}K` : tier.minPoints}
                       </span>
                       {tier.bonus > 0 && (
-                        <span className="text-green-400 text-[10px] font-medium">
+                        <span className="text-green-400 font-medium" style={{ fontSize: 'var(--fs-xs)' }}>
                           +{tier.bonus}% bonus
                         </span>
                       )}

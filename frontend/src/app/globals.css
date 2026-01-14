@@ -25,6 +25,22 @@
   
   /* Background */
   --foreground: #000000;
+
+  /* Typography - Unified Font Sizes (Compact) */
+  --fs-xs: clamp(9px, 2.2vw, 10px);       /* Extra small - badges, hints */
+  --fs-sm: clamp(10px, 2.5vw, 12px);      /* Small - descriptions, labels */
+  --fs-base: clamp(12px, 3vw, 14px);      /* Base - body text, buttons */
+  --fs-md: clamp(14px, 3.5vw, 16px);      /* Medium - card titles */
+  --fs-lg: clamp(16px, 4vw, 18px);        /* Large - section headers */
+  --fs-xl: clamp(18px, 4.5vw, 22px);      /* Extra large - page titles */
+  --fs-2xl: clamp(22px, 5.5vw, 28px);     /* 2X large - hero numbers */
+  
+  /* Icon Sizes */
+  --icon-xs: clamp(12px, 3vw, 14px);
+  --icon-sm: clamp(14px, 3.5vw, 18px);
+  --icon-md: clamp(18px, 4.5vw, 22px);
+  --icon-lg: clamp(24px, 6vw, 30px);
+  --icon-xl: clamp(32px, 8vw, 40px);
 }
 
 @theme inline {
@@ -869,5 +885,33 @@ body {
   }
   75% {
     transform: skewX(2deg);
+  }
+}
+
+/* Bubble floating animation for buttons */
+@keyframes bubble-float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes bubble-float-delayed {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+@keyframes bubble-float-slow {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
   }
 }

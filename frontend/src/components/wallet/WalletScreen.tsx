@@ -56,7 +56,7 @@ export function WalletScreen() {
       {/* Title */}
       <h1 
         className="font-bold"
-        style={{ fontSize: 'clamp(16px, 4.5vw, 20px)', color: '#1a1a2e', marginBottom: 'clamp(12px, 3vw, 20px)' }}
+        style={{ fontSize: 'var(--fs-md)', color: '#1a1a2e', marginBottom: 'clamp(10px, 2.5vw, 16px)' }}
       >
         Your balance
       </h1>
@@ -78,15 +78,15 @@ export function WalletScreen() {
           className="flex items-center"
           style={{
             background: 'linear-gradient(90deg, #6a7080, #2a2f3a)',
-            borderRadius: 'clamp(8px, 2vw, 12px)',
-            padding: 'clamp(10px, 2.5vw, 14px) clamp(12px, 3vw, 16px)',
-            gap: 'clamp(8px, 2vw, 12px)',
+            borderRadius: 'clamp(6px, 1.5vw, 10px)',
+            padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 14px)',
+            gap: 'clamp(6px, 1.5vw, 10px)',
           }}
         >
-          <span style={{ fontSize: 'clamp(18px, 5vw, 24px)', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'var(--fs-lg)', fontWeight: '700', color: '#ffffff' }}>
             {tokenBalance.toLocaleString()}
           </span>
-          <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', color: '#ffffff', fontWeight: '500' }}>points</span>
+          <span style={{ fontSize: 'var(--fs-sm)', color: '#ffffff', fontWeight: '500' }}>points</span>
         </div>
       </div>
 
@@ -116,7 +116,7 @@ export function WalletScreen() {
               borderRadius: 'clamp(8px, 2vw, 12px)',
               border: '2px solid rgba(0, 136, 204, 0.3)',
               background: 'rgba(255, 255, 255, 0.9)',
-              fontSize: 'clamp(12px, 3vw, 15px)',
+              fontSize: 'var(--fs-sm)',
               outline: 'none',
               transition: 'border-color 0.2s',
             }}
@@ -133,15 +133,15 @@ export function WalletScreen() {
               className="flex-1 flex items-center justify-center transition-all hover:scale-[1.02] disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #0088CC, #00AAFF)',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                padding: 'clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px)',
+                borderRadius: 'clamp(6px, 1.5vw, 10px)',
+                padding: 'clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 10px)',
                 border: 'none',
                 cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
-                gap: 'clamp(4px, 1vw, 8px)',
+                gap: 'clamp(3px, 0.8vw, 6px)',
               }}
             >
-              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>💎</span>
-              <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '700', color: '#ffffff' }}>
+              <span style={{ fontSize: 'var(--fs-base)' }}>💎</span>
+              <span style={{ fontSize: 'var(--fs-sm)', fontWeight: '700', color: '#ffffff' }}>
                 {isConnecting ? 'TESTING...' : 'TEST'}
               </span>
             </button>
@@ -153,15 +153,15 @@ export function WalletScreen() {
               className="flex-1 flex items-center justify-center transition-all hover:scale-[1.02] disabled:opacity-50"
               style={{
                 background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                padding: 'clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px)',
+                borderRadius: 'clamp(6px, 1.5vw, 10px)',
+                padding: 'clamp(8px, 2vw, 12px) clamp(6px, 1.5vw, 10px)',
                 border: 'none',
                 cursor: isConnecting || !inputWalletId.trim() ? 'not-allowed' : 'pointer',
-                gap: 'clamp(4px, 1vw, 8px)',
+                gap: 'clamp(3px, 0.8vw, 6px)',
               }}
             >
-              <span style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>✓</span>
-              <span style={{ fontSize: 'clamp(12px, 3vw, 15px)', fontWeight: '700', color: '#ffffff' }}>
+              <span style={{ fontSize: 'var(--fs-base)' }}>✓</span>
+              <span style={{ fontSize: 'var(--fs-sm)', fontWeight: '700', color: '#ffffff' }}>
                 CONFIRM
               </span>
             </button>
@@ -180,7 +180,7 @@ export function WalletScreen() {
               }}
             >
               <span style={{ 
-                fontSize: 'clamp(11px, 2.8vw, 14px)', 
+                fontSize: 'var(--fs-sm)', 
                 color: connectStatus === 'success' ? '#16a34a' : '#dc2626',
                 fontWeight: '500'
               }}>
@@ -195,19 +195,19 @@ export function WalletScreen() {
       <div 
         style={{
           width: '90%',
-          maxWidth: 'clamp(260px, 72vw, 320px)',
-          marginTop: 'clamp(12px, 3vw, 18px)',
+          maxWidth: 'clamp(240px, 68vw, 300px)',
+          marginTop: 'clamp(10px, 2.5vw, 14px)',
           background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-          borderRadius: 'clamp(10px, 2.5vw, 14px)',
-          padding: 'clamp(10px, 2.5vw, 14px)',
+          borderRadius: 'clamp(8px, 2vw, 12px)',
+          padding: 'clamp(8px, 2vw, 12px)',
         }}
       >
         <div className="flex items-center justify-between">
-          <div className="flex items-center" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
-            <span style={{ fontSize: 'clamp(20px, 5.5vw, 26px)' }}>🪙</span>
-            <span style={{ fontSize: 'clamp(14px, 3.5vw, 17px)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
+          <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
+            <span style={{ fontSize: 'var(--fs-lg)' }}>🪙</span>
+            <span style={{ fontSize: 'var(--fs-sm)', fontWeight: '600', color: '#ffffff' }}>Game Coins</span>
           </div>
-          <span style={{ fontSize: 'clamp(16px, 4vw, 20px)', fontWeight: '700', color: '#ffffff' }}>
+          <span style={{ fontSize: 'var(--fs-md)', fontWeight: '700', color: '#ffffff' }}>
             {user?.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ') || '0'}
           </span>
         </div>
@@ -218,9 +218,9 @@ export function WalletScreen() {
         className="text-center"
         style={{ 
           color: 'rgba(255,255,255,0.5)', 
-          fontSize: 'clamp(12px, 3vw, 15px)',
-          maxWidth: 'clamp(220px, 65vw, 280px)',
-          marginTop: 'clamp(12px, 3vw, 18px)'
+          fontSize: 'var(--fs-sm)',
+          maxWidth: 'clamp(200px, 60vw, 260px)',
+          marginTop: 'clamp(10px, 2.5vw, 14px)'
         }}
       >
         Enter your wallet address to connect and withdraw earnings

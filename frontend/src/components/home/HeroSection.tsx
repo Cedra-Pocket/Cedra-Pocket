@@ -26,14 +26,15 @@ export function HeroSection({
         <div 
           className="fixed pointer-events-none overflow-hidden"
           style={{
-            top: '130px',
+            top: '0',
             left: '0',
             right: '0',
-            width: '100%',
-            maxWidth: '390px',
-            height: '450px',
-            zIndex: -1,
-            margin: '0 auto'
+            width: '120%',
+            maxWidth: '400px',
+            height: '100vh',
+            zIndex: 2,
+            margin: '0 auto',
+            transform: 'translateY(-350px)',
           }}
           aria-hidden="true"
         >

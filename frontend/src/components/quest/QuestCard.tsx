@@ -44,20 +44,20 @@ function formatRewardAmount(amount: number): string {
 const RewardBadge = ({ type, amount }: { type: Quest['reward']['type']; amount: number }) => (
   <div 
     style={{ 
-      minWidth: 'clamp(48px, 13vw, 64px)',
-      height: 'clamp(20px, 5.5vw, 28px)',
-      paddingLeft: 'clamp(6px, 1.5vw, 10px)',
-      paddingRight: 'clamp(6px, 1.5vw, 10px)',
+      minWidth: 'clamp(44px, 12vw, 56px)',
+      height: 'clamp(18px, 5vw, 24px)',
+      paddingLeft: 'clamp(5px, 1.2vw, 8px)',
+      paddingRight: 'clamp(5px, 1.2vw, 8px)',
       background: 'rgba(0, 0, 0, 0.1)',
-      borderRadius: 'clamp(8px, 2vw, 12px)',
+      borderRadius: 'clamp(6px, 1.5vw, 10px)',
       border: '1px solid rgba(0, 0, 0, 0.1)'
     }}
     className="flex items-center justify-center gap-1"
   >
-    <span style={{ fontSize: 'clamp(9px, 2.5vw, 12px)' }}>
+    <span style={{ fontSize: 'var(--fs-xs)' }}>
       <RewardIcon type={type} />
     </span>
-    <span style={{ color: '#1a1a2e', fontSize: 'clamp(8px, 2vw, 11px)' }} className="font-extrabold">
+    <span style={{ color: '#1a1a2e', fontSize: 'var(--fs-xs)' }} className="font-extrabold">
       +{formatRewardAmount(amount)}
     </span>
   </div>
@@ -69,7 +69,7 @@ const RewardBadge = ({ type, amount }: { type: Quest['reward']['type']; amount: 
 const ClaimButton = ({ onClick }: { onClick?: () => void }) => (
   <button 
     onClick={onClick}
-    style={{ width: 'clamp(48px, 13vw, 64px)', height: 'clamp(20px, 5.5vw, 28px)', fontSize: 'clamp(8px, 2vw, 11px)' }}
+    style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-xs)' }}
     className="rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold shadow-lg shadow-pink-500/30 border border-pink-400/30 hover:scale-105 transition-transform flex items-center justify-center"
   >
     Claim
@@ -129,24 +129,24 @@ const QuestDetailModal = ({
           {/* Quest Content */}
           <div className="flex-1 min-w-0">
             {/* Title */}
-            <h3 style={{ color: '#1a1a2e', fontSize: 'clamp(10px, 2.8vw, 13px)', marginBottom: 'clamp(3px, 0.8vw, 6px)' }} className="font-bold">
+            <h3 style={{ color: '#1a1a2e', fontSize: 'var(--fs-base)', marginBottom: 'clamp(2px, 0.5vw, 4px)' }} className="font-bold">
               {quest.title}
             </h3>
 
             {/* Description - full text */}
-            <p style={{ color: 'rgba(0, 0, 0, 0.6)', fontSize: 'clamp(8px, 2vw, 11px)', lineHeight: '1.4', marginBottom: 'clamp(8px, 2vw, 12px)' }}>
+            <p style={{ color: 'rgba(0, 0, 0, 0.6)', fontSize: 'var(--fs-sm)', lineHeight: '1.4', marginBottom: 'clamp(6px, 1.5vw, 10px)' }}>
               {quest.description}
             </p>
 
             {/* Reward + Action */}
-            <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
+            <div className="flex items-center" style={{ gap: 'clamp(5px, 1.2vw, 8px)' }}>
               <RewardBadge type={quest.reward.type} amount={quest.reward.amount} />
               <button
                 onClick={() => {
                   onAction();
                   onClose();
                 }}
-                style={{ width: 'clamp(48px, 13vw, 64px)', height: 'clamp(20px, 5.5vw, 28px)', fontSize: 'clamp(8px, 2vw, 11px)' }}
+                style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-xs)' }}
                 className="rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold shadow-lg shadow-pink-500/30 border border-pink-400/30 hover:scale-105 transition-transform flex items-center justify-center"
               >
                 {isCompleted ? 'Claim' : 'Go'}
@@ -201,8 +201,8 @@ export function QuestCard({ quest, onAction }: QuestCardProps) {
             <h3 
               style={{ 
                 color: '#1a1a2e', 
-                fontSize: 'clamp(9px, 2.5vw, 12px)', 
-                marginBottom: 'clamp(1px, 0.3vw, 3px)',
+                fontSize: 'var(--fs-base)', 
+                marginBottom: 'clamp(1px, 0.2vw, 2px)',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
                 WebkitBoxOrient: 'vertical',
@@ -218,7 +218,7 @@ export function QuestCard({ quest, onAction }: QuestCardProps) {
             <p 
               style={{ 
                 color: 'rgba(0, 0, 0, 0.6)', 
-                fontSize: 'clamp(7px, 1.8vw, 9px)',
+                fontSize: 'var(--fs-sm)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'

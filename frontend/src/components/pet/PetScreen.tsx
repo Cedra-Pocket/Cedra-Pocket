@@ -194,29 +194,99 @@ export function PetScreen() {
 
   return (
     <div 
-      className="flex flex-col items-center hide-scrollbar" 
+      className="flex flex-col hide-scrollbar relative" 
       style={{ 
-        paddingTop: 'clamp(8px, 2vw, 14px)', 
         backgroundColor: 'transparent',
         height: 'calc(100vh - clamp(56px, 14vw, 72px))',
         overflowY: 'auto',
         paddingBottom: 'clamp(60px, 16vw, 80px)'
       }}
     >
-      {/* Pet Mascot - Outside the card */}
+      {/* Top Bar */}
       <div 
-        className="relative flex flex-col items-center"
-        style={{ marginBottom: 'clamp(-25px, -7vw, -35px)', zIndex: 10 }}
+        className="flex items-center justify-between w-full"
+        style={{ padding: 'clamp(8px, 2vw, 12px) clamp(12px, 3vw, 16px)' }}
+      >
+        {/* Level Circle - Left */}
+        <div 
+          className="relative flex items-center justify-center"
+          style={{
+            width: 'clamp(40px, 11vw, 50px)',
+            height: 'clamp(40px, 11vw, 50px)',
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.35)',
+            backdropFilter: 'blur(24px)',
+            border: '2px solid rgba(255, 255, 255, 0.5)',
+            boxShadow: '0 4px 15px rgba(0,0,0,0.15), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          {/* Progress ring */}
+          <svg 
+            className="absolute" 
+            viewBox="0 0 40 40"
+            style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}
+          >
+            <circle
+              cx="20"
+              cy="20"
+              r="17"
+              fill="none"
+              stroke="rgba(255,255,255,0.3)"
+              strokeWidth="3"
+            />
+            <circle
+              cx="20"
+              cy="20"
+              r="17"
+              fill="none"
+              stroke="#4facfe"
+              strokeWidth="3"
+              strokeDasharray={`${(pet.exp / pet.maxExp) * 107} 107`}
+              strokeLinecap="round"
+            />
+          </svg>
+          <span style={{ fontSize: 'var(--fs-lg)', fontWeight: '700', color: '#1e3a5f' }}>{pet.level}</span>
+        </div>
+
+        {/* Pet Name - Center */}
+        <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: '700', color: '#1e3a5f', textShadow: '0 1px 2px rgba(255,255,255,0.3)' }}>
+          {petName}
+        </h2>
+
+        {/* Coins - Right */}
+        <div 
+          className="flex items-center"
+          style={{
+            background: 'rgba(255, 255, 255, 0.35)',
+            backdropFilter: 'blur(24px)',
+            borderRadius: 'clamp(15px, 4vw, 20px)',
+            padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
+            gap: 'clamp(4px, 1vw, 6px)',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 3px 8px rgba(0,0,0,0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
+          }}
+        >
+          <span style={{ fontSize: 'var(--fs-base)' }}>🪙</span>
+          <span style={{ fontSize: 'var(--fs-sm)', fontWeight: '700', color: '#1e3a5f' }}>
+            {coinsPerMin}/min
+          </span>
+        </div>
+      </div>
+
+      {/* Pet Mascot - Centered */}
+      <div 
+        className="relative flex flex-col items-center flex-1 justify-center"
+        style={{ zIndex: 10 }}
       >
         {/* Glow effect behind mascot */}
         <div 
           className="absolute"
           style={{
-            width: 'clamp(90px, 24vw, 120px)',
-            height: 'clamp(90px, 24vw, 120px)',
+            width: 'clamp(300px, 100vw, 400px)',
+            height: 'clamp(300px, 100vw, 400px)',
             background: 'radial-gradient(circle, rgba(255,215,0,0.4) 0%, rgba(255,165,0,0.2) 40%, transparent 70%)',
             borderRadius: '50%',
-            filter: 'blur(20px)',
+            filter: 'blur(30px)',
             animation: 'glowPulse 2s ease-in-out infinite',
           }}
         />
@@ -235,7 +305,7 @@ export function PetScreen() {
             className="absolute"
             style={{ 
               top: '-20px', 
-              fontSize: 'clamp(14px, 4vw, 18px)',
+              fontSize: 'clamp(16px, 5vw, 22px)',
               animation: 'floatUp 1s ease-out forwards',
               textShadow: '0 2px 10px rgba(255,215,0,0.5)',
             }}
@@ -245,195 +315,100 @@ export function PetScreen() {
         )}
         
         <img 
-          src="/mascot.png" 
+          src="/pet.png" 
           alt="Pet"
           className={isPlaying ? 'animate-bounce-pet' : isFeeding ? 'animate-pulse-pet' : 'animate-float-pet'}
           style={{ 
-            width: 'clamp(90px, 24vw, 120px)',
-            height: 'clamp(90px, 24vw, 120px)',
+            width: '95vw',
+            maxWidth: '500px',
+            height: 'auto',
             objectFit: 'contain',
-            filter: 'drop-shadow(0 10px 25px rgba(0,0,0,0.4)) drop-shadow(0 0 20px rgba(255,215,0,0.3))',
+            filter: 'drop-shadow(0 15px 35px rgba(0,0,0,0.4)) drop-shadow(0 0 30px rgba(255,215,0,0.3))',
             position: 'relative',
             zIndex: 2,
           }}
         />
       </div>
 
-      {/* Info Card */}
+      {/* Bottom Status Bars - Like Talking Tom */}
       <div 
-        style={{
-          width: '90%',
-          maxWidth: 'clamp(260px, 72vw, 320px)',
-          background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-          borderRadius: 'clamp(10px, 2.5vw, 14px)',
-          padding: 'clamp(28px, 7vw, 38px) clamp(12px, 3vw, 16px) clamp(12px, 3vw, 16px)',
-          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
-          border: '1px solid rgba(255,255,255,0.5)',
+        className="flex items-end justify-center"
+        style={{ 
+          padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 24px)',
+          gap: 'clamp(16px, 4vw, 24px)'
         }}
       >
-        {/* Pet Name & Level */}
-        <div className="text-center" style={{ marginBottom: 'clamp(10px, 2.5vw, 14px)' }}>
-          <h2 style={{ fontSize: 'clamp(16px, 4.5vw, 20px)', fontWeight: '700', color: '#1a1a2e' }}>
-            {petName}
-          </h2>
-          <div className="flex items-center justify-center" style={{ gap: 'clamp(8px, 2vw, 12px)', marginTop: 'clamp(4px, 1vw, 6px)' }}>
-            <span 
-              style={{ 
-                background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                padding: 'clamp(3px, 0.8vw, 5px) clamp(8px, 2vw, 12px)',
-                borderRadius: 'clamp(8px, 2vw, 12px)',
-                fontSize: 'clamp(12px, 3vw, 14px)', 
-                fontWeight: '600', 
-                color: '#fff' 
-              }}
-            >
-              Lv.{pet.level}
-            </span>
-            <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>
-              EXP: {pet.exp}/{pet.maxExp}
-            </span>
-          </div>
-        </div>
-
-        {/* Coin Production Info */}
-        <div 
-          style={{
-            background: 'linear-gradient(135deg, rgba(255,215,0,0.2), rgba(255,165,0,0.2))',
-            borderRadius: 'clamp(8px, 2vw, 12px)',
-            padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 14px)',
-            marginBottom: 'clamp(10px, 2.5vw, 14px)',
-            border: '1px solid rgba(255,215,0,0.3)',
-          }}
-        >
-          <div className="flex items-center justify-between">
-            <div className="flex items-center" style={{ gap: 'clamp(4px, 1vw, 6px)' }}>
-              <span style={{ fontSize: 'clamp(16px, 4vw, 20px)' }}>🪙</span>
-              <span style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '600', color: '#1a1a2e' }}>
-                {coinsPerMin}/min
-              </span>
-            </div>
-            
-            {/* Timer or Claim button in same row */}
-            {pet.pendingCoins > 0 ? (
-              <button
-                onClick={collectCoins}
-                className="flex items-center transition-all hover:scale-105 active:scale-95"
-                style={{
-                  background: 'linear-gradient(135deg, #22c55e, #16a34a)',
-                  borderRadius: 'clamp(6px, 1.5vw, 8px)',
-                  padding: 'clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px)',
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(34, 197, 94, 0.4)',
-                  gap: 'clamp(3px, 0.8vw, 5px)',
-                }}
-              >
-                <span style={{ fontSize: 'clamp(12px, 3vw, 15px)' }}>🎁</span>
-                <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', fontWeight: '700', color: '#fff' }}>
-                  +{pet.pendingCoins}
-                </span>
-              </button>
-            ) : (
-              <div className="flex items-center" style={{ gap: 'clamp(4px, 1vw, 6px)' }}>
-                <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>
-                  Next:
-                </span>
-                <span style={{ 
-                  fontSize: 'clamp(13px, 3.2vw, 15px)', 
-                  fontWeight: '700', 
-                  color: '#FFA500',
-                  fontFamily: 'monospace'
-                }}>
-                  {Math.floor(coinTimer / 60)}:{(coinTimer % 60).toString().padStart(2, '0')}
-                </span>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Stats Bars */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(10px, 2.5vw, 14px)' }}>
-          {/* Hunger */}
-          <div>
-            <div className="flex justify-between" style={{ marginBottom: 'clamp(2px, 0.5vw, 4px)' }}>
-              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>🍖 Hunger</span>
-              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>{pet.hunger}%</span>
-            </div>
-            <div style={{ height: 'clamp(6px, 1.5vw, 8px)', background: 'rgba(0,0,0,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${pet.hunger}%`, height: '100%', background: 'linear-gradient(90deg, #FF6B6B, #FF8E53)', transition: 'width 0.3s' }} />
-            </div>
-          </div>
-
-          {/* Happiness */}
-          <div>
-            <div className="flex justify-between" style={{ marginBottom: 'clamp(2px, 0.5vw, 4px)' }}>
-              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>😊 Happiness</span>
-              <span style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>{pet.happiness}%</span>
-            </div>
-            <div style={{ height: 'clamp(6px, 1.5vw, 8px)', background: 'rgba(0,0,0,0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${pet.happiness}%`, height: '100%', background: 'linear-gradient(90deg, #FFD700, #FFA500)', transition: 'width 0.3s' }} />
-            </div>
-          </div>
-        </div>
-
-        {/* Action Buttons */}
-        <div 
-          className="flex justify-center"
-          style={{ gap: 'clamp(10px, 2.5vw, 14px)' }}
-        >
-          {/* Feed Button */}
-          <button
-            onClick={handleFeed}
-            disabled={(user?.tokenBalance || 0) < 10 || pet.hunger >= 100}
-            className="flex-1 flex flex-col items-center justify-center transition-all hover:scale-105 disabled:opacity-50"
-            style={{
-              background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
-              borderRadius: 'clamp(10px, 2.5vw, 14px)',
-              padding: 'clamp(10px, 2.5vw, 14px)',
-              border: 'none',
-              cursor: (user?.tokenBalance || 0) < 10 || pet.hunger >= 100 ? 'not-allowed' : 'pointer',
-            }}
-          >
-            <span style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>🍖</span>
-            <span style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '600', color: '#fff', marginTop: 'clamp(3px, 0.8vw, 5px)' }}>Feed</span>
-            <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: 'rgba(255,255,255,0.8)' }}>-10 🪙 | +5 EXP</span>
-          </button>
-
-          {/* Play Button */}
+        {/* Happiness */}
+        <div className="flex flex-col items-center">
+          <span style={{ fontSize: 'var(--fs-xs)', color: '#fff', marginBottom: '4px', fontWeight: '600' }}>{pet.happiness}%</span>
           <button
             onClick={handlePlay}
             disabled={(user?.tokenBalance || 0) < 20 || pet.happiness >= 100}
-            className="flex-1 flex flex-col items-center justify-center transition-all hover:scale-105 disabled:opacity-50"
+            className="flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-50"
             style={{
+              width: 'clamp(45px, 12vw, 55px)',
+              height: 'clamp(45px, 12vw, 55px)',
+              borderRadius: '50%',
               background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-              borderRadius: 'clamp(10px, 2.5vw, 14px)',
-              padding: 'clamp(10px, 2.5vw, 14px)',
-              border: 'none',
+              border: '2px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 4px 15px rgba(255,165,0,0.4)',
               cursor: (user?.tokenBalance || 0) < 20 || pet.happiness >= 100 ? 'not-allowed' : 'pointer',
             }}
           >
-            <span style={{ fontSize: 'clamp(22px, 6vw, 28px)' }}>🎾</span>
-            <span style={{ fontSize: 'clamp(12px, 3vw, 14px)', fontWeight: '600', color: '#fff', marginTop: 'clamp(3px, 0.8vw, 5px)' }}>Play</span>
-            <span style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: 'rgba(255,255,255,0.8)' }}>-20 🪙 | +10 EXP</span>
+            <span style={{ fontSize: 'var(--fs-lg)' }}>😊</span>
+          </button>
+        </div>
+
+        {/* Hunger */}
+        <div className="flex flex-col items-center">
+          <span style={{ fontSize: 'var(--fs-xs)', color: '#fff', marginBottom: '4px', fontWeight: '600' }}>{pet.hunger}%</span>
+          <button
+            onClick={handleFeed}
+            disabled={(user?.tokenBalance || 0) < 10 || pet.hunger >= 100}
+            className="flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-50"
+            style={{
+              width: 'clamp(45px, 12vw, 55px)',
+              height: 'clamp(45px, 12vw, 55px)',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #FF6B6B, #FF8E53)',
+              border: '2px solid rgba(255,255,255,0.5)',
+              boxShadow: '0 4px 15px rgba(255,107,107,0.4)',
+              cursor: (user?.tokenBalance || 0) < 10 || pet.hunger >= 100 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 'var(--fs-lg)' }}>🍖</span>
+          </button>
+        </div>
+
+        {/* Collect Coins */}
+        <div className="flex flex-col items-center">
+          <span style={{ fontSize: 'var(--fs-xs)', color: '#fff', marginBottom: '4px', fontWeight: '600' }}>
+            {pet.pendingCoins > 0 ? `+${pet.pendingCoins}` : `${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
+          </span>
+          <button
+            onClick={collectCoins}
+            disabled={pet.pendingCoins <= 0}
+            className="flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-50"
+            style={{
+              width: 'clamp(45px, 12vw, 55px)',
+              height: 'clamp(45px, 12vw, 55px)',
+              borderRadius: '50%',
+              background: pet.pendingCoins > 0 
+                ? 'linear-gradient(135deg, #22c55e, #16a34a)' 
+                : 'linear-gradient(135deg, #6b7280, #4b5563)',
+              border: '2px solid rgba(255,255,255,0.5)',
+              boxShadow: pet.pendingCoins > 0 
+                ? '0 4px 15px rgba(34,197,94,0.4)' 
+                : '0 4px 15px rgba(0,0,0,0.2)',
+              cursor: pet.pendingCoins <= 0 ? 'not-allowed' : 'pointer',
+            }}
+          >
+            <span style={{ fontSize: 'var(--fs-lg)' }}>🪙</span>
           </button>
         </div>
       </div>
 
-      {/* Level up bonus info */}
-      <div 
-        className="text-center"
-        style={{ 
-          marginTop: 'clamp(10px, 2.5vw, 14px)',
-          padding: '0 clamp(12px, 3vw, 16px)',
-        }}
-      >
-        <p style={{ fontSize: 'clamp(11px, 2.8vw, 13px)', color: '#666' }}>
-          🎯 Level up to earn more coins!
-        </p>
-        <p style={{ fontSize: 'clamp(10px, 2.5vw, 12px)', color: '#999', marginTop: '4px' }}>
-          Next level: {getCoinsPerMinute(pet.level + 1)} 🪙/min
-        </p>
-      </div>
+{/* Info Card - temporarily hidden */}
 
       {/* CSS Animation */}
       <style jsx>{`
