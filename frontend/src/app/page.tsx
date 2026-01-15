@@ -4,10 +4,10 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAppStore, useUser, useIsLoading, useError, NavigationTab } from '../store/useAppStore';
 import { HeroSection } from '../components/home';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
-import { LoadingSpinner } from '../components/shared';
+import { LoadingSpinner, LoadingScreen } from '../components/shared';
 import { QuestScreen } from '../components/quest';
 import { SpinModal } from '../components/spin';
-import { WalletScreen } from '../components/wallet';
+import { RewardScreen } from '../components/wallet';
 import { GameScreen } from '../components/game';
 import { PetScreen } from '../components/pet/PetScreen';
 import { useTelegram } from '../components/providers';
@@ -40,6 +40,7 @@ export default function HomePage() {
   const { activeTab, setActiveTab, setUser, setError } = useAppStore();
   const { isInitialized, isAvailable } = useTelegram();
   const [isAppReady, setIsAppReady] = useState(false);
+  const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [showRankModal, setShowRankModal] = useState(false);
   const [showSpinModal, setShowSpinModal] = useState(false);
   const spinsLeft = useSpinsLeft();
@@ -72,12 +73,20 @@ export default function HomePage() {
 
   if (isLoading || !isInitialized || !isAppReady) {
     return (
-      <div className="min-h-screen-safe flex items-center justify-center">
-        <div className="flex flex-col items-center gap-4">
-          <LoadingSpinner size="lg" />
-          <p className="text-text-secondary">Loading...</p>
-        </div>
-      </div>
+      <LoadingScreen 
+        minDuration={2500}
+        onLoadingComplete={() => setShowLoadingScreen(false)}
+      />
+    );
+  }
+
+  // Show loading screen on first load
+  if (showLoadingScreen) {
+    return (
+      <LoadingScreen 
+        minDuration={2500}
+        onLoadingComplete={() => setShowLoadingScreen(false)}
+      />
     );
   }
 
@@ -104,9 +113,10 @@ export default function HomePage() {
 
   if (!user) {
     return (
-      <div className="min-h-screen-safe flex items-center justify-center">
-        <LoadingSpinner size="lg" />
-      </div>
+      <LoadingScreen 
+        minDuration={1500}
+        onLoadingComplete={() => {}}
+      />
     );
   }
 
@@ -426,7 +436,7 @@ export default function HomePage() {
       case 'pet':
         return <PetScreen />;
       case 'wallet':
-        return <WalletScreen />;
+        return <RewardScreen />;
       case 'game':
         return <GameScreen />;
       default:

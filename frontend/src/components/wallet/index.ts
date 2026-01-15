@@ -1,1 +1,1 @@
-export { WalletScreen } from './WalletScreen';
+export { RewardScreen } from './RewardScreen';

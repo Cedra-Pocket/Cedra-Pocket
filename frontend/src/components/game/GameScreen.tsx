@@ -167,6 +167,11 @@ export function GameScreen() {
         ))}
       </div>
 
+      {/* Trending Games Section - Above Featured */}
+      <div style={{ paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(10px, 2.5vw, 14px)' }}>
+        <h2 className="font-bold" style={{ fontSize: 'var(--fs-base)', color: '#1a1a2e', marginBottom: 'clamp(6px, 1.5vw, 10px)' }}>Trending games</h2>
+      </div>
+
       {/* Featured Games Carousel */}
       <div style={{ paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(12px, 3vw, 16px)' }}>
         <div 
@@ -249,7 +254,7 @@ export function GameScreen() {
         </div>
       </div>
 
-      {/* Trending Games Section */}
+      {/* All Games Section */}
       <div 
         className="hide-scrollbar"
         style={{ 
@@ -261,10 +266,8 @@ export function GameScreen() {
           maxHeight: 'calc(100vh - clamp(220px, 55vw, 300px))',
           paddingBottom: 'clamp(60px, 16vw, 80px)',
         }}
-      >  <div className="flex items-center justify-between" style={{ marginBottom: 'clamp(6px, 1.5vw, 10px)' }}>
-          <h2 className="font-bold" style={{ fontSize: 'var(--fs-base)', color: '#1a1a2e' }}>Trending games</h2>
-          <span style={{ color: 'rgba(0,0,0,0.5)', fontSize: 'var(--fs-sm)', cursor: 'pointer' }}>View all</span>
-        </div>
+      >
+        <h2 className="font-bold" style={{ fontSize: 'var(--fs-base)', color: '#1a1a2e', marginBottom: 'clamp(6px, 1.5vw, 10px)' }}>All games</h2>
 
         {/* Games List */}
         <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 10px)' }}>

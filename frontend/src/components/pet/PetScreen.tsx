@@ -338,27 +338,6 @@ export function PetScreen() {
           gap: 'clamp(16px, 4vw, 24px)'
         }}
       >
-        {/* Happiness */}
-        <div className="flex flex-col items-center">
-          <span style={{ fontSize: 'var(--fs-xs)', color: '#fff', marginBottom: '4px', fontWeight: '600' }}>{pet.happiness}%</span>
-          <button
-            onClick={handlePlay}
-            disabled={(user?.tokenBalance || 0) < 20 || pet.happiness >= 100}
-            className="flex items-center justify-center transition-all hover:scale-110 active:scale-95 disabled:opacity-50"
-            style={{
-              width: 'clamp(45px, 12vw, 55px)',
-              height: 'clamp(45px, 12vw, 55px)',
-              borderRadius: '50%',
-              background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-              border: '2px solid rgba(255,255,255,0.5)',
-              boxShadow: '0 4px 15px rgba(255,165,0,0.4)',
-              cursor: (user?.tokenBalance || 0) < 20 || pet.happiness >= 100 ? 'not-allowed' : 'pointer',
-            }}
-          >
-            <span style={{ fontSize: 'var(--fs-lg)' }}>😊</span>
-          </button>
-        </div>
-
         {/* Hunger */}
         <div className="flex flex-col items-center">
           <span style={{ fontSize: 'var(--fs-xs)', color: '#fff', marginBottom: '4px', fontWeight: '600' }}>{pet.hunger}%</span>
