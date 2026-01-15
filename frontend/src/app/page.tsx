@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react';
 import { useAppStore, useUser, useIsLoading, useError, NavigationTab } from '../store/useAppStore';
 import { HeroSection } from '../components/home';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
-import { LoadingSpinner, LoadingScreen } from '../components/shared';
+import { LoadingScreen } from '../components/shared';
 import { QuestScreen } from '../components/quest';
 import { SpinModal } from '../components/spin';
 import { RewardScreen } from '../components/wallet';
