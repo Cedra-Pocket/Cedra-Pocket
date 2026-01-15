@@ -1,29 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-
-interface LoadingScreenProps {
-  onLoadingComplete?: () => void;
-  minDuration?: number;
-}
-
-export function LoadingScreen({ onLoadingComplete, minDuration = 2000 }: LoadingScreenProps) {
-  const [fadeOut, setFadeOut] = useState(false);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setFadeOut(true);
-      setTimeout(() => {
-        onLoadingComplete?.();
-      }, 500);
-    }, minDuration);
-
-    return () => clearTimeout(timer);
-  }, [minDuration, onLoadingComplete]);
-
+export function LoadingScreen() {
   return (
     <div 
-      className={`fixed inset-0 z-[100] flex flex-col items-center justify-center transition-opacity duration-500 ${fadeOut ? 'opacity-0' : 'opacity-100'}`}
+      className="fixed inset-0 z-[100] flex flex-col items-center justify-center"
       style={{
         background: 'linear-gradient(180deg, #87CEEB 0%, #98D8E8 30%, #B0E0E6 60%, #C5E8F0 100%)',
       }}
@@ -65,14 +45,10 @@ export function LoadingScreen({ onLoadingComplete, minDuration = 2000 }: Loading
           height: 'clamp(50px, 14vw, 70px)',
         }}
       >
-        {/* Outer ring */}
         <div 
           className="absolute inset-0 rounded-full"
-          style={{
-            border: '4px solid rgba(255, 255, 255, 0.3)',
-          }}
+          style={{ border: '4px solid rgba(255, 255, 255, 0.3)' }}
         />
-        {/* Spinning ring */}
         <div 
           className="absolute inset-0 rounded-full"
           style={{

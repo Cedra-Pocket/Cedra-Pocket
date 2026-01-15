@@ -71,23 +71,20 @@ export default function HomePage() {
     setIsAppReady(true);
   }, [isInitialized, isAvailable, user, setUser]);
 
-  if (isLoading || !isInitialized || !isAppReady) {
-    return (
-      <LoadingScreen 
-        minDuration={2500}
-        onLoadingComplete={() => setShowLoadingScreen(false)}
-      />
-    );
-  }
+  // Hide loading screen when user data is ready
+  useEffect(() => {
+    if (user && isAppReady && showLoadingScreen) {
+      // Add small delay for smooth transition
+      const timer = setTimeout(() => {
+        setShowLoadingScreen(false);
+      }, 500);
+      return () => clearTimeout(timer);
+    }
+  }, [user, isAppReady, showLoadingScreen]);
 
-  // Show loading screen on first load
-  if (showLoadingScreen) {
-    return (
-      <LoadingScreen 
-        minDuration={2500}
-        onLoadingComplete={() => setShowLoadingScreen(false)}
-      />
-    );
+  // Show loading screen while app is initializing or user not ready
+  if (isLoading || !isInitialized || !isAppReady || showLoadingScreen) {
+    return <LoadingScreen />;
   }
 
   if (error) {
