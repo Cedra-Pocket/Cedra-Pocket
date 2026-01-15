@@ -22,7 +22,6 @@ export function PetScreen() {
   const petName = user?.username ? `${user.username}'s Pet` : 'My Pet';
 
   const [isFeeding, setIsFeeding] = useState(false);
-  const [isPlaying, setIsPlaying] = useState(false);
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   
@@ -158,38 +157,6 @@ export function PetScreen() {
     }
   };
 
-  const handlePlay = async () => {
-    if ((user?.tokenBalance || 0) >= 20 && pet.happiness < 100) {
-      setIsPlaying(true);
-      updateBalance(-20, 'token');
-      
-      const newExp = pet.exp + 10;
-      const newHappiness = Math.min(100, pet.happiness + 15);
-      
-      let newPetData: Partial<typeof pet>;
-      
-      // Check level up
-      if (newExp >= pet.maxExp) {
-        newPetData = {
-          happiness: newHappiness,
-          level: pet.level + 1,
-          exp: newExp - pet.maxExp,
-          maxExp: Math.floor(pet.maxExp * 1.5),
-        };
-      } else {
-        newPetData = {
-          happiness: newHappiness,
-          exp: newExp,
-        };
-      }
-      
-      setPet(newPetData);
-      syncToBackend(newPetData);
-      
-      setTimeout(() => setIsPlaying(false), 1500);
-    }
-  };
-
   const coinsPerMin = getCoinsPerMinute(pet.level);
 
   return (
@@ -317,7 +284,7 @@ export function PetScreen() {
         <img 
           src="/pet.png" 
           alt="Pet"
-          className={isPlaying ? 'animate-bounce-pet' : isFeeding ? 'animate-pulse-pet' : 'animate-float-pet'}
+          className={isFeeding ? 'animate-pulse-pet' : 'animate-float-pet'}
           style={{ 
             width: '95vw',
             maxWidth: '500px',
