@@ -612,13 +612,13 @@ export default function HomePage() {
         );
 
       case 'quest':
-        return <QuestScreen />;
+        return <div className="px-6"><QuestScreen /></div>;
       case 'pet':
-        return <PetScreen />;
+        return <div className="px-6"><PetScreen /></div>;
       case 'wallet':
-        return <RewardScreen />;
+        return <div className="px-6"><RewardScreen /></div>;
       case 'game':
-        return <GameScreen />;
+        return <div className="px-6"><GameScreen /></div>;
       default:
         return (
           <div className="flex-1 flex items-center justify-center">
@@ -630,7 +630,7 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen-safe flex flex-col pb-24 safe-area-inset-top relative">
-      <main className="flex-1 flex flex-col px-6" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
+      <main className="flex-1 flex flex-col" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Rank Progress Modal */}

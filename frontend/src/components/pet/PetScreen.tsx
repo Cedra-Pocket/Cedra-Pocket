@@ -466,7 +466,7 @@ export function PetScreen() {
         {/* Hatch Modal - Task List */}
         {showHatchModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '16px', maxWidth: '300px', width: '100%', maxHeight: '70vh', overflow: 'hidden', backdropFilter: 'blur(20px)' }}>
+            <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '16px', maxWidth: '300px', width: '100%', maxHeight: '70vh', overflowY: 'auto', backdropFilter: 'blur(20px)' }}>
               {showBirthYearInput ? (
                 <>
                   {/* Birth Year Input */}
@@ -807,7 +807,7 @@ export function PetScreen() {
       {/* Boost Modal */}
       {showBoostModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '16px', maxWidth: '320px', width: '100%', maxHeight: '70vh', overflow: 'hidden', backdropFilter: 'blur(20px)' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '16px', maxWidth: '320px', width: '100%', maxHeight: '70vh', overflowY: 'auto', backdropFilter: 'blur(20px)' }}>
             <button onClick={() => setShowBoostModal(false)} className="absolute top-3 right-3" style={{ width: '28px', height: '28px', borderRadius: '50%', background: 'rgba(0,0,0,0.1)', border: 'none', color: '#333', fontSize: '14px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
             <div className="text-center mb-3">
               <div className="flex items-center justify-center gap-1 mb-1">
