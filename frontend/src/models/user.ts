@@ -14,7 +14,8 @@ export interface UserData {
   level: number;
   currentXP: number;
   requiredXP: number;
-  tokenBalance: number;
+  tokenBalance: number; // Points for ranking system
+  walletBalance: number; // Actual wallet money in USD
   gemBalance: number;
   earningRate: number; // tokens per hour
   walletAddress?: string;

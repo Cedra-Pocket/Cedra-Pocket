@@ -1,17 +1,18 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAppStore, useUser, useIsLoading, useError, NavigationTab } from '../store/useAppStore';
+import { useAppStore, useUser, useIsLoading, useError, NavigationTab, usePet } from '../store/useAppStore';
 import { HeroSection } from '../components/home';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { LoadingScreen } from '../components/shared';
 import { QuestScreen } from '../components/quest';
 import { SpinModal } from '../components/spin';
-import { RewardScreen } from '../components/wallet';
+import { RewardScreen } from '../components/reward';
 import { GameScreen } from '../components/game';
 import { PetScreen } from '../components/pet/PetScreen';
 import { useTelegram } from '../components/providers';
 import { useSpinsLeft } from '../store/useAppStore';
+import { backendAPI } from '../services/backend-api.service';
 
 // Rank tiers based on points
 const RANK_TIERS = [
@@ -33,8 +34,259 @@ function getUserRankTier(points: number) {
   return RANK_TIERS[0];
 }
 
+// Rank Carousel Component
+function RankCarousel({ ranks, currentUserPoints, getUserRankTier }: {
+  ranks: typeof RANK_TIERS;
+  currentUserPoints: number;
+  getUserRankTier: (points: number) => typeof RANK_TIERS[0];
+}) {
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [startX, setStartX] = useState(0);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const currentTier = getUserRankTier(currentUserPoints);
+  const currentTierIndex = ranks.findIndex(r => r.name === currentTier.name);
+
+  // Set initial index to current user rank
+  useEffect(() => {
+    if (currentTierIndex >= 0) {
+      setCurrentIndex(currentTierIndex);
+    }
+  }, [currentTierIndex]);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setStartX(e.touches[0].clientX);
+    setIsDragging(true);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    e.preventDefault();
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (!isDragging) return;
+    setIsDragging(false);
+    
+    const endX = e.changedTouches[0].clientX;
+    const diffX = startX - endX;
+    
+    if (Math.abs(diffX) > 50) { // Minimum swipe distance
+      if (diffX > 0 && currentIndex < ranks.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else if (diffX < 0 && currentIndex > 0) {
+        setCurrentIndex(currentIndex - 1);
+      }
+    }
+  };
+
+  const rank = ranks[currentIndex];
+  const isCurrentTier = rank.name === currentTier.name;
+  const isUnlocked = currentUserPoints >= rank.minPoints;
+  const nextRank = ranks[currentIndex + 1];
+
+  return (
+    <div className="relative">
+      {/* Horizontal Scrollable Rank Preview */}
+      <div className="flex gap-3 mb-6 overflow-x-auto pb-2" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        {ranks.map((tier, index) => {
+          const isCurrent = index === currentIndex;
+          const isUserTier = tier.name === currentTier.name;
+          const tierUnlocked = currentUserPoints >= tier.minPoints;
+          
+          return (
+            <button
+              key={tier.name}
+              onClick={() => setCurrentIndex(index)}
+              className="flex-shrink-0 relative transition-all duration-300"
+              style={{
+                width: '60px',
+                height: '60px',
+                borderRadius: '50%',
+                background: isCurrent 
+                  ? `linear-gradient(135deg, ${tier.color}, ${tier.color}80)`
+                  : 'rgba(255,255,255,0.1)',
+                border: isCurrent 
+                  ? `3px solid ${tier.color}` 
+                  : isUserTier 
+                    ? `2px solid ${tier.color}60`
+                    : '2px solid rgba(255,255,255,0.2)',
+                opacity: tierUnlocked ? 1 : 0.4,
+                transform: isCurrent ? 'scale(1.1)' : 'scale(1)',
+              }}
+            >
+              <img 
+                src={tier.icon} 
+                alt={tier.name}
+                style={{ 
+                  width: '36px', 
+                  height: '36px', 
+                  objectFit: 'contain',
+                  margin: 'auto',
+                  marginTop: '10px'
+                }} 
+              />
+              {isUserTier && !isCurrent && (
+                <div 
+                  className="absolute -top-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center"
+                  style={{ background: tier.color, fontSize: '8px' }}
+                >
+                  👑
+                </div>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Main Rank Card */}
+      <div 
+        className="relative mx-auto transition-all duration-500"
+        style={{ 
+          maxWidth: '320px',
+          background: 'linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05))',
+          borderRadius: '24px',
+          border: `2px solid ${rank.color}40`,
+          padding: '24px',
+          backdropFilter: 'blur(20px)',
+          transform: isDragging ? 'scale(0.98)' : 'scale(1)',
+        }}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
+      >
+        {/* Crown for current user rank */}
+        {isCurrentTier && (
+          <div 
+            className="absolute -top-3 left-1/2 transform -translate-x-1/2 w-8 h-8 rounded-full flex items-center justify-center"
+            style={{ background: rank.color }}
+          >
+            <span style={{ fontSize: '16px' }}>👑</span>
+          </div>
+        )}
+
+        {/* Lock for locked ranks */}
+        {!isUnlocked && (
+          <div className="absolute top-4 right-4 opacity-60">
+            <span style={{ fontSize: '24px' }}>🔒</span>
+          </div>
+        )}
+
+        {/* Rank Icon with Glow */}
+        <div className="text-center mb-4">
+          <div 
+            className="inline-block relative"
+            style={{
+              filter: isCurrentTier ? `drop-shadow(0 0 30px ${rank.color}80)` : 'none'
+            }}
+          >
+            <img 
+              src={rank.icon} 
+              alt={rank.name} 
+              style={{ 
+                width: '100px', 
+                height: '100px', 
+                objectFit: 'contain',
+                borderRadius: '50%',
+                background: `radial-gradient(circle, ${rank.color}20, transparent)`,
+                padding: '10px'
+              }} 
+            />
+          </div>
+        </div>
+
+        {/* Rank Name */}
+        <h3 
+          className="text-center font-bold mb-3"
+          style={{ 
+            fontSize: '28px', 
+            color: '#fff',
+            textShadow: `0 0 20px ${rank.color}60`
+          }}
+        >
+          {rank.name}
+        </h3>
+
+        {/* Points Range */}
+        <div className="text-center mb-4">
+          <span 
+            className="font-semibold"
+            style={{ 
+              fontSize: '16px',
+              color: rank.color,
+              background: `${rank.color}20`,
+              padding: '6px 16px',
+              borderRadius: '20px',
+              border: `1px solid ${rank.color}40`
+            }}
+          >
+            {rank.minPoints >= 1000 ? `${rank.minPoints/1000}K` : rank.minPoints}
+            {nextRank && (
+              <> - {nextRank.minPoints >= 1000 ? `${nextRank.minPoints/1000}K` : nextRank.minPoints}</>
+            )}
+            {!nextRank && '+'} points
+          </span>
+        </div>
+
+        {/* Bonus */}
+        {rank.bonus > 0 && (
+          <div className="text-center">
+            <div 
+              className="inline-block px-4 py-2 rounded-full"
+              style={{ 
+                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.3), rgba(34, 197, 94, 0.1))',
+                border: '1px solid rgba(34, 197, 94, 0.4)'
+              }}
+            >
+              <span className="text-green-300 font-bold" style={{ fontSize: '14px' }}>
+                +{Math.round(rank.bonus * 100)}% bonus
+              </span>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Navigation Dots */}
+      <div className="flex justify-center mt-6 gap-2">
+        {ranks.map((tier, index) => (
+          <button
+            key={index}
+            onClick={() => setCurrentIndex(index)}
+            className="transition-all duration-300"
+            style={{
+              width: currentIndex === index ? '32px' : '8px',
+              height: '8px',
+              borderRadius: '4px',
+              background: currentIndex === index 
+                ? tier.color 
+                : 'rgba(255,255,255,0.3)',
+              boxShadow: currentIndex === index 
+                ? `0 0 10px ${tier.color}60` 
+                : 'none'
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Swipe Hint */}
+      <div className="text-center mt-4">
+        <span className="text-white/50" style={{ fontSize: '13px' }}>
+          Swipe to explore ranks
+        </span>
+      </div>
+
+      <style jsx>{`
+        .overflow-x-auto::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const user = useUser();
+  const pet = usePet();
   const isLoading = useIsLoading();
   const error = useError();
   const { activeTab, setActiveTab, setUser, setError } = useAppStore();
@@ -42,8 +294,38 @@ export default function HomePage() {
   const [isAppReady, setIsAppReady] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
   const [showRankModal, setShowRankModal] = useState(false);
+  const [displayRankIndex, setDisplayRankIndex] = useState(0);
+  const [showBalance, setShowBalance] = useState(true);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  // Refresh balance function
+  const handleRefreshBalance = async () => {
+    if (isRefreshing) return;
+    
+    setIsRefreshing(true);
+    try {
+      if (backendAPI?.isAuthenticated()) {
+        // Refresh user data from backend
+        const userData = await backendAPI.getUser();
+        setUser(userData);
+      }
+    } catch (error) {
+      console.error('Failed to refresh balance:', error);
+    } finally {
+      setTimeout(() => setIsRefreshing(false), 500); // Minimum animation time
+    }
+  };
   const [showSpinModal, setShowSpinModal] = useState(false);
   const spinsLeft = useSpinsLeft();
+
+  // Set initial rank index when modal opens
+  useEffect(() => {
+    if (showRankModal && user) {
+      const currentTier = getUserRankTier(user.tokenBalance);
+      const currentIndex = RANK_TIERS.findIndex(tier => tier.name === currentTier.name);
+      setDisplayRankIndex(currentIndex >= 0 ? currentIndex : 0);
+    }
+  }, [showRankModal, user]);
 
   useEffect(() => {
     const handleHashChange = () => {
@@ -158,6 +440,78 @@ export default function HomePage() {
                 </button>
               </div>
 
+              {/* Rank - next to avatar */}
+              <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', left: 'clamp(52px, 13vw, 66px)' }}>
+                <button 
+                  onClick={() => setShowRankModal(true)}
+                  className="flex items-center justify-center transition-all hover:scale-110"
+                  style={{
+                    width: 'clamp(28px, 7vw, 36px)',
+                    height: 'clamp(28px, 7vw, 36px)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <img 
+                    src={getUserRankTier(user.tokenBalance).icon} 
+                    alt="Rank" 
+                    style={{ 
+                      width: 'clamp(24px, 6vw, 32px)', 
+                      height: 'clamp(24px, 6vw, 32px)', 
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                    }} 
+                  />
+                </button>
+              </div>
+
+              {/* Spin - next to coin display */}
+              <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', right: 'clamp(52px, 13vw, 66px)' }}>
+                <button 
+                  onClick={() => setShowSpinModal(true)}
+                  className="relative flex items-center justify-center transition-all hover:scale-110"
+                  style={{
+                    width: 'clamp(28px, 7vw, 36px)',
+                    height: 'clamp(28px, 7vw, 36px)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <img 
+                    src="/icons/spin.PNG" 
+                    alt="Spin" 
+                    style={{ 
+                      width: 'clamp(24px, 6vw, 32px)', 
+                      height: 'clamp(24px, 6vw, 32px)', 
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                    }} 
+                  />
+                  {spinsLeft > 0 && (
+                    <div 
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        top: '-4px',
+                        right: '-4px',
+                        width: 'clamp(16px, 4vw, 20px)',
+                        height: 'clamp(16px, 4vw, 20px)',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+                        border: '2px solid white',
+                        fontSize: 'clamp(8px, 2vw, 10px)',
+                        fontWeight: 'bold',
+                        color: 'white',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                      }}
+                    >
+                      {spinsLeft}
+                    </div>
+                  )}
+                </button>
+              </div>
+
               {/* Username - center */}
               <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: 'clamp(12px, 3.5vw, 18px)' }}>
                 <span style={{ fontSize: 'var(--fs-base)' }} className="font-bold text-gray-800">{user.username}</span>
@@ -232,192 +586,273 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Big Coin Display - removed, now shown in top bar */}
-
-            {/* Left Side Buttons - Vertical */}
-            <div className="flex flex-col items-start" style={{ marginLeft: '0', marginTop: 'clamp(10px, 3vw, 2px)', paddingLeft: 'clamp(4px, 1vw, 6px)', zIndex: 10, gap: 'clamp(10px, 2.5vw, 14px)' }}>
-              {/* Rank Button with icon on top */}
-              <button
-                onClick={() => setShowRankModal(true)}
-                className="flex flex-col transition-all hover:scale-105"
-                style={{ 
-                  gap: '0', 
-                  width: 'clamp(70px, 19vw, 85px)', 
-                  animation: 'bubble-float 3s ease-in-out infinite',
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 'clamp(4px, 1vw, 6px)',
-                  cursor: 'pointer',
+            {/* Total Balance Section */}
+            <div 
+              className="flex justify-center mb-6"
+              style={{ 
+                marginTop: 'clamp(16px, 4vw, 24px)',
+                paddingLeft: '16px',
+                paddingRight: '16px',
+              }}
+            >
+              {/* Total Balance Card */}
+              <div 
+                style={{
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: '20px',
+                  padding: '20px',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                  backdropFilter: 'blur(20px)',
+                  width: '100%',
+                  maxWidth: '320px',
                 }}
               >
-                <div 
-                  className="flex items-center justify-center"
-                  style={{
-                    width: 'clamp(36px, 10vw, 46px)',
-                    height: 'clamp(36px, 10vw, 46px)',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 255, 255, 0.4)',
-                    backdropFilter: 'blur(20px)',
-                    border: '2px solid rgba(255, 255, 255, 0.5)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                    alignSelf: 'center',
-                    marginBottom: 'clamp(-8px, -2vw, -6px)',
-                    zIndex: 2,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <img 
-                    src={getUserRankTier(user.tokenBalance).icon} 
-                    alt="Rank" 
-                    style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(22px, 6vw, 30px)', objectFit: 'contain' }} 
-                  />
+                {/* Header with eye icon */}
+                <div className="flex items-center justify-between mb-3">
+                  <span className="text-gray-600 font-medium" style={{ fontSize: '14px' }}>
+                    Total Balance
+                  </span>
+                  <button 
+                    className="p-1 transition-all hover:scale-110"
+                    onClick={() => setShowBalance(!showBalance)}
+                  >
+                    {showBalance ? (
+                      // Open eye icon
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+                        <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" fill="none"/>
+                        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="none"/>
+                      </svg>
+                    ) : (
+                      // Closed eye icon (eye with slash)
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+                        <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" fill="none"/>
+                        <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2"/>
+                      </svg>
+                    )}
+                  </button>
                 </div>
-                <div 
-                  className="flex items-center justify-center"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.35)',
-                    backdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    boxShadow: '0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                    width: '100%',
-                    height: 'clamp(26px, 7vw, 32px)',
-                    borderRadius: 'clamp(13px, 3.5vw, 16px)',
-                    paddingTop: 'clamp(8px, 2vw, 10px)',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <span className="font-bold" style={{ fontSize: 'var(--fs-xs)', color: '#1e3a5f' }}>
-                    Rank
+
+                {/* Balance Amount */}
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-gray-800 font-bold" style={{ fontSize: '32px' }}>
+                    {showBalance 
+                      ? `$${(user?.walletBalance || 0).toLocaleString()}` 
+                      : '****'
+                    }
+                  </span>
+                  <button 
+                    className="p-1 transition-all hover:scale-110"
+                    onClick={handleRefreshBalance}
+                    disabled={isRefreshing}
+                  >
+                    <svg 
+                      width="20" 
+                      height="20" 
+                      viewBox="0 0 24 24" 
+                      fill="none" 
+                      className={`text-gray-400 transition-transform duration-500 ${isRefreshing ? 'animate-reverse-spin' : ''}`}
+                    >
+                      <path 
+                        d="M1 4v6h6M23 20v-6h-6" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                      <path 
+                        d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15" 
+                        stroke="currentColor" 
+                        strokeWidth="2" 
+                        strokeLinecap="round" 
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="grid grid-cols-4 gap-3">
+                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(255, 193, 7, 0.3)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Deposit</span>
+                  </button>
+
+                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Bridge</span>
+                  </button>
+
+                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(40, 167, 69, 0.2)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <path d="m9 12 2 2 4-4"></path>
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Earn</span>
+                  </button>
+
+                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
+                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <line x1="7" y1="17" x2="17" y2="7"></line>
+                        <polyline points="7,7 17,7 17,17"></polyline>
+                      </svg>
+                    </div>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Transfer</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Widget Grid - 2 Large Empty Buttons */}
+            <div 
+              className="flex justify-center gap-6"
+              style={{ 
+                marginTop: 'clamp(32px, 8vw, 48px)',
+                zIndex: 10,
+                paddingLeft: '16px',
+                paddingRight: '16px',
+              }}
+            >
+              {/* Energy Widget - For Gaming */}
+              <button
+                onClick={() => handleTabChange('game')}
+                className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
+                style={{ 
+                  width: '140px',
+                  height: '140px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '24px',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  animation: 'bubble-float-slow 4s ease-in-out infinite',
+                  padding: '16px',
+                }}
+              >
+                {/* Circular Progress */}
+                <div className="relative flex items-center justify-center" style={{ width: '80px', height: '80px' }}>
+                  {/* Background Circle */}
+                  <svg width="80" height="80" className="absolute">
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="32"
+                      fill="none"
+                      stroke="rgba(0,0,0,0.1)"
+                      strokeWidth="6"
+                    />
+                  </svg>
+                  
+                  {/* Progress Circle */}
+                  <svg width="80" height="80" className="absolute" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle
+                      cx="40"
+                      cy="40"
+                      r="32"
+                      fill="none"
+                      stroke="url(#energyGradient)"
+                      strokeWidth="6"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 32}`}
+                      strokeDashoffset={`${2 * Math.PI * 32 * (1 - (pet.hunger + pet.happiness) / 200)}`}
+                      style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                    />
+                    <defs>
+                      <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="25%" stopColor="#f97316" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="75%" stopColor="#84cc16" />
+                        <stop offset="100%" stopColor="#22c55e" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
+                  
+                  {/* Center Content */}
+                  <div className="flex flex-col items-center">
+                    <div className="text-gray-800 font-bold" style={{ fontSize: '24px' }}>
+                      {Math.round((pet.hunger + pet.happiness) / 2)}
+                    </div>
+                  </div>
+                </div>
+                
+                {/* Status Text */}
+                <div className="text-gray-600 font-medium mt-2" style={{ fontSize: '12px' }}>
+                  {Math.round((pet.hunger + pet.happiness) / 2) >= 75 ? 'Ready' : 
+                   Math.round((pet.hunger + pet.happiness) / 2) >= 50 ? 'Neutral' : 
+                   Math.round((pet.hunger + pet.happiness) / 2) >= 25 ? 'Low' : 'Empty'}
+                </div>
+              </button>
+
+              {/* Storage Widget */}
+              <button
+                onClick={() => handleTabChange('pet')}
+                className="flex flex-col items-start justify-start transition-all hover:scale-105 active:scale-95"
+                style={{ 
+                  width: '140px',
+                  height: '140px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '24px',
+                  boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  animation: 'bubble-float 3.2s ease-in-out infinite',
+                  padding: '16px',
+                }}
+              >
+                {/* Storage Title */}
+                <div className="text-gray-800 font-bold mb-3" style={{ fontSize: '16px' }}>
+                  Storage
+                </div>
+                
+                {/* Storage Bar */}
+                <div className="w-full mb-3">
+                  <div 
+                    className="w-full h-8 rounded-lg overflow-hidden"
+                    style={{ background: 'rgba(0,0,0,0.1)' }}
+                  >
+                    <div 
+                      className="h-full rounded-lg"
+                      style={{ 
+                        width: pet.pendingCoins > 0 ? '100%' : '100%',
+                        background: 'linear-gradient(90deg, #f59e0b, #eab308)',
+                      }}
+                    />
+                  </div>
+                </div>
+                
+                {/* Status */}
+                <div className="flex items-center mb-2">
+                  <span className="text-green-600 font-medium" style={{ fontSize: '14px' }}>
+                    {pet.pendingCoins > 0 ? 'Ready' : 'Empty'}
                   </span>
                 </div>
-              </button>
-
-              {/* Spin Button with icon on top */}
-              <button
-                onClick={() => setShowSpinModal(true)}
-                className="flex flex-col relative transition-all hover:scale-105"
-                style={{ 
-                  gap: '0', 
-                  width: 'clamp(70px, 19vw, 85px)', 
-                  animation: 'bubble-float-delayed 3.5s ease-in-out infinite',
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 'clamp(4px, 1vw, 6px)',
-                  cursor: 'pointer',
-                }}
-              >
-                <div 
-                  className="flex items-center justify-center"
-                  style={{
-                    width: 'clamp(36px, 10vw, 46px)',
-                    height: 'clamp(36px, 10vw, 46px)',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 255, 255, 0.4)',
-                    backdropFilter: 'blur(20px)',
-                    border: '2px solid rgba(255, 255, 255, 0.5)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                    alignSelf: 'center',
-                    marginBottom: 'clamp(-8px, -2vw, -6px)',
-                    zIndex: 2,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <img 
-                    src="/icons/spin.PNG" 
-                    alt="Spin" 
-                    style={{ width: 'clamp(22px, 6vw, 30px)', height: 'clamp(22px, 6vw, 30px)', objectFit: 'contain' }} 
-                  />
-                </div>
-                <div 
-                  className="flex items-center justify-center"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.35)',
-                    backdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    boxShadow: '0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                    width: '100%',
-                    height: 'clamp(26px, 7vw, 32px)',
-                    borderRadius: 'clamp(13px, 3.5vw, 16px)',
-                    paddingTop: 'clamp(8px, 2vw, 10px)',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <span className="font-bold" style={{ fontSize: 'var(--fs-xs)', color: '#1e3a5f' }}>Spin</span>
-                </div>
-                {spinsLeft > 0 && (
-                  <div 
-                    className="absolute flex items-center justify-center"
-                    style={{
-                      top: 'clamp(4px, 1vw, 6px)',
-                      right: 'clamp(10px, 2.5vw, 14px)',
-                      width: 'clamp(16px, 4vw, 20px)',
-                      height: 'clamp(16px, 4vw, 20px)',
-                      borderRadius: '50%',
-                      background: 'linear-gradient(135deg, #EF4444, #DC2626)',
-                      border: '2px solid white',
-                      fontSize: 'var(--fs-xs)',
-                      fontWeight: 'bold',
-                      color: 'white',
-                      boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                      zIndex: 3,
-                      pointerEvents: 'none',
-                    }}
-                  >
-                    {spinsLeft}
+                
+                {/* Collected Amount */}
+                <div>
+                  <div className="text-gray-500" style={{ fontSize: '11px' }}>Collected</div>
+                  <div className="text-gray-800 font-bold" style={{ fontSize: '18px' }}>
+                    {pet.pendingCoins.toLocaleString()}
                   </div>
-                )}
+                </div>
               </button>
+            </div>
 
-              {/* Quest Button with icon on top */}
-              <button
-                onClick={() => handleTabChange('quest')}
-                className="flex flex-col transition-all hover:scale-105"
-                style={{ 
-                  gap: '0', 
-                  width: 'clamp(70px, 19vw, 85px)', 
-                  animation: 'bubble-float-slow 4s ease-in-out infinite',
-                  background: 'transparent',
-                  border: 'none',
-                  padding: 'clamp(4px, 1vw, 6px)',
-                  cursor: 'pointer',
-                }}
-              >
-                <div 
-                  className="flex items-center justify-center"
-                  style={{
-                    width: 'clamp(36px, 10vw, 46px)',
-                    height: 'clamp(36px, 10vw, 46px)',
-                    borderRadius: '50%',
-                    background: 'rgba(255, 255, 255, 0.4)',
-                    backdropFilter: 'blur(20px)',
-                    border: '2px solid rgba(255, 255, 255, 0.5)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -2px 4px rgba(0,0,0,0.1)',
-                    alignSelf: 'center',
-                    marginBottom: 'clamp(-8px, -2vw, -6px)',
-                    zIndex: 2,
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <span style={{ fontSize: 'clamp(20px, 5.5vw, 26px)', lineHeight: 1 }}>🎁</span>
-                </div>
-                <div 
-                  className="flex items-center justify-center"
-                  style={{
-                    background: 'rgba(255, 255, 255, 0.35)',
-                    backdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    boxShadow: '0 3px 8px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255, 255, 255, 0.3)',
-                    width: '100%',
-                    height: 'clamp(26px, 7vw, 32px)',
-                    borderRadius: 'clamp(13px, 3.5vw, 16px)',
-                    paddingTop: 'clamp(8px, 2vw, 10px)',
-                    pointerEvents: 'none',
-                  }}
-                >
-                  <span className="font-bold" style={{ fontSize: 'var(--fs-xs)', color: '#1e3a5f' }}>Quest</span>
-                </div>
-              </button>
-            </div>            {/* Hero Section */}
+            {/* Hero Section */}
             <div className="flex-1 flex items-center justify-center" style={{ marginTop: 'clamp(-80px, -20vw, -40px)', transform: 'scale(0.8)' }}>
               <HeroSection mascotImageUrl="/mascot.png" showAnimation={true} />
             </div>
@@ -443,45 +878,25 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen-safe flex flex-col pb-24 safe-area-inset-top relative">
-      {/* Light rays - absolute at top, behind glass bar */}
-      {activeTab === 'home' && (
-        <div 
-          className="absolute pointer-events-none"
-          style={{
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '600px',
-            zIndex: 0,
-          }}
-          aria-hidden="true"
-        >
-          <div className="light-ray-diagonal" style={{ left: '10%', transform: 'rotate(15deg)', width: '20px' }} />
-          <div className="light-ray-diagonal" style={{ left: '22%', transform: 'rotate(10deg)', width: '18px' }} />
-          <div className="light-ray-diagonal" style={{ left: '35%', transform: 'rotate(5deg)', width: '25px' }} />
-          <div className="light-ray-diagonal" style={{ left: '50%', transform: 'rotate(0deg) translateX(-50%)', width: '28px' }} />
-          <div className="light-ray-diagonal" style={{ left: '65%', transform: 'rotate(-5deg)', width: '22px' }} />
-          <div className="light-ray-diagonal" style={{ left: '78%', transform: 'rotate(-10deg)', width: '18px' }} />
-          <div className="light-ray-diagonal" style={{ left: '90%', transform: 'rotate(-15deg)', width: '20px' }} />
-        </div>
-      )}
       <main className="flex-1 flex flex-col px-6" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Rank Progress Modal */}
       {showRankModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 flex items-center justify-center p-8"
           style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}
           onClick={() => setShowRankModal(false)}
         >
           <div 
-            className="w-full max-w-sm overflow-hidden"
+            className="w-full overflow-hidden"
             style={{
-              background: 'linear-gradient(180deg, #2d4a6f 0%, #1e3a5f 100%)',
-              borderRadius: '28px',
-              border: '1px solid rgba(255,255,255,0.15)',
-              boxShadow: '0 20px 40px rgba(0,0,0,0.5)',
+              maxWidth: '320px',
+              background: 'rgba(255, 255, 255, 0.95)',
+              borderRadius: '20px',
+              border: '1px solid rgba(255,255,255,0.3)',
+              boxShadow: '0 20px 40px rgba(0,0,0,0.2)',
+              backdropFilter: 'blur(20px)',
             }}
             onClick={(e) => e.stopPropagation()}
           >
@@ -490,28 +905,79 @@ export default function HomePage() {
               {/* Close button */}
               <button
                 onClick={() => setShowRankModal(false)}
-                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-all hover:scale-110"
-                style={{ background: 'rgba(255,255,255,0.1)' }}
+                className="absolute top-4 right-4 w-8 h-8 flex items-center justify-center rounded-full transition-all hover:scale-110 z-10"
+                style={{ background: 'rgba(0,0,0,0.1)' }}
               >
-                <span className="text-white/60 text-lg">✕</span>
+                <span className="text-gray-600 text-lg font-bold">✕</span>
               </button>
 
-              <div className="text-cyan-400 font-semibold tracking-widest mb-4" style={{ fontSize: 'var(--fs-xs)' }}>YOUR RANK</div>
+              <div className="text-gray-600 font-semibold tracking-widest mb-4" style={{ fontSize: 'var(--fs-xs)' }}>YOUR RANK</div>
               
-              {/* Current Rank Display */}
-              <div className="flex justify-center">
-                <img 
-                  src={getUserRankTier(user?.tokenBalance || 0).icon} 
-                  alt="Rank" 
-                  style={{ width: '80px', height: '80px', objectFit: 'contain' }} 
-                />
-              </div>
-              
-              <div className="text-white font-bold" style={{ fontSize: 'var(--fs-lg)', marginTop: '8px' }}>
-                {getUserRankTier(user?.tokenBalance || 0).name}
-              </div>
-              <div className="text-cyan-400" style={{ fontSize: 'var(--fs-sm)', marginTop: '4px' }}>
-                {(user?.tokenBalance || 0).toLocaleString()} points
+              {/* Current Rank Display with Navigation */}
+              <div className="relative flex items-center justify-center mb-4">
+                {/* Left Arrow */}
+                <button
+                  onClick={() => setDisplayRankIndex(Math.max(0, displayRankIndex - 1))}
+                  disabled={displayRankIndex === 0}
+                  className="absolute left-4 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ 
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <span className="text-gray-700 text-lg">‹</span>
+                </button>
+
+                {/* Rank Display */}
+                <div className="flex flex-col items-center relative">
+                  {/* Current User Indicator */}
+                  {displayRankIndex === RANK_TIERS.findIndex(tier => tier.name === getUserRankTier(user?.tokenBalance || 0).name) && (
+                    <div 
+                      className="absolute -top-3 -right-3 w-6 h-6 rounded-full flex items-center justify-center"
+                      style={{ background: RANK_TIERS[displayRankIndex].color }}
+                    >
+                      <span style={{ fontSize: '12px' }}>👑</span>
+                    </div>
+                  )}
+                  
+                  <img 
+                    src={RANK_TIERS[displayRankIndex].icon} 
+                    alt="Rank" 
+                    style={{ width: '80px', height: '80px', objectFit: 'contain' }} 
+                  />
+                  <div className="text-gray-800 font-bold" style={{ fontSize: 'var(--fs-lg)', marginTop: '8px' }}>
+                    {RANK_TIERS[displayRankIndex].name}
+                  </div>
+                  <div className="text-gray-600" style={{ fontSize: 'var(--fs-sm)', marginTop: '4px' }}>
+                    {RANK_TIERS[displayRankIndex].minPoints >= 1000 
+                      ? `${RANK_TIERS[displayRankIndex].minPoints/1000}K` 
+                      : RANK_TIERS[displayRankIndex].minPoints}
+                    {displayRankIndex < RANK_TIERS.length - 1 && (
+                      <> - {RANK_TIERS[displayRankIndex + 1].minPoints >= 1000 
+                        ? `${RANK_TIERS[displayRankIndex + 1].minPoints/1000}K` 
+                        : RANK_TIERS[displayRankIndex + 1].minPoints}</>
+                    )}
+                    {displayRankIndex === RANK_TIERS.length - 1 && '+'} points
+                  </div>
+                  {RANK_TIERS[displayRankIndex].bonus > 0 && (
+                    <div className="text-green-400 font-medium" style={{ fontSize: 'var(--fs-xs)', marginTop: '2px' }}>
+                      +{Math.round(RANK_TIERS[displayRankIndex].bonus * 100)}% bonus
+                    </div>
+                  )}
+                </div>
+
+                {/* Right Arrow */}
+                <button
+                  onClick={() => setDisplayRankIndex(Math.min(RANK_TIERS.length - 1, displayRankIndex + 1))}
+                  disabled={displayRankIndex === RANK_TIERS.length - 1}
+                  className="absolute right-4 w-10 h-10 rounded-full flex items-center justify-center transition-all hover:scale-110 disabled:opacity-30 disabled:cursor-not-allowed"
+                  style={{ 
+                    background: 'rgba(255,255,255,0.1)',
+                    border: '1px solid rgba(255,255,255,0.2)'
+                  }}
+                >
+                  <span className="text-gray-700 text-lg">›</span>
+                </button>
               </div>
             </div>
 
@@ -572,51 +1038,28 @@ export default function HomePage() {
                 </div>
               );
             })()}
-
-            {/* All Ranks Grid */}
-            <div className="mx-6 mb-6" style={{ marginTop: '24px' }}>
-              <div className="text-white/40 font-semibold tracking-wider mb-3" style={{ fontSize: 'var(--fs-xs)' }}>ALL RANKS</div>
-              <div className="grid grid-cols-3 gap-3">
-                {RANK_TIERS.map((tier) => {
-                  const currentTier = getUserRankTier(user?.tokenBalance || 0);
-                  const isCurrentTier = tier.name === currentTier.name;
-                  const isUnlocked = (user?.tokenBalance || 0) >= tier.minPoints;
-                  
-                  return (
-                    <div 
-                      key={tier.name}
-                      className="flex flex-col items-center p-3 rounded-2xl"
-                      style={{ 
-                        background: isCurrentTier 
-                          ? `linear-gradient(135deg, ${tier.color}40, ${tier.color}20)`
-                          : 'rgba(255,255,255,0.03)',
-                        border: isCurrentTier 
-                          ? `2px solid ${tier.color}` 
-                          : '1px solid rgba(255,255,255,0.08)',
-                        opacity: isUnlocked ? 1 : 0.35,
-                      }}
-                    >
-                      <img src={tier.icon} alt={tier.name} style={{ width: '36px', height: '36px', objectFit: 'contain' }} />
-                      <span className="text-white font-semibold" style={{ fontSize: 'var(--fs-xs)', marginTop: '4px' }}>{tier.name}</span>
-                      <span className="text-white/40" style={{ fontSize: 'var(--fs-xs)' }}>
-                        {tier.minPoints >= 1000 ? `${tier.minPoints/1000}K` : tier.minPoints}
-                      </span>
-                      {tier.bonus > 0 && (
-                        <span className="text-green-400 font-medium" style={{ fontSize: 'var(--fs-xs)' }}>
-                          +{tier.bonus}% bonus
-                        </span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
           </div>
         </div>
       )}
 
       {/* Spin Modal */}
       <SpinModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
+
+      {/* Custom CSS for reverse spin animation */}
+      <style jsx global>{`
+        @keyframes reverse-spin {
+          from {
+            transform: rotate(0deg);
+          }
+          to {
+            transform: rotate(-360deg);
+          }
+        }
+        
+        .animate-reverse-spin {
+          animation: reverse-spin 1s linear infinite;
+        }
+      `}</style>
     </div>
   );
 }
