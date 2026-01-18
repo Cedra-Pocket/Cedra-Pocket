@@ -217,76 +217,30 @@ export default function HomePage() {
                 </button>
               </div>
 
-              {/* Spin + Points display - top right */}
+              {/* Points display - top right */}
               <div className="absolute z-20" style={{ top: 'clamp(14px, 4vw, 20px)', right: 'clamp(8px, 2.5vw, 12px)' }}>
-                <div className="flex items-center gap-2">
-                  {/* Spin Button */}
-                  <button 
-                    onClick={() => setShowSpinModal(true)}
-                    className="relative flex items-center justify-center transition-all hover:scale-110"
-                    style={{
-                      width: 'clamp(28px, 7vw, 36px)',
-                      height: 'clamp(28px, 7vw, 36px)',
-                      background: 'transparent',
-                      border: 'none',
-                      cursor: 'pointer'
+                {/* Points Display */}
+                <div 
+                  className="flex items-center transition-all"
+                  style={{
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,220,100,0.4) 50%, rgba(255,180,50,0.6) 100%)',
+                    border: '1px solid rgba(255,255,255,0.5)',
+                    boxShadow: '0 2px 10px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)',
+                    borderRadius: '20px 8px 8px 8px',
+                    padding: 'clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px)',
+                    gap: 'clamp(4px, 1vw, 6px)'
+                  }}
+                >
+                  <span style={{ fontSize: 'var(--fs-sm)' }}>🪙</span>
+                  <span 
+                    style={{ 
+                      fontSize: 'var(--fs-sm)', 
+                      fontWeight: '700',
+                      color: '#1a1a2e'
                     }}
                   >
-                    <img 
-                      src="/icons/spin.PNG" 
-                      alt="Spin" 
-                      style={{ 
-                        width: 'clamp(24px, 6vw, 32px)', 
-                        height: 'clamp(24px, 6vw, 32px)', 
-                        objectFit: 'contain',
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-                      }} 
-                    />
-                    {spinsLeft > 0 && (
-                      <div 
-                        className="absolute flex items-center justify-center"
-                        style={{
-                          top: '-4px',
-                          right: '-4px',
-                          width: 'clamp(16px, 4vw, 20px)',
-                          height: 'clamp(16px, 4vw, 20px)',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #EF4444, #DC2626)',
-                          border: '2px solid white',
-                          fontSize: 'clamp(8px, 2vw, 10px)',
-                          fontWeight: 'bold',
-                          color: 'white',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        {spinsLeft}
-                      </div>
-                    )}
-                  </button>
-
-                  {/* Points Display */}
-                  <div 
-                    className="flex items-center transition-all"
-                    style={{
-                      background: 'linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,220,100,0.4) 50%, rgba(255,180,50,0.6) 100%)',
-                      border: '1px solid rgba(255,255,255,0.5)',
-                      boxShadow: '0 2px 10px rgba(255,180,50,0.3), inset 0 1px 0 rgba(255,255,255,0.5)',
-                      borderRadius: '20px 8px 8px 8px',
-                      padding: 'clamp(4px, 1vw, 6px) clamp(8px, 2vw, 12px)',
-                      gap: 'clamp(4px, 1vw, 6px)'
-                    }}
-                  >
-                    <span style={{ fontSize: 'var(--fs-sm)' }}>🪙</span>
-                    <span 
-                      style={{ 
-                        fontSize: 'var(--fs-sm)', 
-                        fontWeight: '700',
-                        color: '#1a1a2e'
-                      }}
-                    >
-                      {user.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ')}
-                    </span>
-                  </div>
+                    {user.tokenBalance.toLocaleString('fr-FR').replace(/\s/g, ' ')}
+                  </span>
                 </div>
               </div>
 
@@ -467,9 +421,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Widget Grid - 2 Large Empty Buttons */}
+            {/* Widget Grid - 2x2 Layout */}
             <div 
-              className="flex justify-center gap-6"
+              className="flex flex-col items-center gap-4"
               style={{ 
                 marginTop: 'clamp(32px, 8vw, 48px)',
                 zIndex: 10,
@@ -477,131 +431,246 @@ export default function HomePage() {
                 paddingRight: '24px',
               }}
             >
-              {/* Energy Widget - For Gaming */}
-              <button
-                onClick={() => handleTabChange('game')}
-                className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
-                style={{ 
-                  width: '140px',
-                  height: '140px',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
-                  backdropFilter: 'blur(24px)',
-                  border: '1px solid rgba(255, 255, 255, 0.4)',
-                  borderRadius: '24px',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
-                  cursor: 'pointer',
-                  animation: 'bubble-float-slow 4s ease-in-out infinite',
-                  padding: '16px',
-                }}
-              >
-                {/* Circular Progress */}
-                <div className="relative flex items-center justify-center" style={{ width: '80px', height: '80px' }}>
-                  {/* Background Circle */}
-                  <svg width="80" height="80" className="absolute">
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
-                      fill="none"
-                      stroke="rgba(0,0,0,0.1)"
-                      strokeWidth="6"
-                    />
-                  </svg>
-                  
-                  {/* Progress Circle */}
-                  <svg width="80" height="80" className="absolute" style={{ transform: 'rotate(-90deg)' }}>
-                    <circle
-                      cx="40"
-                      cy="40"
-                      r="32"
-                      fill="none"
-                      stroke="url(#energyGradient)"
-                      strokeWidth="6"
-                      strokeLinecap="round"
-                      strokeDasharray={`${2 * Math.PI * 32}`}
-                      strokeDashoffset={`${2 * Math.PI * 32 * (1 - (pet.hunger + pet.happiness) / 200)}`}
-                      style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                    />
-                    <defs>
-                      <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#ef4444" />
-                        <stop offset="25%" stopColor="#f97316" />
-                        <stop offset="50%" stopColor="#eab308" />
-                        <stop offset="75%" stopColor="#84cc16" />
-                        <stop offset="100%" stopColor="#22c55e" />
-                      </linearGradient>
-                    </defs>
-                  </svg>
-                  
-                  {/* Center Content */}
-                  <div className="flex flex-col items-center">
-                    <div className="text-gray-800 font-bold" style={{ fontSize: '24px' }}>
-                      {Math.round((pet.hunger + pet.happiness) / 2)}
+              {/* Top Row - Energy and Storage */}
+              <div className="flex justify-center gap-4">
+                {/* Energy Widget - For Gaming */}
+                <button
+                  onClick={() => handleTabChange('game')}
+                  className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
+                  style={{ 
+                    width: '140px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    animation: 'bubble-float-slow 4s ease-in-out infinite',
+                    padding: '12px',
+                  }}
+                >
+                  {/* Circular Progress */}
+                  <div className="relative flex items-center justify-center" style={{ width: '60px', height: '60px' }}>
+                    {/* Background Circle */}
+                    <svg width="60" height="60" className="absolute">
+                      <circle
+                        cx="30"
+                        cy="30"
+                        r="24"
+                        fill="none"
+                        stroke="rgba(0,0,0,0.1)"
+                        strokeWidth="4"
+                      />
+                    </svg>
+                    
+                    {/* Progress Circle */}
+                    <svg width="60" height="60" className="absolute" style={{ transform: 'rotate(-90deg)' }}>
+                      <circle
+                        cx="30"
+                        cy="30"
+                        r="24"
+                        fill="none"
+                        stroke="url(#energyGradient)"
+                        strokeWidth="4"
+                        strokeLinecap="round"
+                        strokeDasharray={`${2 * Math.PI * 24}`}
+                        strokeDashoffset={`${2 * Math.PI * 24 * (1 - (pet.hunger + pet.happiness) / 200)}`}
+                        style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                      />
+                      <defs>
+                        <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="25%" stopColor="#f97316" />
+                          <stop offset="50%" stopColor="#eab308" />
+                          <stop offset="75%" stopColor="#84cc16" />
+                          <stop offset="100%" stopColor="#22c55e" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
+                    
+                    {/* Center Content */}
+                    <div className="flex flex-col items-center">
+                      <div className="text-gray-800 font-bold" style={{ fontSize: '18px' }}>
+                        {Math.round((pet.hunger + pet.happiness) / 2)}
+                      </div>
                     </div>
                   </div>
-                </div>
-                
-                {/* Status Text */}
-                <div className="text-gray-600 font-medium mt-2" style={{ fontSize: '12px' }}>
-                  {Math.round((pet.hunger + pet.happiness) / 2) >= 75 ? 'Ready' : 
-                   Math.round((pet.hunger + pet.happiness) / 2) >= 50 ? 'Neutral' : 
-                   Math.round((pet.hunger + pet.happiness) / 2) >= 25 ? 'Low' : 'Empty'}
-                </div>
-              </button>
+                  
+                  {/* Status Text */}
+                  <div className="text-gray-600 font-medium mt-2" style={{ fontSize: '11px' }}>
+                    {Math.round((pet.hunger + pet.happiness) / 2) >= 75 ? 'Ready' : 
+                     Math.round((pet.hunger + pet.happiness) / 2) >= 50 ? 'Neutral' : 
+                     Math.round((pet.hunger + pet.happiness) / 2) >= 25 ? 'Low' : 'Empty'}
+                  </div>
+                </button>
 
-              {/* Storage Widget */}
-              <button
-                onClick={() => handleTabChange('pet')}
-                className="flex flex-col items-start justify-start transition-all hover:scale-105 active:scale-95"
-                style={{ 
-                  width: '140px',
-                  height: '140px',
-                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
-                  backdropFilter: 'blur(24px)',
-                  border: '1px solid rgba(255, 255, 255, 0.4)',
-                  borderRadius: '24px',
-                  boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
-                  cursor: 'pointer',
-                  animation: 'bubble-float 3.2s ease-in-out infinite',
-                  padding: '16px',
-                }}
-              >
-                {/* Storage Title */}
-                <div className="text-gray-800 font-bold mb-3" style={{ fontSize: '16px' }}>
-                  Storage
-                </div>
-                
-                {/* Storage Bar */}
-                <div className="w-full mb-3">
-                  <div 
-                    className="w-full h-8 rounded-lg overflow-hidden"
-                    style={{ background: 'rgba(0,0,0,0.1)' }}
-                  >
+                {/* Storage Widget */}
+                <button
+                  onClick={() => handleTabChange('pet')}
+                  className="flex flex-col items-start justify-start transition-all hover:scale-105 active:scale-95"
+                  style={{ 
+                    width: '140px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    animation: 'bubble-float 3.2s ease-in-out infinite',
+                    padding: '12px',
+                  }}
+                >
+                  {/* Storage Title */}
+                  <div className="text-gray-800 font-bold mb-2" style={{ fontSize: '14px' }}>
+                    Storage
+                  </div>
+                  
+                  {/* Storage Bar */}
+                  <div className="w-full mb-2">
                     <div 
-                      className="h-full rounded-lg"
+                      className="w-full h-6 rounded-lg overflow-hidden"
+                      style={{ background: 'rgba(0,0,0,0.1)' }}
+                    >
+                      <div 
+                        className="h-full rounded-lg"
+                        style={{ 
+                          width: pet.pendingCoins > 0 ? '100%' : '100%',
+                          background: 'linear-gradient(90deg, #f59e0b, #eab308)',
+                        }}
+                      />
+                    </div>
+                  </div>
+                  
+                  {/* Status */}
+                  <div className="flex items-center mb-1">
+                    <span className="text-green-600 font-medium" style={{ fontSize: '12px' }}>
+                      {pet.pendingCoins > 0 ? 'Ready' : 'Empty'}
+                    </span>
+                  </div>
+                  
+                  {/* Collected Amount */}
+                  <div>
+                    <div className="text-gray-500" style={{ fontSize: '10px' }}>Collected</div>
+                    <div className="text-gray-800 font-bold" style={{ fontSize: '16px' }}>
+                      {pet.pendingCoins.toLocaleString()}
+                    </div>
+                  </div>
+                </button>
+              </div>
+
+              {/* Bottom Row - Spin and another widget */}
+              <div className="flex justify-center gap-4">
+                {/* Spin Widget */}
+                <button
+                  onClick={() => setShowSpinModal(true)}
+                  className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
+                  style={{ 
+                    width: '140px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                    backdropFilter: 'blur(24px)',
+                    border: '1px solid rgba(255, 255, 255, 0.4)',
+                    borderRadius: '20px',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
+                    cursor: 'pointer',
+                    animation: 'bubble-float 3.5s ease-in-out infinite',
+                    padding: '12px',
+                  }}
+                >
+                  {/* Spin Icon */}
+                  <div className="relative flex items-center justify-center mb-2">
+                    <img 
+                      src="/icons/spin.PNG" 
+                      alt="Spin" 
                       style={{ 
-                        width: pet.pendingCoins > 0 ? '100%' : '100%',
-                        background: 'linear-gradient(90deg, #f59e0b, #eab308)',
-                      }}
+                        width: '48px', 
+                        height: '48px', 
+                        objectFit: 'contain',
+                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                      }} 
                     />
+                    {spinsLeft > 0 && (
+                      <div 
+                        className="absolute flex items-center justify-center"
+                        style={{
+                          top: '-6px',
+                          right: '-6px',
+                          width: '20px',
+                          height: '20px',
+                          borderRadius: '50%',
+                          background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+                          border: '2px solid white',
+                          fontSize: '10px',
+                          fontWeight: 'bold',
+                          color: 'white',
+                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
+                        }}
+                      >
+                        {spinsLeft}
+                      </div>
+                    )}
                   </div>
-                </div>
-                
-                {/* Status */}
-                <div className="flex items-center mb-2">
-                  <span className="text-green-600 font-medium" style={{ fontSize: '14px' }}>
-                    {pet.pendingCoins > 0 ? 'Ready' : 'Empty'}
-                  </span>
-                </div>
-                
-                {/* Collected Amount */}
-                <div>
-                  <div className="text-gray-500" style={{ fontSize: '11px' }}>Collected</div>
-                  <div className="text-gray-800 font-bold" style={{ fontSize: '18px' }}>
-                    {pet.pendingCoins.toLocaleString()}
+                  
+                  {/* Spin Title */}
+                  <div className="text-gray-800 font-bold mb-1" style={{ fontSize: '14px' }}>
+                    Lucky Spin
                   </div>
-                </div>
-              </button>
+                  
+                  {/* Status Text */}
+                  <div className="text-gray-600 font-medium" style={{ fontSize: '11px' }}>
+                    {spinsLeft > 0 ? `${spinsLeft} spins left` : 'No spins'}
+                  </div>
+                </button>
+
+                {/* Add Widget Placeholder */}
+                <button
+                  onClick={() => {
+                    // TODO: Implement widget selection modal
+                    console.log('Open widget selection modal');
+                  }}
+                  className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
+                  style={{ 
+                    width: '140px',
+                    height: '120px',
+                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%)',
+                    backdropFilter: 'blur(24px)',
+                    border: '2px dashed rgba(100, 100, 100, 0.4)',
+                    borderRadius: '20px',
+                    boxShadow: '0 6px 20px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.4)',
+                    cursor: 'pointer',
+                    animation: 'bubble-float 4.2s ease-in-out infinite',
+                    padding: '12px',
+                  }}
+                >
+                  {/* Plus Icon */}
+                  <div className="flex items-center justify-center mb-2">
+                    <div 
+                      className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
+                      style={{ 
+                        background: 'rgba(100, 100, 100, 0.2)',
+                        border: '1px solid rgba(100, 100, 100, 0.3)'
+                      }}
+                    >
+                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-700">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                      </svg>
+                    </div>
+                  </div>
+                  
+                  {/* Title */}
+                  <div className="text-gray-700 font-semibold mb-1" style={{ fontSize: '14px' }}>
+                    Add Widget
+                  </div>
+                  
+                  {/* Description */}
+                  <div className="text-gray-600 font-normal text-center" style={{ fontSize: '10px' }}>
+                    Customize your<br />dashboard
+                  </div>
+                </button>
+              </div>
             </div>
 
             {/* Hero Section */}
@@ -629,7 +698,7 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen-safe flex flex-col pb-24 safe-area-inset-top relative">
+    <div className="min-h-screen-safe flex flex-col pb-24 safe-area-inset-top relative overflow-hidden" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
       <main className="flex-1 flex flex-col" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
@@ -797,8 +866,18 @@ export default function HomePage() {
       {/* Spin Modal */}
       <SpinModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
 
-      {/* Custom CSS for reverse spin animation */}
+      {/* Custom CSS for reverse spin animation and hide scrollbars */}
       <style jsx global>{`
+        /* Hide scrollbars */
+        ::-webkit-scrollbar {
+          display: none;
+        }
+        
+        html, body {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        
         @keyframes reverse-spin {
           from {
             transform: rotate(0deg);

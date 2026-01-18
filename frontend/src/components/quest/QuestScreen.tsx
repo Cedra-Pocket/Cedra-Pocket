@@ -149,6 +149,8 @@ export function QuestScreen() {
       className="flex flex-col hide-scrollbar" 
       style={{ 
         paddingTop: 'clamp(12px, 3vw, 18px)', 
+        paddingLeft: 'clamp(8px, 2vw, 12px)',
+        paddingRight: 'clamp(8px, 2vw, 12px)',
         backgroundColor: 'transparent',
         height: 'calc(100vh - clamp(56px, 14vw, 72px))',
         overflowY: 'auto',
