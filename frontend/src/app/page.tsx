@@ -150,7 +150,7 @@ export default function HomePage() {
     switch (activeTab) {
       case 'home':
         return (
-          <div className="flex-1 flex flex-col" style={{ paddingTop: 'clamp(6px, 2vw, 10px)', position: 'relative', zIndex: 1 }}>
+          <div className="flex-1 flex flex-col h-full" style={{ paddingTop: 'clamp(4px, 1vw, 6px)', position: 'relative', zIndex: 1 }}>
             {/* Top Bar - Glass Container with top notch */}
             <div className="relative mb-2" style={{ marginLeft: 'clamp(24px, 6vw, 32px)', marginRight: 'clamp(24px, 6vw, 32px)', zIndex: 10 }}>
               {/* SVG for clip-path definition - top center notch like inverted trapezoid */}
@@ -294,9 +294,9 @@ export default function HomePage() {
 
             {/* Total Balance Section */}
             <div 
-              className="flex justify-center mb-6"
+              className="flex justify-center mb-4"
               style={{ 
-                marginTop: 'clamp(16px, 4vw, 24px)',
+                marginTop: 'clamp(8px, 2vw, 12px)',
                 paddingLeft: '24px',
                 paddingRight: '24px',
               }}
@@ -305,18 +305,18 @@ export default function HomePage() {
               <div 
                 style={{
                   background: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '20px',
-                  padding: '20px',
+                  borderRadius: '16px',
+                  padding: '16px',
                   border: '1px solid rgba(255,255,255,0.3)',
-                  boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                  boxShadow: '0 6px 24px rgba(0,0,0,0.1)',
                   backdropFilter: 'blur(20px)',
                   width: '100%',
-                  maxWidth: '320px',
+                  maxWidth: '300px',
                 }}
               >
                 {/* Header with eye icon */}
-                <div className="flex items-center justify-between mb-3">
-                  <span className="text-gray-600 font-medium" style={{ fontSize: '14px' }}>
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-gray-600 font-medium" style={{ fontSize: '13px' }}>
                     Total Balance
                   </span>
                   <button 
@@ -340,8 +340,8 @@ export default function HomePage() {
                 </div>
 
                 {/* Balance Amount */}
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-gray-800 font-bold" style={{ fontSize: '32px' }}>
+                <div className="flex items-center gap-3 mb-3">
+                  <span className="text-gray-800 font-bold" style={{ fontSize: '28px' }}>
                     {showBalance 
                       ? `$${(user?.walletBalance || 0).toLocaleString()}` 
                       : '****'
@@ -378,303 +378,250 @@ export default function HomePage() {
                 </div>
 
                 {/* Action Buttons */}
-                <div className="grid grid-cols-4 gap-3">
-                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(255, 193, 7, 0.3)' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <div className="grid grid-cols-4 gap-2">
+                  <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
+                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(255, 193, 7, 0.3)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Deposit</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Deposit</span>
                   </button>
 
-                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
+                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Bridge</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Bridge</span>
                   </button>
 
-                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(40, 167, 69, 0.2)' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
+                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(40, 167, 69, 0.2)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="m9 12 2 2 4-4"></path>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Earn</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Earn</span>
                   </button>
 
-                  <button className="flex flex-col items-center p-3 rounded-2xl transition-all hover:scale-105">
-                    <div className="w-8 h-8 rounded-xl flex items-center justify-center mb-2" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
+                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="7" y1="17" x2="17" y2="7"></line>
                         <polyline points="7,7 17,7 17,17"></polyline>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '12px' }}>Transfer</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Transfer</span>
                   </button>
                 </div>
               </div>
             </div>
 
-            {/* Widget Grid - 2x2 Layout */}
+            {/* Widget Grid - 3 Widgets */}
             <div 
-              className="flex flex-col items-center gap-4"
+              className="flex justify-center gap-3"
               style={{ 
-                marginTop: 'clamp(32px, 8vw, 48px)',
+                marginTop: 'clamp(16px, 4vw, 24px)',
                 zIndex: 10,
-                paddingLeft: '24px',
-                paddingRight: '24px',
+                paddingLeft: '20px',
+                paddingRight: '20px',
               }}
             >
-              {/* Top Row - Energy and Storage */}
-              <div className="flex justify-center gap-4">
-                {/* Energy Widget - For Gaming */}
-                <button
-                  onClick={() => handleTabChange('game')}
-                  className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
-                  style={{ 
-                    width: '140px',
-                    height: '120px',
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
-                    backdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.4)',
-                    borderRadius: '20px',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
-                    cursor: 'pointer',
-                    animation: 'bubble-float-slow 4s ease-in-out infinite',
-                    padding: '12px',
-                  }}
-                >
-                  {/* Circular Progress */}
-                  <div className="relative flex items-center justify-center" style={{ width: '60px', height: '60px' }}>
-                    {/* Background Circle */}
-                    <svg width="60" height="60" className="absolute">
-                      <circle
-                        cx="30"
-                        cy="30"
-                        r="24"
-                        fill="none"
-                        stroke="rgba(0,0,0,0.1)"
-                        strokeWidth="4"
-                      />
-                    </svg>
-                    
-                    {/* Progress Circle */}
-                    <svg width="60" height="60" className="absolute" style={{ transform: 'rotate(-90deg)' }}>
-                      <circle
-                        cx="30"
-                        cy="30"
-                        r="24"
-                        fill="none"
-                        stroke="url(#energyGradient)"
-                        strokeWidth="4"
-                        strokeLinecap="round"
-                        strokeDasharray={`${2 * Math.PI * 24}`}
-                        strokeDashoffset={`${2 * Math.PI * 24 * (1 - (pet.hunger + pet.happiness) / 200)}`}
-                        style={{ transition: 'stroke-dashoffset 0.5s ease' }}
-                      />
-                      <defs>
-                        <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                          <stop offset="0%" stopColor="#ef4444" />
-                          <stop offset="25%" stopColor="#f97316" />
-                          <stop offset="50%" stopColor="#eab308" />
-                          <stop offset="75%" stopColor="#84cc16" />
-                          <stop offset="100%" stopColor="#22c55e" />
-                        </linearGradient>
-                      </defs>
-                    </svg>
-                    
-                    {/* Center Content */}
-                    <div className="flex flex-col items-center">
-                      <div className="text-gray-800 font-bold" style={{ fontSize: '18px' }}>
-                        {Math.round((pet.hunger + pet.happiness) / 2)}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Status Text */}
-                  <div className="text-gray-600 font-medium mt-2" style={{ fontSize: '11px' }}>
-                    {Math.round((pet.hunger + pet.happiness) / 2) >= 75 ? 'Ready' : 
-                     Math.round((pet.hunger + pet.happiness) / 2) >= 50 ? 'Neutral' : 
-                     Math.round((pet.hunger + pet.happiness) / 2) >= 25 ? 'Low' : 'Empty'}
-                  </div>
-                </button>
-
-                {/* Storage Widget */}
-                <button
-                  onClick={() => handleTabChange('pet')}
-                  className="flex flex-col items-start justify-start transition-all hover:scale-105 active:scale-95"
-                  style={{ 
-                    width: '140px',
-                    height: '120px',
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
-                    backdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.4)',
-                    borderRadius: '20px',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
-                    cursor: 'pointer',
-                    animation: 'bubble-float 3.2s ease-in-out infinite',
-                    padding: '12px',
-                  }}
-                >
-                  {/* Storage Title */}
-                  <div className="text-gray-800 font-bold mb-2" style={{ fontSize: '14px' }}>
-                    Storage
-                  </div>
-                  
-                  {/* Storage Bar */}
-                  <div className="w-full mb-2">
-                    <div 
-                      className="w-full h-6 rounded-lg overflow-hidden"
-                      style={{ background: 'rgba(0,0,0,0.1)' }}
-                    >
-                      <div 
-                        className="h-full rounded-lg"
-                        style={{ 
-                          width: pet.pendingCoins > 0 ? '100%' : '100%',
-                          background: 'linear-gradient(90deg, #f59e0b, #eab308)',
-                        }}
-                      />
-                    </div>
-                  </div>
-                  
-                  {/* Status */}
-                  <div className="flex items-center mb-1">
-                    <span className="text-green-600 font-medium" style={{ fontSize: '12px' }}>
-                      {pet.pendingCoins > 0 ? 'Ready' : 'Empty'}
-                    </span>
-                  </div>
-                  
-                  {/* Collected Amount */}
-                  <div>
-                    <div className="text-gray-500" style={{ fontSize: '10px' }}>Collected</div>
-                    <div className="text-gray-800 font-bold" style={{ fontSize: '16px' }}>
-                      {pet.pendingCoins.toLocaleString()}
-                    </div>
-                  </div>
-                </button>
-              </div>
-
-              {/* Bottom Row - Spin and another widget */}
-              <div className="flex justify-center gap-4">
-                {/* Spin Widget */}
-                <button
-                  onClick={() => setShowSpinModal(true)}
-                  className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
-                  style={{ 
-                    width: '140px',
-                    height: '120px',
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
-                    backdropFilter: 'blur(24px)',
-                    border: '1px solid rgba(255, 255, 255, 0.4)',
-                    borderRadius: '20px',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.15), inset 0 2px 4px rgba(255,255,255,0.5)',
-                    cursor: 'pointer',
-                    animation: 'bubble-float 3.5s ease-in-out infinite',
-                    padding: '12px',
-                  }}
-                >
-                  {/* Spin Icon */}
-                  <div className="relative flex items-center justify-center mb-2">
-                    <img 
-                      src="/icons/spin.PNG" 
-                      alt="Spin" 
-                      style={{ 
-                        width: '48px', 
-                        height: '48px', 
-                        objectFit: 'contain',
-                        filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
-                      }} 
+              {/* Energy Widget - For Gaming */}
+              <button
+                onClick={() => handleTabChange('game')}
+                className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
+                style={{ 
+                  width: '100px',
+                  height: '100px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  animation: 'bubble-float-slow 4s ease-in-out infinite',
+                  padding: '10px',
+                }}
+              >
+                {/* Circular Progress */}
+                <div className="relative flex items-center justify-center" style={{ width: '50px', height: '50px' }}>
+                  {/* Background Circle */}
+                  <svg width="50" height="50" className="absolute">
+                    <circle
+                      cx="25"
+                      cy="25"
+                      r="20"
+                      fill="none"
+                      stroke="rgba(0,0,0,0.1)"
+                      strokeWidth="3"
                     />
-                    {spinsLeft > 0 && (
-                      <div 
-                        className="absolute flex items-center justify-center"
-                        style={{
-                          top: '-6px',
-                          right: '-6px',
-                          width: '20px',
-                          height: '20px',
-                          borderRadius: '50%',
-                          background: 'linear-gradient(135deg, #EF4444, #DC2626)',
-                          border: '2px solid white',
-                          fontSize: '10px',
-                          fontWeight: 'bold',
-                          color: 'white',
-                          boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
-                        }}
-                      >
-                        {spinsLeft}
-                      </div>
-                    )}
-                  </div>
+                  </svg>
                   
-                  {/* Spin Title */}
-                  <div className="text-gray-800 font-bold mb-1" style={{ fontSize: '14px' }}>
-                    Lucky Spin
-                  </div>
+                  {/* Progress Circle */}
+                  <svg width="50" height="50" className="absolute" style={{ transform: 'rotate(-90deg)' }}>
+                    <circle
+                      cx="25"
+                      cy="25"
+                      r="20"
+                      fill="none"
+                      stroke="url(#energyGradient)"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeDasharray={`${2 * Math.PI * 20}`}
+                      strokeDashoffset={`${2 * Math.PI * 20 * (1 - (pet.hunger + pet.happiness) / 200)}`}
+                      style={{ transition: 'stroke-dashoffset 0.5s ease' }}
+                    />
+                    <defs>
+                      <linearGradient id="energyGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" stopColor="#ef4444" />
+                        <stop offset="25%" stopColor="#f97316" />
+                        <stop offset="50%" stopColor="#eab308" />
+                        <stop offset="75%" stopColor="#84cc16" />
+                        <stop offset="100%" stopColor="#22c55e" />
+                      </linearGradient>
+                    </defs>
+                  </svg>
                   
-                  {/* Status Text */}
-                  <div className="text-gray-600 font-medium" style={{ fontSize: '11px' }}>
-                    {spinsLeft > 0 ? `${spinsLeft} spins left` : 'No spins'}
+                  {/* Center Content */}
+                  <div className="flex flex-col items-center">
+                    <div className="text-gray-800 font-bold" style={{ fontSize: '16px' }}>
+                      {Math.round((pet.hunger + pet.happiness) / 2)}
+                    </div>
                   </div>
-                </button>
+                </div>
+                
+                {/* Status Text */}
+                <div className="text-gray-600 font-medium mt-1" style={{ fontSize: '10px' }}>
+                  {Math.round((pet.hunger + pet.happiness) / 2) >= 75 ? 'Ready' : 
+                   Math.round((pet.hunger + pet.happiness) / 2) >= 50 ? 'Neutral' : 
+                   Math.round((pet.hunger + pet.happiness) / 2) >= 25 ? 'Low' : 'Empty'}
+                </div>
+              </button>
 
-                {/* Add Widget Placeholder */}
-                <button
-                  onClick={() => {
-                    // TODO: Implement widget selection modal
-                    console.log('Open widget selection modal');
-                  }}
-                  className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
-                  style={{ 
-                    width: '140px',
-                    height: '120px',
-                    background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.3) 0%, rgba(255, 255, 255, 0.2) 100%)',
-                    backdropFilter: 'blur(24px)',
-                    border: '2px dashed rgba(100, 100, 100, 0.4)',
-                    borderRadius: '20px',
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.1), inset 0 2px 4px rgba(255,255,255,0.4)',
-                    cursor: 'pointer',
-                    animation: 'bubble-float 4.2s ease-in-out infinite',
-                    padding: '12px',
-                  }}
-                >
-                  {/* Plus Icon */}
-                  <div className="flex items-center justify-center mb-2">
+              {/* Spin Widget */}
+              <button
+                onClick={() => setShowSpinModal(true)}
+                className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
+                style={{ 
+                  width: '100px',
+                  height: '100px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  animation: 'bubble-float 3.5s ease-in-out infinite',
+                  padding: '10px',
+                }}
+              >
+                {/* Spin Icon */}
+                <div className="relative flex items-center justify-center mb-1">
+                  <img 
+                    src="/icons/spin.PNG" 
+                    alt="Spin" 
+                    style={{ 
+                      width: '40px', 
+                      height: '40px', 
+                      objectFit: 'contain',
+                      filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
+                    }} 
+                  />
+                  {spinsLeft > 0 && (
                     <div 
-                      className="w-12 h-12 rounded-full flex items-center justify-center transition-all"
-                      style={{ 
-                        background: 'rgba(100, 100, 100, 0.2)',
-                        border: '1px solid rgba(100, 100, 100, 0.3)'
+                      className="absolute flex items-center justify-center"
+                      style={{
+                        top: '-4px',
+                        right: '-4px',
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        background: 'linear-gradient(135deg, #EF4444, #DC2626)',
+                        border: '2px solid white',
+                        fontSize: '9px',
+                        fontWeight: 'bold',
+                        color: 'white',
+                        boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                       }}
                     >
-                      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="text-gray-700">
-                        <line x1="12" y1="5" x2="12" y2="19"></line>
-                        <line x1="5" y1="12" x2="19" y2="12"></line>
-                      </svg>
+                      {spinsLeft}
                     </div>
+                  )}
+                </div>
+                
+                {/* Spin Title */}
+                <div className="text-gray-800 font-bold mb-1" style={{ fontSize: '12px' }}>
+                  Lucky Spin
+                </div>
+                
+                {/* Status Text */}
+                <div className="text-gray-600 font-medium" style={{ fontSize: '10px' }}>
+                  {spinsLeft > 0 ? `${spinsLeft} spins left` : 'No spins'}
+                </div>
+              </button>
+
+              {/* Storage Widget */}
+              <button
+                onClick={() => handleTabChange('pet')}
+                className="flex flex-col items-start justify-start transition-all hover:scale-105 active:scale-95"
+                style={{ 
+                  width: '100px',
+                  height: '100px',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
+                  borderRadius: '16px',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
+                  cursor: 'pointer',
+                  animation: 'bubble-float 3.2s ease-in-out infinite',
+                  padding: '10px',
+                }}
+              >
+                {/* Storage Title */}
+                <div className="text-gray-800 font-bold mb-1" style={{ fontSize: '12px' }}>
+                  Storage
+                </div>
+                
+                {/* Storage Bar */}
+                <div className="w-full mb-1">
+                  <div 
+                    className="w-full h-5 rounded-lg overflow-hidden"
+                    style={{ background: 'rgba(0,0,0,0.1)' }}
+                  >
+                    <div 
+                      className="h-full rounded-lg"
+                      style={{ 
+                        width: pet.pendingCoins > 0 ? '100%' : '100%',
+                        background: 'linear-gradient(90deg, #f59e0b, #eab308)',
+                      }}
+                    />
                   </div>
-                  
-                  {/* Title */}
-                  <div className="text-gray-700 font-semibold mb-1" style={{ fontSize: '14px' }}>
-                    Add Widget
+                </div>
+                
+                {/* Status */}
+                <div className="flex items-center mb-1">
+                  <span className="text-green-600 font-medium" style={{ fontSize: '11px' }}>
+                    {pet.pendingCoins > 0 ? 'Ready' : 'Empty'}
+                  </span>
+                </div>
+                
+                {/* Collected Amount */}
+                <div>
+                  <div className="text-gray-500" style={{ fontSize: '9px' }}>Collected</div>
+                  <div className="text-gray-800 font-bold" style={{ fontSize: '14px' }}>
+                    {pet.pendingCoins.toLocaleString()}
                   </div>
-                  
-                  {/* Description */}
-                  <div className="text-gray-600 font-normal text-center" style={{ fontSize: '10px' }}>
-                    Customize your<br />dashboard
-                  </div>
-                </button>
-              </div>
+                </div>
+              </button>
             </div>
 
             {/* Hero Section */}
-            <div className="flex-1 flex items-center justify-center" style={{ marginTop: 'clamp(-80px, -20vw, -40px)', transform: 'scale(0.8)' }}>
+            <div className="flex-1 flex items-center justify-center" style={{ marginTop: 'clamp(-60px, -15vw, -30px)', transform: 'scale(0.7)' }}>
               <HeroSection mascotImageUrl="/mascot.png" showAnimation={true} />
             </div>
           </div>

@@ -17,26 +17,35 @@ const ZODIAC_ANIMALS = [
   { id: 'tiger', name: 'Tiger', emoji: '🐅', nameVi: 'Dần', image: 'tiger', hasLevels: true }, // tiger1-tiger5
   { id: 'cat', name: 'Cat', emoji: '🐱', nameVi: 'Mão', image: 'cat', hasLevels: true }, // cat1-cat5
   { id: 'dragon', name: 'Dragon', emoji: '🐉', nameVi: 'Thìn', image: 'dragon', hasLevels: true }, // dragon1-dragon5
-  { id: 'snake', name: 'Snake', emoji: '🐍', nameVi: 'Tỵ', image: 'snake.png' },
-  { id: 'horse', name: 'Horse', emoji: '🐴', nameVi: 'Ngọ', image: 'horse.png' },
-  { id: 'goat', name: 'Goat', emoji: '🐐', nameVi: 'Mùi', image: 'goat.png' },
-  { id: 'monkey', name: 'Monkey', emoji: '🐵', nameVi: 'Thân', image: 'monkey.png' },
+  { id: 'snake', name: 'Snake', emoji: '🐍', nameVi: 'Tỵ', image: 'snake', hasLevels: true }, // snake1-snake5
+  { id: 'horse', name: 'Horse', emoji: '🐴', nameVi: 'Ngọ', image: 'horse', hasLevels: true }, // horse1-horse5
+  { id: 'goat', name: 'Goat', emoji: '🐐', nameVi: 'Mùi', image: 'goat', hasLevels: true }, // goat1-goat5
+  { id: 'monkey', name: 'Monkey', emoji: '🐵', nameVi: 'Thân', image: 'monkey', hasLevels: true }, // monkey1-monkey5
   { id: 'rooster', name: 'Rooster', emoji: '🐓', nameVi: 'Dậu', image: 'chicken', hasLevels: true }, // chicken1-chicken5
-  { id: 'dog', name: 'Dog', emoji: '🐕', nameVi: 'Tuất', image: 'dog.png' },
-  { id: 'pig', name: 'Pig', emoji: '🐷', nameVi: 'Hợi', image: 'pig.png' },
+  { id: 'dog', name: 'Dog', emoji: '🐕', nameVi: 'Tuất', image: 'dog', hasLevels: true }, // dog1-dog5
+  { id: 'pig', name: 'Pig', emoji: '🐷', nameVi: 'Hợi', image: 'pig', hasLevels: true }, // pig1-pig5
 ];
 
 // Lấy ảnh pet theo zodiac và level
 // Mỗi 2 level đổi ảnh 1 lần: lv1-2 = img1, lv3-4 = img2, ...
 const getPetImage = (zodiac: typeof ZODIAC_ANIMALS[0], level: number) => {
   if (zodiac.hasLevels) {
-    // Pet có nhiều level (cat1-cat5, chicken1-chicken5, mouse1-mouse5 cho 10 levels)
+    // Pet có nhiều level (tất cả animals đều có 5 levels)
     const imgLevel = Math.ceil(level / 2); // 1-2->1, 3-4->2, 5-6->3, 7-8->4, 9-10->5
-    // level 1 là .png, còn lại là .PNG
-    if (imgLevel === 1) {
-      return `/pet/${zodiac.image}${imgLevel}.png`;
-    }
-    return `/pet/${zodiac.image}${imgLevel}.PNG`;
+    
+    // Xử lý extension dựa trên từng animal và level cụ thể
+    const getExtension = (animalImage: string, level: number) => {
+      // Các trường hợp đặc biệt có .png thay vì .PNG
+      const pngCases = [
+        'mouse1', 'chicken1', 'dog3', 'horse2', 'horse5', 'pig3', 'pig4', 'snake3', 'snake4', 'tiger'
+      ];
+      
+      const fileName = `${animalImage}${level}`;
+      return pngCases.includes(fileName) ? '.png' : '.PNG';
+    };
+    
+    const extension = getExtension(zodiac.image, imgLevel);
+    return `/pet/${zodiac.image}${imgLevel}${extension}`;
   }
   return `/pet/${zodiac.image}`;
 };
@@ -674,41 +683,35 @@ export function PetScreen() {
   // Pet đã nở - hiển thị giao diện chính
   return (
     <div className="flex flex-col relative" style={{ backgroundColor: 'transparent', minHeight: 'calc(100vh - 80px)', paddingBottom: '140px' }}>
-      {/* Top Banner */}
-      <div style={{ margin: '8px 12px', padding: '10px 12px', background: 'rgba(255, 255, 255, 0.85)', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.5)', backdropFilter: 'blur(10px)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <div className="flex items-center gap-2">
-          <div 
-            onClick={() => setShowDebugPanel(true)}
-            className="relative flex items-center justify-center cursor-pointer" 
-            style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, #4facfe, #00f2fe)' }}
-          >
-            <svg className="absolute" viewBox="0 0 36 36" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-              <circle cx="18" cy="18" r="15" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
-              <circle cx="18" cy="18" r="15" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray={`${(pet.exp / pet.maxExp) * 94} 94`} strokeLinecap="round" />
-            </svg>
-            <span style={{ fontSize: '13px', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
-          </div>
-          <div>
-            <div style={{ color: '#1a1a2e', fontSize: '13px', fontWeight: '600' }}>{petName}</div>
-            <div style={{ color: 'rgba(0,0,0,0.5)', fontSize: '11px' }}>EXP: {pet.exp}/{pet.maxExp}</div>
-          </div>
+      {/* Pet Info - Top Left */}
+      <div className="flex items-center" style={{ marginTop: '16px', marginBottom: '8px', marginLeft: '20px' }}>
+        <div 
+          onClick={() => setShowDebugPanel(true)}
+          className="relative flex items-center justify-center cursor-pointer mr-3" 
+          style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #4facfe, #00f2fe)' }}
+        >
+          <svg className="absolute" viewBox="0 0 40 40" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+            <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
+            <circle cx="20" cy="20" r="16" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray={`${(pet.exp / pet.maxExp) * 100} 100`} strokeLinecap="round" />
+          </svg>
+          <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
+        </div>
+        <div>
+          <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px', fontWeight: '600' }}>{petName}</div>
+          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>EXP: {pet.exp}/{pet.maxExp}</div>
         </div>
       </div>
 
-      {/* Storage Display - Kho chứa coins pet nhả ra */}
-      <div className="flex flex-col items-center" style={{ marginTop: '4px', marginBottom: '4px' }}>
-        <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: '13px', marginBottom: '4px' }}>Pending coins:</span>
-        <div className="flex items-center gap-2">
-          <span style={{ fontSize: '24px' }}>🪙</span>
-          <span style={{ fontSize: '36px', fontWeight: '700', color: '#ffd700' }}>{pet.pendingCoins}</span>
-        </div>
-        <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '11px', marginTop: '4px' }}>
-          {pet.pendingCoins > 0 ? 'Ready to claim!' : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
+      {/* Storage Display - Center */}
+      <div className="flex flex-col items-center" style={{ marginTop: '20px', marginBottom: '20px' }}>
+        <div className="flex items-center gap-3">
+          <span style={{ fontSize: '32px' }}>🪙</span>
+          <span style={{ fontSize: '48px', fontWeight: '700', color: '#ffd700' }}>{pet.pendingCoins}</span>
         </div>
       </div>
 
       {/* Pet Image */}
-      <div className="flex flex-col items-center justify-center relative flex-1" style={{ margin: '-20px 0 4px 0' }}>
+      <div className="flex flex-col items-center justify-center relative flex-1" style={{ margin: '20px 0 4px 0' }}>
         {showCoinAnimation && (
           <div style={{ 
             position: 'absolute', 
@@ -748,27 +751,26 @@ export function PetScreen() {
         </div>
       </div>
 
-      {/* Bottom Fixed Section */}
-      <div style={{ position: 'fixed', bottom: '100px', left: 0, right: 0, zIndex: 40, padding: '0 16px' }}>
-        {/* Claim Card */}
-        <div style={{ maxWidth: '300px', margin: '0 auto 8px auto', background: 'linear-gradient(135deg, #f5e6c8, #e8d4a8)', borderRadius: '16px', padding: '2px' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '14px', padding: '12px 14px', backdropFilter: 'blur(10px)' }}>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #ffd700, #f5a623)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <span style={{ fontSize: '20px' }}>💰</span>
-              </div>
-              <div>
-                <div style={{ color: '#1a1a2e', fontSize: '15px', fontWeight: '600' }}>Storage</div>
-                <div style={{ color: 'rgba(0,0,0,0.5)', fontSize: '12px' }}>{pet.pendingCoins > 0 ? 'Ready!' : 'Earning...'}</div>
-                <div style={{ color: '#f5a623', fontSize: '11px', fontWeight: '600', marginTop: '2px' }}>
-                  +{getCoinsPerMinute(pet.level)}/hour
-                </div>
-              </div>
-            </div>
-            <button onClick={collectCoins} disabled={pet.pendingCoins <= 0} style={{ padding: '8px 20px', borderRadius: '10px', background: pet.pendingCoins > 0 ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(100,100,100,0.3)', border: 'none', color: pet.pendingCoins > 0 ? '#1a1a1f' : 'rgba(0,0,0,0.4)', fontSize: '14px', fontWeight: '700', cursor: pet.pendingCoins > 0 ? 'pointer' : 'not-allowed' }}>Claim</button>
-          </div>
-        </div>
+      {/* Claim Button - Center */}
+      <div className="flex justify-center" style={{ marginTop: '20px', marginBottom: '20px' }}>
+        <button 
+          onClick={collectCoins} 
+          disabled={pet.pendingCoins <= 0} 
+          className="transition-all hover:scale-105 active:scale-95"
+          style={{ 
+            padding: '14px 40px', 
+            borderRadius: '16px', 
+            background: pet.pendingCoins > 0 ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(100,100,100,0.3)', 
+            border: 'none', 
+            color: pet.pendingCoins > 0 ? '#1a1a1f' : 'rgba(0,0,0,0.4)', 
+            fontSize: '16px', 
+            fontWeight: '700', 
+            cursor: pet.pendingCoins > 0 ? 'pointer' : 'not-allowed',
+            boxShadow: pet.pendingCoins > 0 ? '0 4px 20px rgba(255,215,0,0.4)' : 'none'
+          }}
+        >
+          {pet.pendingCoins > 0 ? 'Claim' : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
+        </button>
       </div>
 
       {/* Bottom Actions Bar */}
@@ -789,7 +791,6 @@ export function PetScreen() {
             <span style={{ color: '#1a1a2e', fontSize: '13px', fontWeight: '600' }}>Friends</span>
           </button>
         </div>
-      </div>
       </div>
 
       <style jsx>{`

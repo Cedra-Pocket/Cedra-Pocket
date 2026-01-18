@@ -8,14 +8,14 @@ export function LoadingScreen() {
         background: 'linear-gradient(180deg, #87CEEB 0%, #98D8E8 30%, #B0E0E6 60%, #C5E8F0 100%)',
       }}
     >
-      {/* Logo/Mascot */}
+      {/* Logo */}
       <div 
         className="relative mb-8 animate-bounce"
         style={{ animationDuration: '2s' }}
       >
         <img 
-          src="/mascot.png" 
-          alt="Loading" 
+          src="/logo.png" 
+          alt="Cedra Pocket Logo" 
           className="drop-shadow-2xl"
           style={{ 
             width: 'clamp(120px, 35vw, 180px)', 
