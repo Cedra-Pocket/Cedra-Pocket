@@ -788,9 +788,12 @@ export const useAppStore = create<AppStore>()(
               pendingCoins: 0,
             });
           }
+
+          console.log(`✅ Claimed ${result.pointsEarned} rewards successfully`);
         } catch (error) {
           console.error('Failed to claim pet rewards:', error);
           get().setError('Failed to claim rewards');
+          throw error;
         }
       },
 

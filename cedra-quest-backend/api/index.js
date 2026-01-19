@@ -165,6 +165,63 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Pet claim rewards endpoint
+    if (path.includes('/game/pet/claim/') && req.method === 'POST') {
+      const userId = path.split('/').pop();
+      
+      if (!userId) {
+        res.status(400).json({ error: 'User ID required' });
+        return;
+      }
+
+      // Get user and pet data
+      const user = await prisma.users.findUnique({
+        where: { telegram_id: BigInt(userId) },
+        include: { pet: true }
+      });
+
+      if (!user || !user.pet) {
+        res.status(404).json({ error: 'User or pet not found' });
+        return;
+      }
+
+      const pendingCoins = user.pet.pending_coins;
+      
+      if (pendingCoins <= 0) {
+        res.status(400).json({ error: 'No rewards to claim' });
+        return;
+      }
+
+      // Update user points and reset pending coins
+      const updatedUser = await prisma.users.update({
+        where: { telegram_id: BigInt(userId) },
+        data: {
+          total_points: user.total_points + BigInt(pendingCoins),
+          lifetime_points: user.lifetime_points + BigInt(pendingCoins)
+        }
+      });
+
+      // Reset pending coins
+      await prisma.pets.update({
+        where: { user_id: BigInt(userId) },
+        data: {
+          pending_coins: 0,
+          last_coin_time: new Date()
+        }
+      });
+
+      res.status(200).json({
+        success: true,
+        pointsEarned: pendingCoins,
+        newTotalPoints: Number(updatedUser.total_points),
+        pet: {
+          pendingCoins: 0,
+          lastClaimTime: new Date().toISOString()
+        }
+      });
+      return;
+    }
+
     // Default response
     res.status(200).json({
       message: 'Cedra Quest Backend API with Database',
@@ -173,7 +230,8 @@ export default async function handler(req, res) {
       available_endpoints: [
         'GET /health',
         'GET /game/dashboard/:userId',
-        'GET /game/cycle/current'
+        'GET /game/cycle/current',
+        'POST /game/pet/claim/:userId'
       ]
     });
 
