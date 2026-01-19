@@ -116,38 +116,60 @@ export default async function handler(req, res) {
         if (!user) {
           console.log(`👤 Creating new user: ${userId}`);
           try {
-            user = await prisma.users.create({
+            // Create user first
+            const newUser = await prisma.users.create({
               data: {
                 telegram_id: BigInt(userId),
                 username: `User${userId}`,
                 wallet_address: `0x${userId}`,
                 public_key: `pk_${userId}`,
-                pet: {
-                  create: {
-                    level: 1,
-                    exp: 0,
-                    max_exp: 100,
-                    hunger: 100,
-                    happiness: 100,
-                    pending_coins: 5, // Give some initial pending coins for testing
-                    total_coins_earned: BigInt(0),
-                    coin_rate: 1.0
-                  }
-                },
-                energy: {
-                  create: {
-                    current_energy: 10,
-                    max_energy: 10
-                  }
-                }
-              },
+              }
+            });
+            
+            console.log(`✅ Created user: ${newUser.telegram_id}`);
+
+            // Create pet separately
+            const newPet = await prisma.pets.create({
+              data: {
+                user_id: BigInt(userId),
+                level: 1,
+                exp: 0,
+                max_exp: 100,
+                hunger: 100,
+                happiness: 100,
+                pending_coins: 5, // Give some initial pending coins for testing
+                total_coins_earned: BigInt(0),
+                coin_rate: 1.0
+              }
+            });
+            
+            console.log(`✅ Created pet: ${newPet.id}`);
+
+            // Create energy separately
+            const newEnergy = await prisma.user_energy.create({
+              data: {
+                user_id: BigInt(userId),
+                current_energy: 10,
+                max_energy: 10
+              }
+            });
+            
+            console.log(`✅ Created energy: ${newEnergy.id}`);
+
+            // Now fetch the complete user with relationships
+            user = await prisma.users.findUnique({
+              where: { telegram_id: BigInt(userId) },
               include: {
                 pet: true,
                 energy: true,
-                game_sessions: true
+                game_sessions: {
+                  orderBy: { created_at: 'desc' },
+                  take: 10
+                }
               }
             });
-            console.log(`✅ Created user with pet:`, user.pet ? 'Yes' : 'No');
+            
+            console.log(`✅ Fetched complete user, pet:`, user.pet ? 'Yes' : 'No');
           } catch (createError) {
             console.error('Failed to create user:', createError);
             res.status(500).json({ 
