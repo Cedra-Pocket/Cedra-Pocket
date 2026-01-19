@@ -129,7 +129,7 @@ export default async function handler(req, res) {
                     max_exp: 100,
                     hunger: 100,
                     happiness: 100,
-                    pending_coins: 0,
+                    pending_coins: 5, // Give some initial pending coins for testing
                     total_coins_earned: BigInt(0),
                     coin_rate: 1.0
                   }
@@ -147,6 +147,7 @@ export default async function handler(req, res) {
                 game_sessions: true
               }
             });
+            console.log(`✅ Created user with pet:`, user.pet ? 'Yes' : 'No');
           } catch (createError) {
             console.error('Failed to create user:', createError);
             res.status(500).json({ 
@@ -155,6 +156,8 @@ export default async function handler(req, res) {
             });
             return;
           }
+        } else {
+          console.log(`👤 Found existing user: ${userId}, pet:`, user.pet ? 'Yes' : 'No');
         }
 
         // Cache the user data
