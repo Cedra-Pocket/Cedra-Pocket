@@ -21,5 +21,6 @@
       "maxDuration": 30
     }
   },
-  "installCommand": "npm install --ignore-scripts"
+  "buildCommand": "npm run vercel-build",
+  "installCommand": "npm ci --ignore-scripts"
 }
