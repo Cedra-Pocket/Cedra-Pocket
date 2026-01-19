@@ -1,5 +1,5 @@
 // Simple serverless function for Vercel
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -10,20 +10,30 @@ module.exports = async (req, res) => {
     return;
   }
 
+  // Get the path from URL
+  const path = req.url || '/';
+
   // Health check endpoint
-  if (req.url === '/health' || req.url === '/') {
+  if (path === '/health' || path === '/' || path === '/api') {
     res.status(200).json({
       status: 'ok',
-      message: 'Cedra Quest Backend is running',
+      message: 'Cedra Quest Backend is running on Vercel',
       timestamp: new Date().toISOString(),
+      path: path,
+      method: req.method,
     });
     return;
   }
 
-  // For now, return a simple response for all other routes
+  // For all other routes, return API info
   res.status(200).json({
     message: 'Cedra Quest Backend API',
-    path: req.url,
+    path: path,
     method: req.method,
+    available_endpoints: [
+      'GET /',
+      'GET /health',
+      'GET /api'
+    ]
   });
-};
+}
