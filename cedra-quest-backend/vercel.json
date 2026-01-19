@@ -13,11 +13,13 @@
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "SKIP_ENV_VALIDATION": "true"
   },
   "functions": {
     "api/index.js": {
       "maxDuration": 30
     }
-  }
+  },
+  "installCommand": "npm install --ignore-scripts"
 }
