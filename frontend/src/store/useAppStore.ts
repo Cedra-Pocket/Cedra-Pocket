@@ -773,25 +773,38 @@ export const useAppStore = create<AppStore>()(
 
       claimGamePetRewards: async () => {
         try {
+          console.log('💰 Starting pet rewards claim...');
           const { backendAPI } = await import('../services/backend-api.service');
           const result = await backendAPI.claimGamePetRewards();
           
-          // Update user points with claimed rewards
-          if (result.pointsEarned) {
-            get().updateBalance(result.pointsEarned, 'token');
-          }
+          console.log('💰 Claim result:', result);
+          
+          if (result && result.success) {
+            console.log('✅ Claim successful, updating state...');
+            
+            // Update user points with claimed rewards
+            if (result.pointsEarned) {
+              console.log(`💰 Adding ${result.pointsEarned} points to balance`);
+              get().updateBalance(result.pointsEarned, 'token');
+            }
 
-          // Update pet state
-          if (result.pet) {
-            get().setPet({
-              lastCoinTime: Date.now(),
-              pendingCoins: 0,
-            });
-          }
+            // Update pet state
+            if (result.pet) {
+              console.log('🐾 Updating pet state after claim:', result.pet);
+              get().setPet({
+                lastCoinTime: Date.now(),
+                pendingCoins: 0,
+              });
+            }
 
-          console.log(`✅ Claimed ${result.pointsEarned} rewards successfully`);
+            console.log(`✅ Claimed ${result.pointsEarned} rewards successfully`);
+          } else {
+            console.error('❌ Claim response missing success flag:', result);
+            get().setError('Invalid claim response');
+            throw new Error('Invalid claim response');
+          }
         } catch (error) {
-          console.error('Failed to claim pet rewards:', error);
+          console.error('❌ Failed to claim pet rewards:', error);
           get().setError('Failed to claim rewards');
           throw error;
         }
@@ -871,11 +884,17 @@ export const useAppStore = create<AppStore>()(
       loadGameDashboard: async () => {
         try {
           const { backendAPI } = await import('../services/backend-api.service');
-          const dashboard = await backendAPI.getGameDashboard();
+          console.log('🎮 Loading game dashboard...');
           
-          if (dashboard.success) {
+          const dashboard = await backendAPI.getGameDashboard();
+          console.log('📊 Dashboard response:', dashboard);
+          
+          if (dashboard && dashboard.success) {
+            console.log('✅ Dashboard has success flag, processing data...');
+            
             // Update pet state
             if (dashboard.pet) {
+              console.log('🐾 Updating pet state:', dashboard.pet);
               get().setPet({
                 level: dashboard.pet.level,
                 exp: dashboard.pet.currentXp,
@@ -887,6 +906,7 @@ export const useAppStore = create<AppStore>()(
 
             // Update energy state
             if (dashboard.energy) {
+              console.log('⚡ Updating energy state:', dashboard.energy);
               get().setEnergy({
                 currentEnergy: dashboard.energy.currentEnergy,
                 maxEnergy: dashboard.energy.maxEnergy,
@@ -896,6 +916,7 @@ export const useAppStore = create<AppStore>()(
 
             // Update ranking
             if (dashboard.ranking) {
+              console.log('🏆 Updating ranking:', dashboard.ranking);
               get().setRanking({
                 rank: dashboard.ranking.rank,
                 position: dashboard.ranking.position,
@@ -906,6 +927,7 @@ export const useAppStore = create<AppStore>()(
 
             // Update game stats
             if (dashboard.gameStats) {
+              console.log('📈 Updating game stats:', dashboard.gameStats);
               get().setGameStats({
                 totalGamesPlayed: dashboard.gameStats.totalGamesPlayed,
                 totalScore: dashboard.gameStats.totalScore,
@@ -916,13 +938,20 @@ export const useAppStore = create<AppStore>()(
             }
 
             // Load current game cycle
+            console.log('🔄 Loading game cycle...');
             const cycle = await backendAPI.getCurrentGameCycle();
             if (cycle) {
+              console.log('🎯 Game cycle loaded:', cycle);
               get().setGameCycle(cycle);
             }
+            
+            console.log('✅ Game dashboard loaded successfully');
+          } else {
+            console.error('❌ Dashboard response missing success flag:', dashboard);
+            get().setError('Invalid dashboard response');
           }
         } catch (error) {
-          console.error('Failed to load game dashboard:', error);
+          console.error('❌ Failed to load game dashboard:', error);
           get().setError('Failed to load game data');
         }
       },

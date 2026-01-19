@@ -278,7 +278,7 @@ export default async function handler(req, res) {
         console.log(`💰 User ${userId} claiming ${pendingCoins} coins`);
 
         // Update user points and reset pending coins in a transaction with timeout
-        const [updatedUser] = await Promise.race([
+        const [updatedUser, updatedPet] = await Promise.race([
           prisma.$transaction([
             prisma.users.update({
               where: { telegram_id: BigInt(userId) },
