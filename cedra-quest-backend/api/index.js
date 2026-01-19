@@ -265,6 +265,57 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Admin reset user endpoint (for development/testing)
+    if (path.includes('/admin/reset-user/') && req.method === 'POST') {
+      const userId = path.split('/').pop();
+      
+      if (!userId) {
+        res.status(400).json({ error: 'User ID required' });
+        return;
+      }
+
+      console.log(`🔄 Resetting user data for: ${userId}`);
+
+      try {
+        // Delete existing user data (cascade will delete pet, energy, etc.)
+        await prisma.users.deleteMany({
+          where: { telegram_id: BigInt(userId) }
+        });
+
+        // Also delete any orphaned records
+        await prisma.pets.deleteMany({
+          where: { user_id: BigInt(userId) }
+        });
+
+        await prisma.user_energy.deleteMany({
+          where: { user_id: BigInt(userId) }
+        });
+
+        await prisma.game_sessions.deleteMany({
+          where: { user_id: BigInt(userId) }
+        });
+
+        // Clear cache
+        userCache.delete(userId);
+
+        console.log(`✅ Reset complete for user: ${userId}`);
+
+        res.status(200).json({
+          success: true,
+          message: `User ${userId} data has been reset`,
+          timestamp: new Date().toISOString()
+        });
+        return;
+      } catch (resetError) {
+        console.error(`❌ Reset error for user ${userId}:`, resetError);
+        res.status(500).json({ 
+          error: 'Reset failed', 
+          message: resetError.message 
+        });
+        return;
+      }
+    }
+
     // Pet claim rewards endpoint
     if (path.includes('/game/pet/claim/') && req.method === 'POST') {
       const userId = path.split('/').pop();
@@ -367,7 +418,8 @@ export default async function handler(req, res) {
         'GET /health',
         'GET /game/dashboard/:userId',
         'GET /game/cycle/current',
-        'POST /game/pet/claim/:userId'
+        'POST /game/pet/claim/:userId',
+        'POST /admin/reset-user/:userId (for development)'
       ]
     });
 
