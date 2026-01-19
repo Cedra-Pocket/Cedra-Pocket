@@ -132,6 +132,39 @@ export default async function handler(req, res) {
 
       console.log(`🎮 Loading dashboard for user: ${userId}`);
 
+      // Check for reset parameter
+      const url = new URL(req.url, `https://${req.headers.host}`);
+      const shouldReset = url.searchParams.get('reset') === 'true';
+
+      if (shouldReset) {
+        console.log(`🔄 RESET requested for user: ${userId}`);
+        try {
+          // Delete existing user data
+          await prisma.users.deleteMany({
+            where: { telegram_id: BigInt(userId) }
+          });
+
+          await prisma.pets.deleteMany({
+            where: { user_id: BigInt(userId) }
+          });
+
+          await prisma.user_energy.deleteMany({
+            where: { user_id: BigInt(userId) }
+          });
+
+          await prisma.game_sessions.deleteMany({
+            where: { user_id: BigInt(userId) }
+          });
+
+          // Clear cache
+          userCache.delete(userId);
+
+          console.log(`✅ Reset complete for user: ${userId}`);
+        } catch (resetError) {
+          console.error(`❌ Reset error:`, resetError);
+        }
+      }
+
       // Check cache first
       let user = getCachedUser(userId);
       
