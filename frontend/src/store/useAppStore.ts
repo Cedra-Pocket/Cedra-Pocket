@@ -26,7 +26,7 @@ export type NavigationTab = 'home' | 'quest' | 'pet' | 'wallet' | 'game';
 /**
  * Currency types for balance updates
  */
-export type CurrencyType = 'token' | 'gem';
+export type CurrencyType = 'token' | 'gem' | 'wallet';
 
 /**
  * Complete application state interface
@@ -73,8 +73,11 @@ export interface AppState {
     maxExp: number;
     hunger: number;
     happiness: number;
-    lastCoinTime: number; // timestamp khi lần cuối nhả coin
+    lastCoinTime: number;
     pendingCoins: number;
+    hatched: boolean;
+    birthYear: number | null;
+    hatchProgress: number; // 0-100, cần hoàn thành nhiệm vụ để tăng
   };
 }
 
@@ -196,6 +199,9 @@ const initialState: AppState = {
     happiness: 50,
     lastCoinTime: Date.now(),
     pendingCoins: 0,
+    hatched: false,
+    birthYear: null,
+    hatchProgress: 0,
   },
 };
 
@@ -295,6 +301,16 @@ export const useAppStore = create<AppStore>()(
               }
             }
           }
+        } else if (currency === 'wallet') {
+          // Update wallet balance (USD)
+          const newWalletBalance = user.walletBalance + amount;
+          set({
+            user: {
+              ...user,
+              walletBalance: newWalletBalance,
+              updatedAt: new Date(),
+            },
+          });
         } else {
           set({
             user: {

@@ -54,11 +54,33 @@ const RewardBadge = ({ type, amount }: { type: Quest['reward']['type']; amount: 
     }}
     className="flex items-center justify-center gap-1"
   >
-    <span style={{ fontSize: 'var(--fs-xs)' }}>
+    <span style={{ fontSize: 'var(--fs-sm)' }}>
       <RewardIcon type={type} />
     </span>
-    <span style={{ color: '#1a1a2e', fontSize: 'var(--fs-xs)' }} className="font-extrabold">
+    <span style={{ color: '#1a1a2e', fontSize: 'var(--fs-sm)' }} className="font-extrabold">
       +{formatRewardAmount(amount)}
+    </span>
+  </div>
+);
+
+/**
+ * Completed Badge component
+ */
+const CompletedBadge = () => (
+  <div 
+    style={{ 
+      minWidth: 'clamp(54px, 14vw, 70px)',
+      height: 'clamp(18px, 5vw, 24px)',
+      paddingLeft: 'clamp(5px, 1.2vw, 8px)',
+      paddingRight: 'clamp(5px, 1.2vw, 8px)',
+      background: 'rgba(34, 197, 94, 0.2)',
+      borderRadius: 'clamp(6px, 1.5vw, 10px)',
+      border: '1px solid rgba(34, 197, 94, 0.3)'
+    }}
+    className="flex items-center justify-center"
+  >
+    <span style={{ color: '#16a34a', fontSize: 'var(--fs-sm)' }} className="font-extrabold">
+      ✓ Completed
     </span>
   </div>
 );
@@ -69,7 +91,7 @@ const RewardBadge = ({ type, amount }: { type: Quest['reward']['type']; amount: 
 const ClaimButton = ({ onClick }: { onClick?: () => void }) => (
   <button 
     onClick={onClick}
-    style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-xs)' }}
+    style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-sm)' }}
     className="rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold shadow-lg shadow-pink-500/30 border border-pink-400/30 hover:scale-105 transition-transform flex items-center justify-center"
   >
     Claim
@@ -92,6 +114,7 @@ const QuestDetailModal = ({
 }) => {
   if (!isOpen) return null;
 
+  const isClaimable = quest.status === 'claimable';
   const isCompleted = quest.status === 'completed';
 
   return (
@@ -141,16 +164,31 @@ const QuestDetailModal = ({
             {/* Reward + Action */}
             <div className="flex items-center" style={{ gap: 'clamp(5px, 1.2vw, 8px)' }}>
               <RewardBadge type={quest.reward.type} amount={quest.reward.amount} />
-              <button
-                onClick={() => {
-                  onAction();
-                  onClose();
-                }}
-                style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-xs)' }}
-                className="rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold shadow-lg shadow-pink-500/30 border border-pink-400/30 hover:scale-105 transition-transform flex items-center justify-center"
-              >
-                {isCompleted ? 'Claim' : 'Go'}
-              </button>
+              {isCompleted ? (
+                <CompletedBadge />
+              ) : isClaimable ? (
+                <button
+                  onClick={() => {
+                    onAction();
+                    onClose();
+                  }}
+                  style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-xs)' }}
+                  className="rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-extrabold shadow-lg shadow-pink-500/30 border border-pink-400/30 hover:scale-105 transition-transform flex items-center justify-center"
+                >
+                  Claim
+                </button>
+              ) : (
+                <button
+                  onClick={() => {
+                    onAction();
+                    onClose();
+                  }}
+                  style={{ width: 'clamp(44px, 12vw, 56px)', height: 'clamp(18px, 5vw, 24px)', fontSize: 'var(--fs-xs)' }}
+                  className="rounded-xl bg-gradient-to-r from-blue-500 to-cyan-500 text-white font-extrabold shadow-lg shadow-blue-500/30 border border-blue-400/30 hover:scale-105 transition-transform flex items-center justify-center"
+                >
+                  Go
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -165,12 +203,13 @@ const QuestDetailModal = ({
 export function QuestCard({ quest, onAction }: QuestCardProps) {
   const [showDetail, setShowDetail] = useState(false);
   const isLocked = quest.status === 'locked';
+  const isClaimable = quest.status === 'claimable';
   const isCompleted = quest.status === 'completed';
 
   return (
     <>
       <div
-        onClick={isLocked ? undefined : () => setShowDetail(true)}
+        onClick={isLocked || isCompleted ? undefined : () => setShowDetail(true)}
         style={{
           background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
           border: '1px solid rgba(0, 0, 0, 0.1)',
@@ -179,7 +218,7 @@ export function QuestCard({ quest, onAction }: QuestCardProps) {
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
           width: '100%',
         }}
-        className={`${isLocked ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]'}`}
+        className={`${isLocked || isCompleted ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]'}`}
       >
         <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
           {/* Quest Icon */}
@@ -201,7 +240,7 @@ export function QuestCard({ quest, onAction }: QuestCardProps) {
             <h3 
               style={{ 
                 color: '#1a1a2e', 
-                fontSize: 'var(--fs-base)', 
+                fontSize: 'var(--fs-lg)', 
                 marginBottom: 'clamp(1px, 0.2vw, 2px)',
                 display: '-webkit-box',
                 WebkitLineClamp: 2,
@@ -218,7 +257,7 @@ export function QuestCard({ quest, onAction }: QuestCardProps) {
             <p 
               style={{ 
                 color: 'rgba(0, 0, 0, 0.6)', 
-                fontSize: 'var(--fs-sm)',
+                fontSize: 'var(--fs-base)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis'
@@ -228,14 +267,15 @@ export function QuestCard({ quest, onAction }: QuestCardProps) {
             </p>
           </div>
 
-          {/* Reward + Claim - Right side */}
+          {/* Reward + Action - Right side */}
           <div className="flex items-center flex-shrink-0" style={{ gap: 'clamp(4px, 1vw, 8px)' }}>
             <RewardBadge type={quest.reward.type} amount={quest.reward.amount} />
-            {isCompleted && (
+            {isClaimable && (
               <ClaimButton onClick={() => {
                 onAction();
               }} />
             )}
+            {isCompleted && <CompletedBadge />}
           </div>
         </div>
       </div>

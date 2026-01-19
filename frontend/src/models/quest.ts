@@ -11,7 +11,7 @@ export type QuestType = 'social' | 'daily' | 'achievement' | 'referral';
 /**
  * Quest completion status
  */
-export type QuestStatus = 'active' | 'completed' | 'locked';
+export type QuestStatus = 'active' | 'claimable' | 'completed' | 'locked';
 
 /**
  * Reward type for quests

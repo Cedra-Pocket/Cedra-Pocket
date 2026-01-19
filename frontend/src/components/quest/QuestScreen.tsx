@@ -25,7 +25,7 @@ export function QuestScreen() {
   const totalProgress = quests.length > 0 
     ? Math.round(quests.reduce((sum, q) => sum + q.progress, 0) / quests.length)
     : 0;
-  const completedCount = quests.filter(q => q.progress === 100).length;
+  const completedCount = quests.filter(q => q.status === 'completed').length;
 
   // Load quests from backend on mount
   useEffect(() => {
@@ -54,7 +54,7 @@ export function QuestScreen() {
     loadQuests();
   }, [setQuests, setQuestsLoading]);
 
-  // Handle quest verification/completion
+  // Handle quest action (Go or Claim)
   const handleQuestSelect = useCallback(async (questId: string) => {
     const quest = quests.find((q) => q.id === questId);
     if (!quest) return;
@@ -63,20 +63,12 @@ export function QuestScreen() {
 
     // If already completed, do nothing
     if (quest.status === 'completed') {
-      telegramService.triggerHapticFeedback('medium');
       return;
     }
 
-    // Check if authenticated before verifying
-    if (!backendAPI.isAuthenticated()) {
-      console.log('⚠️ Not authenticated, cannot verify quest');
-      // For now, just mark as completed locally (demo mode)
-      updateQuest(questId, { 
-        status: 'completed', 
-        progress: 100,
-        currentValue: quest.targetValue 
-      });
-      
+    // If claimable, claim the reward and mark as completed
+    if (quest.status === 'claimable') {
+      // Add reward to balance
       if (quest.reward) {
         if (quest.reward.type === 'token') {
           updateBalance(quest.reward.amount, 'token');
@@ -87,36 +79,47 @@ export function QuestScreen() {
         }
       }
       
+      // Mark as completed
+      updateQuest(questId, { 
+        status: 'completed', 
+        progress: 100,
+        currentValue: quest.targetValue 
+      });
+      
       telegramService.triggerHapticFeedback('medium');
+      console.log('✅ Quest reward claimed!');
       return;
     }
 
-    // If active and authenticated, try to verify with backend
+    // If active, try to complete the quest
     if (quest.status === 'active') {
+      // Check if authenticated before verifying with backend
+      if (!backendAPI.isAuthenticated()) {
+        console.log('⚠️ Not authenticated, marking as claimable locally (demo mode)');
+        // Mark as claimable so user can click Claim
+        updateQuest(questId, { 
+          status: 'claimable', 
+          progress: 100,
+          currentValue: quest.targetValue 
+        });
+        telegramService.triggerHapticFeedback('medium');
+        return;
+      }
+
+      // Try to verify with backend
       try {
         const result = await backendAPI.verifyQuest(Number(questId));
         
         if (result.success) {
-          // Update quest status locally
+          // Mark as claimable (user needs to click Claim to get reward)
           updateQuest(questId, { 
-            status: 'completed', 
+            status: 'claimable', 
             progress: 100,
             currentValue: quest.targetValue 
           });
           
-          // Add reward to balance
-          if (quest.reward) {
-            if (quest.reward.type === 'token') {
-              updateBalance(quest.reward.amount, 'token');
-            } else if (quest.reward.type === 'gem') {
-              updateBalance(quest.reward.amount, 'gem');
-            } else if (quest.reward.type === 'xp') {
-              addXP(quest.reward.amount);
-            }
-          }
-          
           telegramService.triggerHapticFeedback('medium');
-          console.log('✅ Quest completed:', result.message);
+          console.log('✅ Quest verified, ready to claim:', result.message);
         } else {
           console.log('❌ Quest verification failed:', result.message);
           telegramService.triggerHapticFeedback('heavy');
@@ -146,6 +149,8 @@ export function QuestScreen() {
       className="flex flex-col hide-scrollbar" 
       style={{ 
         paddingTop: 'clamp(12px, 3vw, 18px)', 
+        paddingLeft: 'clamp(8px, 2vw, 12px)',
+        paddingRight: 'clamp(8px, 2vw, 12px)',
         backgroundColor: 'transparent',
         height: 'calc(100vh - clamp(56px, 14vw, 72px))',
         overflowY: 'auto',
@@ -154,15 +159,7 @@ export function QuestScreen() {
     >
       {/* Header */}
       <header style={{ marginBottom: 'clamp(8px, 2vw, 12px)', paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)', textAlign: 'center' }} className="flex-shrink-0">
-        <div className="flex justify-center" style={{ marginBottom: 'clamp(4px, 1vw, 8px)' }}>
-          <img 
-            src="/icons/quest.png" 
-            alt="Quest" 
-            className="object-contain drop-shadow-lg animate-float-medium"
-            style={{ width: 'var(--icon-lg)', height: 'var(--icon-lg)' }}
-          />
-        </div>
-        <h1 style={{ color: '#1a1a2e', fontSize: 'var(--fs-lg)' }} className="font-extrabold drop-shadow-[0_0_15px_rgba(0,0,0,0.1)]">
+        <h1 style={{ color: '#1a1a2e', fontSize: 'var(--fs-xl)' }} className="font-extrabold drop-shadow-[0_0_15px_rgba(0,0,0,0.1)]">
           Quests
         </h1>
 
