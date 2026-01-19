@@ -1,28 +1,14 @@
 import { Module } from '@nestjs/common';
-import { JwtModule } from '@nestjs/jwt';
-import { PassportModule } from '@nestjs/passport';
-import { ConfigService } from '@nestjs/config';
-import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
-import { JwtStrategy } from './jwt.strategy';
-import { UsersModule } from '../users/users.module';
+import { AuthController } from './auth.controller';
+import { TelegramAuthService } from './telegram-auth.service';
+import { UserModule } from '../user/user.module';
+import { WalletModule } from '../wallet/wallet.module';
 
 @Module({
-  imports: [
-    PassportModule,
-    JwtModule.registerAsync({
-      useFactory: (configService: ConfigService) => ({
-        secret: configService.get<string>('JWT_SECRET') || 'default-secret',
-        signOptions: {
-          expiresIn: '7d',
-        },
-      }),
-      inject: [ConfigService],
-    }),
-    UsersModule,
-  ],
+  imports: [UserModule, WalletModule],
+  providers: [AuthService, TelegramAuthService],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy],
-  exports: [AuthService],
+  exports: [AuthService, TelegramAuthService],
 })
 export class AuthModule {}

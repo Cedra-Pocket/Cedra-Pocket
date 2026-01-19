@@ -1,36 +1,23 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
-import { UsersModule } from './users/users.module';
-import { QuestsModule } from './quests/quests.module';
-import { BlockchainModule } from './blockchain/blockchain.module';
-import { SocialModule } from './social/social.module';
-import { RewardsModule } from './rewards/rewards.module';
-import { BotModule } from './bot/bot.module';
-import { PetsModule } from './pets/pets.module';
+import { UserModule } from './user/user.module';
+import { WalletModule } from './wallet/wallet.module';
+import { GameModule } from './game/game.module';
+import { HealthController } from './health/health.controller';
 
 @Module({
   imports: [
-    // Global configuration
     ConfigModule.forRoot({
       isGlobal: true,
     }),
-
-    // Core modules
     PrismaModule,
     AuthModule,
-    UsersModule,
-    QuestsModule,
-    BlockchainModule,
-    SocialModule,
-    RewardsModule,
-    BotModule,
-    PetsModule,
+    UserModule,
+    WalletModule,
+    GameModule,
   ],
-  controllers: [AppController],
-  providers: [AppService],
+  controllers: [HealthController],
 })
 export class AppModule {}

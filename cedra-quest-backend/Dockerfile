@@ -1,7 +1,5 @@
-FROM node:18-slim
-
-# Install OpenSSL
-RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
+# Multi-stage build for production
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
@@ -9,27 +7,46 @@ WORKDIR /app
 COPY package*.json ./
 COPY prisma ./prisma/
 
-# Install all dependencies (including dev for build)
-RUN npm ci
-
-# Generate Prisma client
-RUN npx prisma generate
+# Install dependencies
+RUN npm ci --only=production && npm cache clean --force
 
 # Copy source code
 COPY . .
 
+# Generate Prisma client
+RUN npx prisma generate
+
 # Build the application
 RUN npm run build
 
-# Remove dev dependencies
-RUN npm prune --production
+# Production stage
+FROM node:18-alpine AS production
+
+WORKDIR /app
+
+# Install dumb-init for proper signal handling
+RUN apk add --no-cache dumb-init
+
+# Create non-root user
+RUN addgroup -g 1001 -S nodejs
+RUN adduser -S nestjs -u 1001
+
+# Copy built application
+COPY --from=builder --chown=nestjs:nodejs /app/dist ./dist
+COPY --from=builder --chown=nestjs:nodejs /app/node_modules ./node_modules
+COPY --from=builder --chown=nestjs:nodejs /app/prisma ./prisma
+COPY --from=builder --chown=nestjs:nodejs /app/package*.json ./
+
+# Switch to non-root user
+USER nestjs
 
 # Expose port
-EXPOSE 10000
+EXPOSE 3333
 
-# Set environment
-ENV NODE_ENV=production
-ENV PORT=10000
+# Health check
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+  CMD node healthcheck.js
 
 # Start the application
-CMD ["node", "dist/src/main.js"]
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "dist/main"]

@@ -1,177 +1,277 @@
-# Cedra Quest Backend
+# 🎮 Cedra Quest Backend
 
-Backend API cho Telegram Mini App Quest Platform với tích hợp blockchain và social media verification.
+A comprehensive backend API for Cedra Quest - a Telegram Mini App game with non-custodial wallet integration and complete game economy system.
 
-## 🚀 Tính năng chính
+## 🚀 Features
 
-- **Telegram Mini App Authentication** - Xác thực qua Telegram initData
-- **Quest Management** - Quản lý nhiệm vụ Social và On-chain
-- **Social Media Verification** - Tự động verify Twitter, Telegram tasks
-- **Blockchain Integration** - Verify on-chain activities (holding, swapping, staking)
-- **Reward System** - Tự động trả thưởng points/tokens/NFTs
-- **Referral System** - Hệ thống giới thiệu với commission
-- **Background Jobs** - Xử lý bất đồng bộ với Redis Queue
+### **🔐 Authentication System**
+- Telegram Mini App authentication
+- Non-custodial wallet creation
+- BIP-39 seed phrase generation (client-side)
+- Secure user management
 
-## 🏗️ Kiến trúc
+### **🎮 Game Economy**
+- **Pet System**: Feed, level up, passive mining
+- **Energy System**: Active gameplay with regeneration
+- **Ranking System**: 6-tier progression (Bronze → Leviathan)
+- **Game Sessions**: Mini-games with point rewards
+- **Game Cycles**: Dynamic difficulty adjustment
+
+### **🛡️ Security**
+- Server never stores private keys
+- Telegram signature validation
+- Rate limiting and anti-cheat
+- Input validation and sanitization
+
+## 📁 Project Structure
 
 ```
-Frontend (Mini App) → Auth Module → JWT
-                   ↓
-API Gateway → Quest Module → Social/Blockchain Verification
-                   ↓
-Queue System → Reward Processing → Payout Worker
-                   ↓
-Bot Module → Telegram Notifications
+cedra-quest-backend/
+├── src/                    # Source code
+│   ├── auth/              # Authentication modules
+│   ├── game/              # Game economy modules
+│   ├── user/              # User management
+│   ├── wallet/            # Wallet services
+│   └── common/            # Shared interfaces & constants
+├── test/                  # Test scripts
+├── docs/                  # Documentation
+├── prisma/                # Database schema & migrations
+├── docker-compose.yml     # Docker services
+├── Dockerfile            # Container configuration
+└── deploy.sh             # Deployment script
 ```
 
-## 📋 Yêu cầu
+## 🛠️ Quick Start
 
+### **Prerequisites**
 - Node.js 18+
-- PostgreSQL
-- Redis
+- PostgreSQL database
 - Telegram Bot Token
 
-## 🛠️ Cài đặt
-
-1. **Clone và cài dependencies:**
+### **Installation**
 ```bash
-git clone <repo-url>
+# Clone repository
+git clone <repository-url>
 cd cedra-quest-backend
+
+# Install dependencies
 npm install
-```
 
-2. **Cấu hình environment:**
-```bash
+# Setup environment
 cp .env.example .env
-# Chỉnh sửa các biến môi trường trong .env
-```
+# Edit .env with your configuration
 
-3. **Setup database:**
-```bash
+# Setup database
 npx prisma generate
 npx prisma db push
-npm run prisma:seed
-```
 
-4. **Khởi chạy:**
-```bash
-# Development
+# Start development server
 npm run start:dev
-
-# Production
-npm run build
-npm run start:prod
 ```
 
-## 🔧 Cấu hình Environment
+### **Testing**
+```bash
+# Test authentication
+npm run test:api
 
-```env
-# Database
-DATABASE_URL="postgresql://..."
-DIRECT_URL="postgresql://..."
+# Test game economy
+npm run test:game
 
-# JWT
-JWT_SECRET="your-secret-key"
-JWT_EXPIRES_IN="7d"
+# Test with real Telegram data
+npm run test:telegram
 
-# Telegram
-TELEGRAM_BOT_TOKEN="123456:ABC-DEF..."
-
-# Redis
-REDIS_HOST="localhost"
-REDIS_PORT="6379"
-REDIS_PASSWORD=""
-
-# Blockchain
-CEDRA_RPC_URL="https://rpc.cedra.network"
-PRIVATE_KEY="your-private-key"
-
-# Social APIs
-TWITTER_API_KEY=""
-TWITTER_API_SECRET=""
+# Run all tests
+npm run test:all
 ```
 
-## 📚 API Endpoints
+## 📚 Documentation
 
-### Authentication
-- `POST /auth/verify` - Verify Telegram initData và tạo JWT
+### **📖 For Developers**
+- [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md) - Complete API reference
+- [`docs/GAME_ECONOMY_PLAN.md`](docs/GAME_ECONOMY_PLAN.md) - Game mechanics & business logic
+- [`docs/HOW_TO_GET_REAL_INITDATA.md`](docs/HOW_TO_GET_REAL_INITDATA.md) - Telegram integration guide
 
-### Users
-- `GET /users/profile` - Lấy thông tin user hiện tại
-- `POST /users/connect-wallet` - Kết nối ví blockchain
+### **🚀 For Deployment**
+- [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md) - Production deployment guide
+- [`docker-compose.yml`](docker-compose.yml) - Docker services configuration
+- [`deploy.sh`](deploy.sh) - Automated deployment script
 
-### Quests
-- `GET /quests` - Lấy danh sách quest với trạng thái user
-- `POST /quests/:id/verify` - Verify và hoàn thành quest
+### **🧪 For Testing**
+- [`test/README.md`](test/README.md) - Test scripts documentation
+- Various test files in `test/` folder
 
-## 🔄 Luồng hoạt động
+## 🔧 API Endpoints
 
-### 1. Authentication Flow
+### **Authentication**
 ```
-Frontend → POST /auth/verify {initData}
-Backend → Validate với Bot Token → Tạo/Tìm User → Return JWT
-```
-
-### 2. Quest Verification Flow
-```
-Frontend → POST /quests/:id/verify
-Backend → Check quest type:
-  - Social: Call Twitter/Telegram API
-  - Onchain: Queue blockchain verification job
-→ Update status → Queue reward → Send notification
+POST /auth/login           # Telegram authentication
+POST /auth/create-wallet   # Create new wallet
+POST /auth/recover-wallet  # Recover wallet from seed
 ```
 
-### 3. Reward Processing
+### **Game Economy**
 ```
-Quest Completed → Queue Job → Process Reward:
-  - Points: Update DB directly
-  - Tokens: Queue payout job → Batch transaction
-→ Send Telegram notification
+GET  /game/pet/status/:userId      # Pet status
+POST /game/pet/feed/:userId        # Feed pet
+POST /game/pet/claim/:userId       # Claim mining rewards
+
+GET  /game/energy/status/:userId   # Energy status
+POST /game/energy/refill/:userId   # Refill energy
+
+POST /game/session/start/:userId   # Start game session
+POST /game/session/complete/:userId # Complete game session
+
+GET  /game/ranking/leaderboard     # Global leaderboard
+GET  /game/ranking/user/:userId    # User rank info
+
+GET  /game/dashboard/:userId       # Complete dashboard data
 ```
 
-## 🧪 Testing
+## 🎯 Game Economy Overview
+
+### **Core Loop**
+```
+Earn Points → Upgrade Pet → Pet Mines More → Earn More Points
+```
+
+### **Point Sources**
+- 🎮 **Active**: Mini-games (consume energy)
+- 🐾 **Passive**: Pet mining (time-based)
+- 👥 **Social**: Quests & referrals
+
+### **Point Sinks**
+- 🔥 **Pet Upgrade**: Feed pet to level up (main sink)
+- ⚡ **Energy Refill**: Buy more game sessions
+- 💱 **Swap Fee**: Convert to $CEDRA tokens
+
+### **Progression System**
+- **Pet Levels**: 1-10 (affects mining speed)
+- **User Ranks**: Bronze → Silver → Gold → Platinum → Diamond → Leviathan
+- **Game Cycles**: Dynamic difficulty adjustment
+
+## 🐳 Docker Deployment
+
+### **Development**
+```bash
+# Start all services
+docker-compose up -d
+
+# View logs
+docker-compose logs -f
+
+# Stop services
+docker-compose down
+```
+
+### **Production**
+```bash
+# Configure production environment
+cp .env.production.example .env.production
+# Edit .env.production with real values
+
+# Deploy
+chmod +x deploy.sh
+./deploy.sh
+```
+
+## 🔍 Health Monitoring
 
 ```bash
-# Unit tests
-npm run test
+# Check API health
+curl http://localhost:3333/health
 
-# E2E tests
-npm run test:e2e
-
-# Test coverage
-npm run test:cov
+# Expected response
+{
+  "status": "ok",
+  "timestamp": "2024-01-19T12:00:00.000Z",
+  "uptime": 3600,
+  "database": "connected",
+  "memory": {...}
+}
 ```
 
-## 📦 Deployment
+## 🛡️ Security Features
 
-1. **Build:**
+- **Non-custodial**: Server never stores private keys
+- **Telegram Auth**: Cryptographic signature validation
+- **Rate Limiting**: Prevent API abuse
+- **Input Validation**: All endpoints validated
+- **CORS**: Configurable origin restrictions
+- **HTTPS**: SSL/TLS encryption
+- **Anti-cheat**: Time validation, concurrency control
+
+## 📊 Performance
+
+### **Expected Metrics**
+- API Response: < 200ms
+- Database Queries: < 50ms
+- Memory Usage: < 1GB
+- Concurrent Users: 1000+
+
+### **Load Testing**
 ```bash
-npm run build
+# Install artillery
+npm install -g artillery
+
+# Run load test
+artillery quick --count 100 --num 10 http://localhost:3333/health
 ```
 
-2. **Environment setup:**
-- Cấu hình production database
-- Setup Redis cluster
-- Configure load balancer
+## 🔧 Development
 
-3. **Run:**
+### **Available Scripts**
 ```bash
-npm run start:prod
+npm run start:dev      # Development server with hot reload
+npm run build          # Build for production
+npm run test:api       # Test authentication APIs
+npm run test:game      # Test game economy APIs
+npm run prisma:studio  # Open database GUI
+npm run lint           # Code linting
 ```
 
-## 🔍 Monitoring
+### **Database Management**
+```bash
+# Generate Prisma client
+npm run prisma:generate
 
-- Health check: `GET /health`
-- Metrics: Redis queue dashboard
-- Logs: Structured logging với Winston
+# Push schema changes
+npm run prisma:push
+
+# Create migration
+npm run prisma:migrate
+
+# Open database studio
+npm run prisma:studio
+```
 
 ## 🤝 Contributing
 
-1. Fork repository
-2. Tạo feature branch
-3. Commit changes
-4. Push và tạo Pull Request
+1. Fork the repository
+2. Create feature branch: `git checkout -b feature/amazing-feature`
+3. Commit changes: `git commit -m 'Add amazing feature'`
+4. Push to branch: `git push origin feature/amazing-feature`
+5. Open Pull Request
 
 ## 📄 License
 
-MIT License
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 📞 Support
+
+- 📚 Check documentation in `docs/` folder
+- 🧪 Run test scripts in `test/` folder
+- 🔍 Review troubleshooting guides
+- 📊 Monitor health endpoints
+
+## 🎯 Roadmap
+
+- [ ] Blockchain integration (replace mock)
+- [ ] Advanced anti-cheat systems
+- [ ] Real-time notifications
+- [ ] Analytics dashboard
+- [ ] Mobile app support
+- [ ] Multi-language support
+
+---
+
+**Built with ❤️ for the Cedra Quest community**
