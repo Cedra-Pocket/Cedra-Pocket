@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
   directUrl = env("DIRECT_URL")
 }
 
@@ -64,42 +64,37 @@ model user_quests {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model users {
-  telegram_id          BigInt      @id // Primary Key
-  wallet_address       String      @unique @db.VarChar(255) // Required & Unique
-  public_key           String      @db.VarChar(255) // Required
-  username_at_creation String?     @db.VarChar(255)
-  
-  username             String?     @db.VarChar(255)
-  is_wallet_connected  Boolean     @default(true) // Always true since wallet is required
-  total_points         BigInt      @default(0)
-  lifetime_points      BigInt      @default(0) // For ranking, never decreases
-  referral_code        String?     @unique @db.VarChar(20)
+  telegram_id          BigInt             @id
+  wallet_address       String             @unique @db.VarChar(255)
+  public_key           String             @db.VarChar(255)
+  username_at_creation String?            @db.VarChar(255)
+  username             String?            @db.VarChar(255)
+  is_wallet_connected  Boolean            @default(true)
+  total_points         BigInt             @default(0)
+  referral_code        String?            @unique @db.VarChar(20)
   referrer_id          BigInt?
-  created_at           DateTime    @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime    @default(now()) @db.Timestamptz(6)
-  avatar_url           String?     @db.VarChar(500)
-  current_xp           Int         @default(0)
-  daily_streak         Int         @default(0)
-  last_daily_claim     DateTime?   @db.Timestamptz(6)
-  last_spin_reset      DateTime?   @db.Timestamptz(6)
-  level                Int         @default(1)
-  role                 user_role   @default(USER)
-  spins_left           Int         @default(3)
-  status               user_status @default(ACTIVE)
-  current_rank         user_rank   @default(BRONZE)
-  
-  // Pet System
-  pet_level            Int         @default(1)
-  pet_current_xp       Int         @default(0)
-  pet_last_claim_time  DateTime    @default(now()) @db.Timestamptz(6)
-  
-  // Relations
-  referrer             users?      @relation("usersTousers", fields: [referrer_id], references: [telegram_id], map: "fk_referrer")
-  referees             users[]     @relation("usersTousers")
+  created_at           DateTime           @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime           @default(now()) @db.Timestamptz(6)
+  avatar_url           String?            @db.VarChar(500)
+  current_xp           Int                @default(0)
+  daily_streak         Int                @default(0)
+  last_daily_claim     DateTime?          @db.Timestamptz(6)
+  last_spin_reset      DateTime?          @db.Timestamptz(6)
+  level                Int                @default(1)
+  role                 user_role          @default(USER)
+  spins_left           Int                @default(3)
+  status               user_status        @default(ACTIVE)
+  current_rank         user_rank          @default(BRONZE)
+  lifetime_points      BigInt             @default(0)
+  pet_current_xp       Int                @default(0)
+  pet_last_claim_time  DateTime           @default(now()) @db.Timestamptz(6)
+  pet_level            Int                @default(1)
+  game_sessions        game_sessions[]
+  feeding_logs         pet_feeding_logs[]
   pet                  pets?
   energy               user_energy?
-  feeding_logs         pet_feeding_logs[]
-  game_sessions        game_sessions[]
+  referrer             users?             @relation("usersTousers", fields: [referrer_id], references: [telegram_id], map: "fk_referrer")
+  referees             users[]            @relation("usersTousers")
 
   @@index([referral_code], map: "idx_users_referral_code")
   @@index([total_points(sort: Desc)])
@@ -108,34 +103,26 @@ model users {
 }
 
 model pets {
-  id                 BigInt   @id @default(autoincrement())
-  user_id            BigInt   @unique
-  level              Int      @default(1)
-  exp                Int      @default(0)
-  max_exp            Int      @default(100)
-  hunger             Int      @default(100)  // Start with full hunger
-  happiness          Int      @default(100)  // Start with full happiness
-  last_coin_time     DateTime @default(now()) @db.Timestamptz(6)
-  pending_coins      Int      @default(0)
-  total_coins_earned BigInt   @default(0)
-  coin_rate          Decimal  @default(1.0) @db.Decimal(10, 2)  // Coins per minute
+  id                 BigInt    @id @default(autoincrement())
+  user_id            BigInt    @unique
+  level              Int       @default(1)
+  exp                Int       @default(0)
+  max_exp            Int       @default(100)
+  hunger             Int       @default(100)
+  happiness          Int       @default(100)
+  last_coin_time     DateTime  @default(now()) @db.Timestamptz(6)
+  pending_coins      Int       @default(0)
+  total_coins_earned BigInt    @default(0)
+  coin_rate          Decimal   @default(1.0) @db.Decimal(10, 2)
   last_feed_time     DateTime? @db.Timestamptz(6)
   last_play_time     DateTime? @db.Timestamptz(6)
-  tier               pet_tier @default(BRONZE)
-  created_at         DateTime @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime @default(now()) @db.Timestamptz(6)
-  user               users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
-  
+  tier               pet_tier  @default(BRONZE)
+  created_at         DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime  @default(now()) @db.Timestamptz(6)
+  user               users     @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+
   @@index([user_id])
   @@index([last_coin_time])
-}
-
-enum pet_tier {
-  BRONZE
-  SILVER
-  GOLD
-  PLATINUM
-  DIAMOND
 }
 
 model daily_rewards {
@@ -173,6 +160,74 @@ model spin_history {
 
   @@index([created_at])
   @@index([user_id])
+}
+
+model game_cycles {
+  id            Int      @id @default(autoincrement())
+  cycle_number  Int      @unique
+  growth_rate   Decimal  @db.Decimal(10, 4)
+  max_speed_cap Decimal  @db.Decimal(10, 4)
+  start_date    DateTime @db.Timestamptz(6)
+  end_date      DateTime @db.Timestamptz(6)
+  is_active     Boolean  @default(false)
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([is_active])
+  @@index([cycle_number])
+}
+
+model user_energy {
+  id             Int      @id @default(autoincrement())
+  user_id        BigInt   @unique
+  current_energy Int      @default(10)
+  max_energy     Int      @default(10)
+  last_update    DateTime @default(now()) @db.Timestamptz(6)
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @db.Timestamptz(6)
+  user           users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([last_update])
+}
+
+model pet_feeding_logs {
+  id                Int      @id @default(autoincrement())
+  user_id           BigInt
+  points_spent      Int
+  xp_gained         Int
+  feed_date         String   @db.VarChar(10)
+  total_daily_spent Int
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  user              users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+
+  @@unique([user_id, feed_date])
+  @@index([user_id])
+  @@index([feed_date])
+}
+
+model game_sessions {
+  id            Int      @id @default(autoincrement())
+  user_id       BigInt
+  game_type     String   @db.VarChar(50)
+  score         Int
+  points_earned Int
+  energy_used   Int      @default(1)
+  duration      Int?
+  created_at    DateTime @default(now()) @db.Timestamptz(6)
+  user          users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+
+  @@index([user_id])
+  @@index([game_type])
+  @@index([created_at])
+}
+
+enum pet_tier {
+  BRONZE
+  SILVER
+  GOLD
+  PLATINUM
+  DIAMOND
 }
 
 enum quest_frequency {
@@ -229,69 +284,4 @@ enum user_rank {
   GOLD
   PLATINUM
   DIAMOND
-}
-
-// Game Economy Tables
-
-model game_cycles {
-  id           Int      @id @default(autoincrement())
-  cycle_number Int      @unique
-  growth_rate  Decimal  @db.Decimal(10, 4)
-  max_speed_cap Decimal @db.Decimal(10, 4)
-  start_date   DateTime @db.Timestamptz(6)
-  end_date     DateTime @db.Timestamptz(6)
-  is_active    Boolean  @default(false)
-  created_at   DateTime @default(now()) @db.Timestamptz(6)
-  updated_at   DateTime @default(now()) @db.Timestamptz(6)
-
-  @@index([is_active])
-  @@index([cycle_number])
-}
-
-model user_energy {
-  id             Int      @id @default(autoincrement())
-  user_id        BigInt   @unique
-  current_energy Int      @default(10)
-  max_energy     Int      @default(10)
-  last_update    DateTime @default(now()) @db.Timestamptz(6)
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime @default(now()) @db.Timestamptz(6)
-  
-  user           users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
-
-  @@index([user_id])
-  @@index([last_update])
-}
-
-model pet_feeding_logs {
-  id                Int      @id @default(autoincrement())
-  user_id           BigInt
-  points_spent      Int
-  xp_gained         Int
-  feed_date         String   @db.VarChar(10) // "2024-01-20" format
-  total_daily_spent Int      // Running total for the day
-  created_at        DateTime @default(now()) @db.Timestamptz(6)
-
-  user              users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
-
-  @@unique([user_id, feed_date])
-  @@index([user_id])
-  @@index([feed_date])
-}
-
-model game_sessions {
-  id            Int      @id @default(autoincrement())
-  user_id       BigInt
-  game_type     String   @db.VarChar(50)
-  score         Int
-  points_earned Int
-  energy_used   Int      @default(1)
-  duration      Int?     // seconds
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-
-  user          users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
-
-  @@index([user_id])
-  @@index([game_type])
-  @@index([created_at])
 }

@@ -447,6 +447,275 @@ export class BackendAPIService {
       throw error;
     }
   }
+
+  // ============ New Game System APIs ============
+
+  /**
+   * Get pet status from new game system
+   */
+  async getGamePetStatus(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.get(`/game/pet/status/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get pet status',
+          error.response?.status || 500,
+          'GAME_PET_STATUS_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Feed pet in new game system
+   */
+  async feedGamePet(feedCount: number = 1): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.post(`/game/pet/feed/${user.telegram_id}`, {
+        feedCount,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to feed pet',
+          error.response?.status || 500,
+          'GAME_PET_FEED_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Claim pet rewards in new game system
+   */
+  async claimGamePetRewards(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.post(`/game/pet/claim/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to claim pet rewards',
+          error.response?.status || 500,
+          'GAME_PET_CLAIM_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get energy status
+   */
+  async getEnergyStatus(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.get(`/game/energy/status/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get energy status',
+          error.response?.status || 500,
+          'GAME_ENERGY_STATUS_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Refill energy
+   */
+  async refillEnergy(energyAmount: number): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.post(`/game/energy/refill/${user.telegram_id}`, {
+        energyAmount,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to refill energy',
+          error.response?.status || 500,
+          'GAME_ENERGY_REFILL_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Start game session
+   */
+  async startGameSession(gameType: string): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.post(`/game/session/start/${user.telegram_id}`, {
+        gameType,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to start game session',
+          error.response?.status || 500,
+          'GAME_SESSION_START_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Complete game session
+   */
+  async completeGameSession(score: number, duration?: number): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.post(`/game/session/complete/${user.telegram_id}`, {
+        score,
+        duration,
+      });
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to complete game session',
+          error.response?.status || 500,
+          'GAME_SESSION_COMPLETE_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get game stats
+   */
+  async getGameStats(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.get(`/game/session/stats/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get game stats',
+          error.response?.status || 500,
+          'GAME_STATS_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get user rank info
+   */
+  async getUserRankInfo(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.get(`/game/ranking/user/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get user rank info',
+          error.response?.status || 500,
+          'GAME_RANK_INFO_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get leaderboard
+   */
+  async getLeaderboard(limit: number = 50, offset: number = 0): Promise<any> {
+    try {
+      const response = await this.client.get(`/game/ranking/leaderboard?limit=${limit}&offset=${offset}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get leaderboard',
+          error.response?.status || 500,
+          'GAME_LEADERBOARD_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get user position in ranking
+   */
+  async getUserPosition(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.get(`/game/ranking/position/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get user position',
+          error.response?.status || 500,
+          'GAME_POSITION_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get current game cycle
+   */
+  async getCurrentGameCycle(): Promise<any> {
+    try {
+      const response = await this.client.get('/game/cycle/current');
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get current game cycle',
+          error.response?.status || 500,
+          'GAME_CYCLE_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Get complete game dashboard
+   */
+  async getGameDashboard(): Promise<any> {
+    try {
+      const user = await this.getUserProfile();
+      const response = await this.client.get(`/game/dashboard/${user.telegram_id}`);
+      return response.data;
+    } catch (error) {
+      if (axios.isAxiosError(error)) {
+        throw new BackendAPIError(
+          error.response?.data?.message || 'Failed to get game dashboard',
+          error.response?.status || 500,
+          'GAME_DASHBOARD_FAILED'
+        );
+      }
+      throw error;
+    }
+  }
 }
 
 export interface PetData {
