@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useUser, usePet, useAppStore } from '../../store/useAppStore';
+import { useUser, usePet, useEnergy, useGameSystemActions, useAppStore } from '../../store/useAppStore';
 import { backendAPI } from '../../services/backend-api.service';
 
 const getCoinsPerMinute = (level: number) => {
@@ -70,7 +70,14 @@ const getZodiacFromYear = (year: number) => {
 export function PetScreen() {
   const user = useUser();
   const pet = usePet();
+  const energy = useEnergy();
   const { updateBalance, setPet, claimPetCoins } = useAppStore();
+  const { 
+    feedGamePet, 
+    claimGamePetRewards, 
+    loadGameDashboard,
+    regenerateEnergy 
+  } = useGameSystemActions();
   const hasFetchedRef = useRef(false);
   
   // Lấy con giáp từ năm sinh
@@ -91,7 +98,6 @@ export function PetScreen() {
   const [isHatching, setIsHatching] = useState(false);
   const [showBirthYearInput, setShowBirthYearInput] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
-  const [showDebugPanel, setShowDebugPanel] = useState(false); // Debug panel để test level
   
   // Hatch tasks
   const hatchTasks = [
@@ -115,18 +121,34 @@ export function PetScreen() {
   });
 
   useEffect(() => {
-    const loadPetFromBackend = async () => {
-      if (!backendAPI.isAuthenticated() || hasFetchedRef.current) return;
+    const loadGameData = async () => {
+      if (hasFetchedRef.current) return;
+      
       try {
         hasFetchedRef.current = true;
-        const petData = await backendAPI.getPet();
-        setPet(petData);
+        console.log('🎮 Loading game dashboard...');
+        
+        // Load complete game dashboard (pet, energy, ranking, stats)
+        await loadGameDashboard();
+        
+        // Regenerate energy based on time elapsed
+        regenerateEnergy();
+        
+        console.log('✅ Game dashboard loaded successfully');
       } catch (error) {
-        console.error('Failed to load pet from backend:', error);
+        console.error('❌ Failed to load game data:', error);
+        // Fallback to old pet API if new system fails
+        try {
+          const petData = await backendAPI.getPet();
+          setPet(petData);
+        } catch (fallbackError) {
+          console.error('❌ Fallback pet loading also failed:', fallbackError);
+        }
       }
     };
-    loadPetFromBackend();
-  }, [setPet]);
+    
+    loadGameData();
+  }, [loadGameDashboard, regenerateEnergy, setPet]);
 
   const syncToBackend = useCallback(async (petData: Partial<typeof pet>) => {
     if (!backendAPI.isAuthenticated() || isSyncing) return;
@@ -139,6 +161,15 @@ export function PetScreen() {
       setIsSyncing(false);
     }
   }, [isSyncing]);
+
+  // Energy regeneration timer
+  useEffect(() => {
+    const interval = setInterval(() => {
+      regenerateEnergy();
+    }, 60000); // Check every minute
+
+    return () => clearInterval(interval);
+  }, [regenerateEnergy]);
 
   // Timer logic - chỉ chạy khi pet đã nở
   useEffect(() => {
@@ -188,32 +219,55 @@ export function PetScreen() {
       setClaimedCoins(coinsToCollect);
       setShowCoinAnimation(true);
       setTimeout(() => setShowCoinAnimation(false), 1000);
-      claimPetCoins();
-      setCoinTimer(COIN_INTERVAL_SECONDS);
-      if (backendAPI.isAuthenticated()) {
-        try { await backendAPI.claimPetCoins(coinsToCollect); } catch (e) { console.error(e); }
+      
+      try {
+        // Use new game system API to claim pet rewards
+        await claimGamePetRewards();
+        console.log('✅ Pet rewards claimed via new game system');
+      } catch (error) {
+        console.error('❌ Failed to claim via new game system, using fallback:', error);
+        // Fallback to old system
+        claimPetCoins();
+        setCoinTimer(COIN_INTERVAL_SECONDS);
+        if (backendAPI.isAuthenticated()) {
+          try { 
+            await backendAPI.claimPetCoins(coinsToCollect); 
+          } catch (e) { 
+            console.error('❌ Fallback claim also failed:', e); 
+          }
+        }
       }
     }
-  }, [pet.pendingCoins, claimPetCoins]);
+  }, [pet.pendingCoins, claimGamePetRewards, claimPetCoins]);
 
   const handleFeed = async () => {
-    if ((user?.tokenBalance || 0) >= 10 && pet.hunger < 100) {
+    if ((user?.tokenBalance || 0) >= 20 && pet.hunger < 100) { // New system uses 20 points per feed
       setIsFeeding(true);
-      updateBalance(-10, 'token');
-      const newExp = pet.exp + 5;
-      const newHunger = Math.min(100, pet.hunger + 20);
-      let newPetData: Partial<typeof pet>;
-      if (newExp >= pet.maxExp && pet.level < 10) {
-        // Level up, max level = 10
-        newPetData = { hunger: newHunger, level: pet.level + 1, exp: newExp - pet.maxExp, maxExp: Math.floor(pet.maxExp * 1.5) };
-      } else if (newExp >= pet.maxExp && pet.level >= 10) {
-        // Max level reached, keep exp at max
-        newPetData = { hunger: newHunger, exp: pet.maxExp };
-      } else {
-        newPetData = { hunger: newHunger, exp: newExp };
+      
+      try {
+        // Use new game system API to feed pet
+        await feedGamePet(1);
+        console.log('✅ Pet fed via new game system');
+      } catch (error) {
+        console.error('❌ Failed to feed via new game system, using fallback:', error);
+        // Fallback to old system
+        updateBalance(-10, 'token');
+        const newExp = pet.exp + 5;
+        const newHunger = Math.min(100, pet.hunger + 20);
+        let newPetData: Partial<typeof pet>;
+        if (newExp >= pet.maxExp && pet.level < 10) {
+          // Level up, max level = 10
+          newPetData = { hunger: newHunger, level: pet.level + 1, exp: newExp - pet.maxExp, maxExp: Math.floor(pet.maxExp * 1.5) };
+        } else if (newExp >= pet.maxExp && pet.level >= 10) {
+          // Max level reached, keep exp at max
+          newPetData = { hunger: newHunger, exp: pet.maxExp };
+        } else {
+          newPetData = { hunger: newHunger, exp: newExp };
+        }
+        setPet(newPetData);
+        syncToBackend(newPetData);
       }
-      setPet(newPetData);
-      syncToBackend(newPetData);
+      
       setTimeout(() => setIsFeeding(false), 1000);
     }
   };
@@ -684,21 +738,33 @@ export function PetScreen() {
   return (
     <div className="flex flex-col relative" style={{ backgroundColor: 'transparent', height: 'calc(100vh - 160px)', overflow: 'visible' }}>
       {/* Pet Info - Top Left */}
-      <div className="flex items-center" style={{ marginTop: '16px', marginBottom: '8px', marginLeft: '20px' }}>
-        <div 
-          onClick={() => setShowDebugPanel(true)}
-          className="relative flex items-center justify-center cursor-pointer mr-3" 
-          style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #4facfe, #00f2fe)' }}
-        >
-          <svg className="absolute" viewBox="0 0 40 40" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
-            <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
-            <circle cx="20" cy="20" r="16" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray={`${(pet.exp / pet.maxExp) * 100} 100`} strokeLinecap="round" />
-          </svg>
-          <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
+      <div className="flex items-center justify-between" style={{ marginTop: '16px', marginBottom: '8px', marginLeft: '20px', marginRight: '20px' }}>
+        <div className="flex items-center">
+          <div 
+            className="relative flex items-center justify-center mr-3" 
+            style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #4facfe, #00f2fe)' }}
+          >
+            <svg className="absolute" viewBox="0 0 40 40" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
+              <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
+              <circle cx="20" cy="20" r="16" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray={`${(pet.exp / pet.maxExp) * 100} 100`} strokeLinecap="round" />
+            </svg>
+            <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
+          </div>
+          <div>
+            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px', fontWeight: '600' }}>{petName}</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>EXP: {pet.exp}/{pet.maxExp}</div>
+          </div>
         </div>
-        <div>
-          <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px', fontWeight: '600' }}>{petName}</div>
-          <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>EXP: {pet.exp}/{pet.maxExp}</div>
+
+        {/* Energy Display - Top Right */}
+        <div className="flex items-center gap-2">
+          <span style={{ fontSize: '16px' }}>⚡</span>
+          <div>
+            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: '600' }}>
+              {energy.currentEnergy}/{energy.maxEnergy}
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px' }}>Energy</div>
+          </div>
         </div>
       </div>
 
@@ -1065,47 +1131,6 @@ export function PetScreen() {
             >
               Get referral link
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* Debug Panel - Nhấn 3 lần vào level để mở */}
-      {showDebugPanel && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
-          <div style={{ background: '#1a1a2e', borderRadius: '16px', padding: '20px', maxWidth: '300px', width: '100%' }}>
-            <div className="flex justify-between items-center mb-4">
-              <h3 style={{ color: '#fff', fontSize: '16px', fontWeight: '700' }}>🔧 Debug Panel</h3>
-              <button onClick={() => setShowDebugPanel(false)} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: '50%', width: '28px', height: '28px', color: '#fff', cursor: 'pointer' }}>✕</button>
-            </div>
-            
-            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: '13px', marginBottom: '12px' }}>
-              Current Level: <span style={{ color: '#ffd700', fontWeight: '700' }}>{pet.level}</span>
-            </div>
-            
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((lvl) => (
-                <button
-                  key={lvl}
-                  onClick={() => setPet({ level: lvl })}
-                  style={{
-                    padding: '10px',
-                    borderRadius: '8px',
-                    background: pet.level === lvl ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(255,255,255,0.1)',
-                    border: 'none',
-                    color: pet.level === lvl ? '#1a1a2e' : '#fff',
-                    fontSize: '14px',
-                    fontWeight: '600',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {lvl}
-                </button>
-              ))}
-            </div>
-            
-            <div style={{ marginTop: '16px', color: 'rgba(255,255,255,0.5)', fontSize: '11px', textAlign: 'center' }}>
-              Tap level number to change pet image
-            </div>
           </div>
         </div>
       )}

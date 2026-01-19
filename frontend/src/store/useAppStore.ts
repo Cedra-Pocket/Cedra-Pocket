@@ -79,6 +79,37 @@ export interface AppState {
     birthYear: number | null;
     hatchProgress: number; // 0-100, cần hoàn thành nhiệm vụ để tăng
   };
+
+  // New Game System State
+  energy: {
+    currentEnergy: number;
+    maxEnergy: number;
+    lastUpdate: number;
+  };
+
+  gameStats: {
+    totalGamesPlayed: number;
+    totalScore: number;
+    averageScore: number;
+    bestScore: number;
+    totalPointsEarned: number;
+  };
+
+  ranking: {
+    rank: string;
+    position: number;
+    lifetimePoints: number;
+    nextRankThreshold?: number;
+  };
+
+  gameCycle: {
+    cycleNumber: number;
+    growthRate: number;
+    maxSpeedCap: number;
+    startDate: string;
+    endDate: string;
+    isActive: boolean;
+  } | null;
 }
 
 /**
@@ -131,6 +162,26 @@ export interface AppActions {
   // Pet Actions
   setPet: (pet: Partial<AppState['pet']>) => void;
   claimPetCoins: () => void;
+
+  // New Game System Actions
+  setEnergy: (energy: Partial<AppState['energy']>) => void;
+  consumeEnergy: (amount: number) => boolean;
+  regenerateEnergy: () => void;
+  
+  setGameStats: (stats: Partial<AppState['gameStats']>) => void;
+  updateGameStats: (score: number, pointsEarned: number) => void;
+  
+  setRanking: (ranking: Partial<AppState['ranking']>) => void;
+  
+  setGameCycle: (cycle: AppState['gameCycle']) => void;
+
+  // Game API Actions
+  feedGamePet: (feedCount?: number) => Promise<void>;
+  claimGamePetRewards: () => Promise<void>;
+  startGameSession: (gameType: string) => Promise<any>;
+  completeGameSession: (score: number, duration?: number) => Promise<void>;
+  refillGameEnergy: (amount: number) => Promise<void>;
+  loadGameDashboard: () => Promise<void>;
 
   // Global Actions
   reset: () => void;
@@ -203,6 +254,30 @@ const initialState: AppState = {
     birthYear: null,
     hatchProgress: 0,
   },
+
+  // New Game System State
+  energy: {
+    currentEnergy: 10,
+    maxEnergy: 10,
+    lastUpdate: Date.now(),
+  },
+
+  gameStats: {
+    totalGamesPlayed: 0,
+    totalScore: 0,
+    averageScore: 0,
+    bestScore: 0,
+    totalPointsEarned: 0,
+  },
+
+  ranking: {
+    rank: 'BRONZE',
+    position: 0,
+    lifetimePoints: 0,
+    nextRankThreshold: 10000,
+  },
+
+  gameCycle: null,
 };
 
 
@@ -221,6 +296,10 @@ const PERSISTED_KEYS: (keyof AppState)[] = [
   'activeTab',
   'spinsLeft',
   'pet',
+  'energy',
+  'gameStats',
+  'ranking',
+  'gameCycle',
 ];
 
 /**
@@ -269,23 +348,19 @@ export const useAppStore = create<AppStore>()(
           if (amount !== 0) {
             try {
               const { backendAPI } = await import('../services/backend-api.service');
-              if (backendAPI.isAuthenticated()) {
-                console.log(`💰 Syncing points to backend: ${amount > 0 ? '+' : ''}${amount}`);
-                const result = await backendAPI.addPoints(amount);
-                console.log(`✅ Backend sync success. New total: ${result.total_points}`);
-                
-                // Update local state with backend's authoritative value
-                const currentUser = get().user;
-                if (currentUser) {
-                  set({
-                    user: {
-                      ...currentUser,
-                      tokenBalance: Number(result.total_points),
-                    },
-                  });
-                }
-              } else {
-                console.log('⚠️ Not authenticated, points saved locally only');
+              console.log(`💰 Syncing points to backend: ${amount > 0 ? '+' : ''}${amount}`);
+              const result = await backendAPI.addPoints(amount);
+              console.log(`✅ Backend sync success. New total: ${result.total_points}`);
+              
+              // Update local state with backend's authoritative value
+              const currentUser = get().user;
+              if (currentUser) {
+                set({
+                  user: {
+                    ...currentUser,
+                    tokenBalance: Number(result.total_points),
+                  },
+                });
               }
             } catch (err) {
               console.error('❌ Failed to sync points to backend:', err);
@@ -586,6 +661,301 @@ export const useAppStore = create<AppStore>()(
         }
       },
 
+      // New Game System Actions
+      setEnergy: (energyUpdates) => {
+        const { energy } = get();
+        set({ energy: { ...energy, ...energyUpdates } });
+      },
+
+      consumeEnergy: (amount) => {
+        const { energy } = get();
+        if (energy.currentEnergy >= amount) {
+          set({ 
+            energy: { 
+              ...energy, 
+              currentEnergy: energy.currentEnergy - amount,
+              lastUpdate: Date.now()
+            } 
+          });
+          return true;
+        }
+        return false;
+      },
+
+      regenerateEnergy: () => {
+        const { energy } = get();
+        const now = Date.now();
+        const timeDiff = now - energy.lastUpdate;
+        const REGEN_INTERVAL = 30 * 60 * 1000; // 30 minutes
+        const REGEN_THRESHOLD = 5; // Only regen if energy < 5
+
+        if (energy.currentEnergy < REGEN_THRESHOLD) {
+          const intervalsElapsed = Math.floor(timeDiff / REGEN_INTERVAL);
+          const energyToAdd = Math.min(intervalsElapsed, energy.maxEnergy - energy.currentEnergy);
+          
+          if (energyToAdd > 0) {
+            set({
+              energy: {
+                ...energy,
+                currentEnergy: energy.currentEnergy + energyToAdd,
+                lastUpdate: now,
+              }
+            });
+          }
+        }
+      },
+
+      setGameStats: (statsUpdates) => {
+        const { gameStats } = get();
+        set({ gameStats: { ...gameStats, ...statsUpdates } });
+      },
+
+      updateGameStats: (score, pointsEarned) => {
+        const { gameStats } = get();
+        const newTotalGames = gameStats.totalGamesPlayed + 1;
+        const newTotalScore = gameStats.totalScore + score;
+        const newAverageScore = newTotalScore / newTotalGames;
+        const newBestScore = Math.max(gameStats.bestScore, score);
+        const newTotalPoints = gameStats.totalPointsEarned + pointsEarned;
+
+        set({
+          gameStats: {
+            totalGamesPlayed: newTotalGames,
+            totalScore: newTotalScore,
+            averageScore: Math.round(newAverageScore),
+            bestScore: newBestScore,
+            totalPointsEarned: newTotalPoints,
+          }
+        });
+      },
+
+      setRanking: (rankingUpdates) => {
+        const { ranking } = get();
+        set({ ranking: { ...ranking, ...rankingUpdates } });
+      },
+
+      setGameCycle: (cycle) => {
+        set({ gameCycle: cycle });
+      },
+
+      // Game API Actions
+      feedGamePet: async (feedCount = 1) => {
+        try {
+          const { backendAPI } = await import('../services/backend-api.service');
+          const result = await backendAPI.feedGamePet(feedCount);
+          
+          // Update local pet state with backend response
+          if (result.pet) {
+            get().setPet({
+              level: result.pet.level,
+              exp: result.pet.currentXp,
+              maxExp: result.pet.xpForNextLevel,
+            });
+          }
+
+          // Update user points if changed
+          if (result.user && result.user.total_points !== undefined) {
+            const currentUser = get().user;
+            if (currentUser) {
+              set({
+                user: {
+                  ...currentUser,
+                  tokenBalance: Number(result.user.total_points),
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to feed pet:', error);
+          get().setError('Failed to feed pet');
+        }
+      },
+
+      claimGamePetRewards: async () => {
+        try {
+          console.log('💰 Starting pet rewards claim...');
+          const { backendAPI } = await import('../services/backend-api.service');
+          const result = await backendAPI.claimGamePetRewards();
+          
+          console.log('💰 Claim result:', result);
+          
+          if (result && result.success) {
+            console.log('✅ Claim successful, updating state...');
+            
+            // Update user points with claimed rewards
+            if (result.pointsEarned) {
+              console.log(`💰 Adding ${result.pointsEarned} points to balance`);
+              get().updateBalance(result.pointsEarned, 'token');
+            }
+
+            // Update pet state
+            if (result.pet) {
+              console.log('🐾 Updating pet state after claim:', result.pet);
+              get().setPet({
+                lastCoinTime: Date.now(),
+                pendingCoins: 0,
+              });
+            }
+
+            console.log(`✅ Claimed ${result.pointsEarned} rewards successfully`);
+          } else {
+            console.error('❌ Claim response missing success flag:', result);
+            get().setError('Invalid claim response');
+            throw new Error('Invalid claim response');
+          }
+        } catch (error) {
+          console.error('❌ Failed to claim pet rewards:', error);
+          get().setError('Failed to claim rewards');
+          throw error;
+        }
+      },
+
+      startGameSession: async (gameType) => {
+        try {
+          const { backendAPI } = await import('../services/backend-api.service');
+          const result = await backendAPI.startGameSession(gameType);
+          
+          // Consume energy locally
+          if (result.energyUsed) {
+            get().consumeEnergy(result.energyUsed);
+          }
+
+          return result;
+        } catch (error) {
+          console.error('Failed to start game session:', error);
+          get().setError('Failed to start game');
+          throw error;
+        }
+      },
+
+      completeGameSession: async (score, duration) => {
+        try {
+          const { backendAPI } = await import('../services/backend-api.service');
+          const result = await backendAPI.completeGameSession(score, duration);
+          
+          // Update game stats
+          if (result.pointsEarned) {
+            get().updateGameStats(score, result.pointsEarned);
+            get().updateBalance(result.pointsEarned, 'token');
+          }
+
+          // Update ranking if changed
+          if (result.ranking) {
+            get().setRanking(result.ranking);
+          }
+        } catch (error) {
+          console.error('Failed to complete game session:', error);
+          get().setError('Failed to complete game');
+        }
+      },
+
+      refillGameEnergy: async (amount) => {
+        try {
+          const { backendAPI } = await import('../services/backend-api.service');
+          const result = await backendAPI.refillEnergy(amount);
+          
+          // Update energy state
+          if (result.energy) {
+            get().setEnergy({
+              currentEnergy: result.energy.currentEnergy,
+              maxEnergy: result.energy.maxEnergy,
+              lastUpdate: Date.now(),
+            });
+          }
+
+          // Update user points if cost was deducted
+          if (result.user && result.user.total_points !== undefined) {
+            const currentUser = get().user;
+            if (currentUser) {
+              set({
+                user: {
+                  ...currentUser,
+                  tokenBalance: Number(result.user.total_points),
+                }
+              });
+            }
+          }
+        } catch (error) {
+          console.error('Failed to refill energy:', error);
+          get().setError('Failed to refill energy');
+        }
+      },
+
+      loadGameDashboard: async () => {
+        try {
+          const { backendAPI } = await import('../services/backend-api.service');
+          console.log('🎮 Loading game dashboard...');
+          
+          const dashboard = await backendAPI.getGameDashboard();
+          console.log('📊 Dashboard response:', dashboard);
+          
+          if (dashboard && dashboard.success) {
+            console.log('✅ Dashboard has success flag, processing data...');
+            
+            // Update pet state
+            if (dashboard.pet) {
+              console.log('🐾 Updating pet state:', dashboard.pet);
+              get().setPet({
+                level: dashboard.pet.level,
+                exp: dashboard.pet.currentXp,
+                maxExp: dashboard.pet.xpForNextLevel,
+                pendingCoins: dashboard.pet.pendingRewards || 0,
+                lastCoinTime: dashboard.pet.lastClaimTime ? new Date(dashboard.pet.lastClaimTime).getTime() : Date.now(),
+              });
+            }
+
+            // Update energy state
+            if (dashboard.energy) {
+              console.log('⚡ Updating energy state:', dashboard.energy);
+              get().setEnergy({
+                currentEnergy: dashboard.energy.currentEnergy,
+                maxEnergy: dashboard.energy.maxEnergy,
+                lastUpdate: dashboard.energy.lastUpdate ? new Date(dashboard.energy.lastUpdate).getTime() : Date.now(),
+              });
+            }
+
+            // Update ranking
+            if (dashboard.ranking) {
+              console.log('🏆 Updating ranking:', dashboard.ranking);
+              get().setRanking({
+                rank: dashboard.ranking.rank,
+                position: dashboard.ranking.position,
+                lifetimePoints: dashboard.ranking.lifetimePoints,
+                nextRankThreshold: dashboard.ranking.nextRankThreshold,
+              });
+            }
+
+            // Update game stats
+            if (dashboard.gameStats) {
+              console.log('📈 Updating game stats:', dashboard.gameStats);
+              get().setGameStats({
+                totalGamesPlayed: dashboard.gameStats.totalGamesPlayed,
+                totalScore: dashboard.gameStats.totalScore,
+                averageScore: dashboard.gameStats.averageScore,
+                bestScore: dashboard.gameStats.bestScore,
+                totalPointsEarned: dashboard.gameStats.totalPointsEarned,
+              });
+            }
+
+            // Load current game cycle
+            console.log('🔄 Loading game cycle...');
+            const cycle = await backendAPI.getCurrentGameCycle();
+            if (cycle) {
+              console.log('🎯 Game cycle loaded:', cycle);
+              get().setGameCycle(cycle);
+            }
+            
+            console.log('✅ Game dashboard loaded successfully');
+          } else {
+            console.error('❌ Dashboard response missing success flag:', dashboard);
+            get().setError('Invalid dashboard response');
+          }
+        } catch (error) {
+          console.error('❌ Failed to load game dashboard:', error);
+          get().setError('Failed to load game data');
+        }
+      },
+
       // Global Actions
       reset: () => set(initialState),
     }),
@@ -672,6 +1042,12 @@ export const useActiveTab = () => useAppStore((state) => state.activeTab);
 export const useSpinsLeft = () => useAppStore((state) => state.spinsLeft);
 export const usePet = () => useAppStore((state) => state.pet);
 
+// New Game System Selectors
+export const useEnergy = () => useAppStore((state) => state.energy);
+export const useGameStats = () => useAppStore((state) => state.gameStats);
+export const useRanking = () => useAppStore((state) => state.ranking);
+export const useGameCycle = () => useAppStore((state) => state.gameCycle);
+
 /**
  * Action hooks for cleaner component code
  * Using useShallow to prevent infinite loops with object selectors
@@ -729,4 +1105,36 @@ export const useWalletActions = () => {
 export const useNavigationActions = () => {
   const setActiveTab = useAppStore((state) => state.setActiveTab);
   return { setActiveTab };
+};
+
+export const useGameSystemActions = () => {
+  const setEnergy = useAppStore((state) => state.setEnergy);
+  const consumeEnergy = useAppStore((state) => state.consumeEnergy);
+  const regenerateEnergy = useAppStore((state) => state.regenerateEnergy);
+  const setGameStats = useAppStore((state) => state.setGameStats);
+  const updateGameStats = useAppStore((state) => state.updateGameStats);
+  const setRanking = useAppStore((state) => state.setRanking);
+  const setGameCycle = useAppStore((state) => state.setGameCycle);
+  const feedGamePet = useAppStore((state) => state.feedGamePet);
+  const claimGamePetRewards = useAppStore((state) => state.claimGamePetRewards);
+  const startGameSession = useAppStore((state) => state.startGameSession);
+  const completeGameSession = useAppStore((state) => state.completeGameSession);
+  const refillGameEnergy = useAppStore((state) => state.refillGameEnergy);
+  const loadGameDashboard = useAppStore((state) => state.loadGameDashboard);
+  
+  return {
+    setEnergy,
+    consumeEnergy,
+    regenerateEnergy,
+    setGameStats,
+    updateGameStats,
+    setRanking,
+    setGameCycle,
+    feedGamePet,
+    claimGamePetRewards,
+    startGameSession,
+    completeGameSession,
+    refillGameEnergy,
+    loadGameDashboard,
+  };
 };

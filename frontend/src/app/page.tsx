@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useAppStore, useUser, useIsLoading, useError, NavigationTab, usePet } from '../store/useAppStore';
+import { useAppStore, useUser, useIsLoading, useError, NavigationTab, usePet, useGameSystemActions } from '../store/useAppStore';
 import { HeroSection } from '../components/home';
 import { BottomNavigation } from '../components/layout/BottomNavigation';
 import { LoadingScreen } from '../components/shared';
@@ -40,6 +40,7 @@ export default function HomePage() {
   const isLoading = useIsLoading();
   const error = useError();
   const { activeTab, setActiveTab, setUser, setError } = useAppStore();
+  const { loadGameDashboard } = useGameSystemActions();
   const { isInitialized, isAvailable } = useTelegram();
   const [isAppReady, setIsAppReady] = useState(false);
   const [showLoadingScreen, setShowLoadingScreen] = useState(true);
@@ -47,6 +48,7 @@ export default function HomePage() {
   const [displayRankIndex, setDisplayRankIndex] = useState(0);
   const [showBalance, setShowBalance] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [gameDataLoaded, setGameDataLoaded] = useState(false);
 
   // Refresh balance function
   const handleRefreshBalance = async () => {
@@ -103,6 +105,25 @@ export default function HomePage() {
     }
     setIsAppReady(true);
   }, [isInitialized, isAvailable, user, setUser]);
+
+  // Load game dashboard when user is authenticated
+  useEffect(() => {
+    const initializeGameData = async () => {
+      if (!user || gameDataLoaded) return;
+      
+      try {
+        console.log('🎮 Initializing game data on app startup...');
+        await loadGameDashboard();
+        setGameDataLoaded(true);
+        console.log('✅ Game data initialized successfully');
+      } catch (error) {
+        console.error('❌ Failed to initialize game data:', error);
+        // Don't block the app if game data fails to load
+      }
+    };
+
+    initializeGameData();
+  }, [user, loadGameDashboard, gameDataLoaded]);
 
   // Hide loading screen when user data is ready
   useEffect(() => {
