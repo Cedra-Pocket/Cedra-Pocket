@@ -32,6 +32,14 @@ export declare const DEFAULT_CYCLE: {
     maxSpeedCap: number;
     isActive: boolean;
 };
+export declare const BLOCKCHAIN_CONSTANTS: {
+    MIN_CLAIM_AMOUNT: number;
+    SIGNATURE_EXPIRY: number;
+    MAX_NONCE_AGE: number;
+    TREASURY_SEED: string;
+    DECIMALS: number;
+    OCTAS_PER_CEDRA: number;
+};
 export declare const TIME_CONSTANTS: {
     HOUR_IN_MS: number;
     DAY_IN_MS: number;

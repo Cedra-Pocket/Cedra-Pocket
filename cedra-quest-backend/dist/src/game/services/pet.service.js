@@ -15,10 +15,12 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const game_constants_1 = require("../../common/constants/game.constants");
 const game_cycle_service_1 = require("./game-cycle.service");
+const blockchain_service_1 = require("../../blockchain/blockchain.service");
 let PetService = PetService_1 = class PetService {
-    constructor(prisma, gameCycleService) {
+    constructor(prisma, gameCycleService, blockchainService) {
         this.prisma = prisma;
         this.gameCycleService = gameCycleService;
+        this.blockchainService = blockchainService;
         this.logger = new common_1.Logger(PetService_1.name);
     }
     async getPetStatus(userId) {
@@ -190,6 +192,7 @@ let PetService = PetService_1 = class PetService {
                         lifetime_points: true,
                         pet_level: true,
                         pet_last_claim_time: true,
+                        wallet_address: true,
                     },
                 });
                 if (!user) {
@@ -217,6 +220,18 @@ let PetService = PetService_1 = class PetService {
                         updated_at: new Date(),
                     },
                 });
+                const MIN_BLOCKCHAIN_CLAIM = 1000;
+                if (user.wallet_address && rewards >= MIN_BLOCKCHAIN_CLAIM) {
+                    try {
+                        const nonce = Date.now();
+                        const signature = await this.generateClaimSignature(user.wallet_address, rewards, nonce);
+                        await this.blockchainService.claimReward(user.wallet_address, process.env.CEDRA_ADMIN_ADDRESS || '', rewards, nonce, signature);
+                        this.logger.log(`Blockchain claim recorded for user ${userId}: ${rewards} points`);
+                    }
+                    catch (blockchainError) {
+                        this.logger.warn(`Blockchain claim failed for user ${userId}:`, blockchainError.message);
+                    }
+                }
                 this.logger.log(`User ${userId} claimed ${rewards} points from pet mining`);
                 return {
                     success: true,
@@ -252,11 +267,17 @@ let PetService = PetService_1 = class PetService {
             return 0;
         }
     }
+    async generateClaimSignature(userAddress, amount, nonce) {
+        const message = `${userAddress}:${amount}:${nonce}`;
+        const hash = Buffer.from(message).toString('hex');
+        return `0x${hash.padEnd(128, '0')}`;
+    }
 };
 exports.PetService = PetService;
 exports.PetService = PetService = PetService_1 = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        game_cycle_service_1.GameCycleService])
+        game_cycle_service_1.GameCycleService,
+        blockchain_service_1.BlockchainService])
 ], PetService);
 //# sourceMappingURL=pet.service.js.map

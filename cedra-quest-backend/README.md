@@ -87,12 +87,14 @@ npm run test:all
 ## 📚 Documentation
 
 ### **📖 For Developers**
-- [`docs/API_DOCUMENTATION.md`](docs/API_DOCUMENTATION.md) - Complete API reference
+- [`docs/FRONTEND_API_GUIDE.md`](docs/FRONTEND_API_GUIDE.md) - Complete API reference for frontend integration
 - [`docs/GAME_ECONOMY_PLAN.md`](docs/GAME_ECONOMY_PLAN.md) - Game mechanics & business logic
 - [`docs/HOW_TO_GET_REAL_INITDATA.md`](docs/HOW_TO_GET_REAL_INITDATA.md) - Telegram integration guide
 
 ### **🚀 For Deployment**
-- [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md) - Production deployment guide
+- [`docs/DEPLOYMENT_GUIDE.md`](docs/DEPLOYMENT_GUIDE.md) - **Complete production deployment guide**
+- [`docs/QUICK_DEPLOY.md`](docs/QUICK_DEPLOY.md) - **Quick 10-minute deployment**
+- [`docs/PRODUCTION_CHECKLIST.md`](docs/PRODUCTION_CHECKLIST.md) - Production deployment checklist
 - [`docker-compose.yml`](docker-compose.yml) - Docker services configuration
 - [`deploy.sh`](deploy.sh) - Automated deployment script
 

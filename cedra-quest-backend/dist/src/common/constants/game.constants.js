@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ANTI_CHEAT = exports.DATE_FORMAT = exports.TIME_CONSTANTS = exports.DEFAULT_CYCLE = exports.RANK_ORDER = exports.RANK_THRESHOLDS = exports.GAME_CONSTANTS = exports.ENERGY_CONSTANTS = exports.PET_CONSTANTS = void 0;
+exports.ANTI_CHEAT = exports.DATE_FORMAT = exports.TIME_CONSTANTS = exports.BLOCKCHAIN_CONSTANTS = exports.DEFAULT_CYCLE = exports.RANK_ORDER = exports.RANK_THRESHOLDS = exports.GAME_CONSTANTS = exports.ENERGY_CONSTANTS = exports.PET_CONSTANTS = void 0;
 exports.PET_CONSTANTS = {
     FEED_COST: 20,
     MAX_DAILY_SPEND: 600,
@@ -34,6 +34,14 @@ exports.DEFAULT_CYCLE = {
     growthRate: 0.8,
     maxSpeedCap: 8.0,
     isActive: true,
+};
+exports.BLOCKCHAIN_CONSTANTS = {
+    MIN_CLAIM_AMOUNT: 1000,
+    SIGNATURE_EXPIRY: 5 * 60 * 1000,
+    MAX_NONCE_AGE: 24 * 60 * 60 * 1000,
+    TREASURY_SEED: 'cedra_gamefi_treasury_v1',
+    DECIMALS: 8,
+    OCTAS_PER_CEDRA: 100000000,
 };
 exports.TIME_CONSTANTS = {
     HOUR_IN_MS: 60 * 60 * 1000,

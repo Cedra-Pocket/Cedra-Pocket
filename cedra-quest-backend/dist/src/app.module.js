@@ -14,6 +14,8 @@ const auth_module_1 = require("./auth/auth.module");
 const user_module_1 = require("./user/user.module");
 const wallet_module_1 = require("./wallet/wallet.module");
 const game_module_1 = require("./game/game.module");
+const blockchain_module_1 = require("./blockchain/blockchain.module");
+const blockchain_controller_1 = require("./blockchain/blockchain.controller");
 const health_controller_1 = require("./health/health.controller");
 let AppModule = class AppModule {
 };
@@ -29,8 +31,9 @@ exports.AppModule = AppModule = __decorate([
             user_module_1.UserModule,
             wallet_module_1.WalletModule,
             game_module_1.GameModule,
+            blockchain_module_1.BlockchainModule,
         ],
-        controllers: [health_controller_1.HealthController],
+        controllers: [health_controller_1.HealthController, blockchain_controller_1.BlockchainController],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

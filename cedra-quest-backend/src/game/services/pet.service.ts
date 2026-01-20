@@ -3,6 +3,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { PetStatus, FeedPetRequest, FeedPetResult, ClaimRewardsResult } from '../../common/interfaces/game.interface';
 import { PET_CONSTANTS, TIME_CONSTANTS } from '../../common/constants/game.constants';
 import { GameCycleService } from './game-cycle.service';
+import { BlockchainService } from '../../blockchain/blockchain.service';
 
 @Injectable()
 export class PetService {
@@ -11,6 +12,7 @@ export class PetService {
   constructor(
     private prisma: PrismaService,
     private gameCycleService: GameCycleService,
+    private blockchainService: BlockchainService,
   ) {}
 
   /**
@@ -212,7 +214,7 @@ export class PetService {
   }
 
   /**
-   * Claim mining rewards
+   * Claim mining rewards with blockchain integration
    */
   async claimRewards(userId: string): Promise<ClaimRewardsResult> {
     try {
@@ -224,6 +226,7 @@ export class PetService {
             lifetime_points: true,
             pet_level: true,
             pet_last_claim_time: true,
+            wallet_address: true,
           },
         });
 
@@ -261,6 +264,31 @@ export class PetService {
             updated_at: new Date(),
           },
         });
+
+        // Optional: Record on blockchain for transparency (large rewards only)
+        const MIN_BLOCKCHAIN_CLAIM = 1000; // Only record claims >= 1000 points on blockchain
+        
+        if (user.wallet_address && rewards >= MIN_BLOCKCHAIN_CLAIM) {
+          try {
+            // Generate signature for blockchain claim
+            const nonce = Date.now();
+            const signature = await this.generateClaimSignature(user.wallet_address, rewards, nonce);
+            
+            // Submit to blockchain (this is optional and can fail without affecting the game)
+            await this.blockchainService.claimReward(
+              user.wallet_address,
+              process.env.CEDRA_ADMIN_ADDRESS || '',
+              rewards,
+              nonce,
+              signature
+            );
+            
+            this.logger.log(`Blockchain claim recorded for user ${userId}: ${rewards} points`);
+          } catch (blockchainError) {
+            // Log but don't fail the game operation
+            this.logger.warn(`Blockchain claim failed for user ${userId}:`, blockchainError.message);
+          }
+        }
 
         this.logger.log(`User ${userId} claimed ${rewards} points from pet mining`);
 
@@ -309,5 +337,17 @@ export class PetService {
       this.logger.error('Failed to calculate pending rewards', error);
       return 0;
     }
+  }
+
+  /**
+   * Generate signature for blockchain claim (placeholder implementation)
+   * In production, this should use proper cryptographic signing with server's private key
+   */
+  private async generateClaimSignature(userAddress: string, amount: number, nonce: number): Promise<string> {
+    // This is a placeholder - in production, you would use proper cryptographic signing
+    // The signature should be generated using the server's private key
+    const message = `${userAddress}:${amount}:${nonce}`;
+    const hash = Buffer.from(message).toString('hex');
+    return `0x${hash.padEnd(128, '0')}`; // Mock signature
   }
 }

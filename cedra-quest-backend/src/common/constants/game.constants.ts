@@ -43,6 +43,16 @@ export const DEFAULT_CYCLE = {
   isActive: true,
 };
 
+// Blockchain Integration Constants
+export const BLOCKCHAIN_CONSTANTS = {
+  MIN_CLAIM_AMOUNT: 1000, // Minimum points to record on blockchain
+  SIGNATURE_EXPIRY: 5 * 60 * 1000, // Signature valid for 5 minutes
+  MAX_NONCE_AGE: 24 * 60 * 60 * 1000, // Nonce valid for 24 hours
+  TREASURY_SEED: 'cedra_gamefi_treasury_v1',
+  DECIMALS: 8, // CEDRA token decimals
+  OCTAS_PER_CEDRA: 100000000, // 10^8
+};
+
 // Time Utilities
 export const TIME_CONSTANTS = {
   HOUR_IN_MS: 60 * 60 * 1000,

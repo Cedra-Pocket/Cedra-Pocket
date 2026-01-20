@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module';
 import { UserModule } from './user/user.module';
 import { WalletModule } from './wallet/wallet.module';
 import { GameModule } from './game/game.module';
+import { BlockchainModule } from './blockchain/blockchain.module';
+import { BlockchainController } from './blockchain/blockchain.controller';
 import { HealthController } from './health/health.controller';
 
 @Module({
@@ -17,7 +19,8 @@ import { HealthController } from './health/health.controller';
     UserModule,
     WalletModule,
     GameModule,
+    BlockchainModule,
   ],
-  controllers: [HealthController],
+  controllers: [HealthController, BlockchainController],
 })
 export class AppModule {}

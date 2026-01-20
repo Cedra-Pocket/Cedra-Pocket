@@ -21,6 +21,15 @@
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
     "test:e2e": "jest --config ./test/jest-e2e.json",
+    "test:api": "node test/test-simple.js",
+    "test:game": "node test/test-game-economy.js",
+    "test:telegram": "node test/test-real-telegram.js",
+    "test:blockchain": "node test/test-blockchain.js",
+    "test:real-blockchain": "node test/test-real-blockchain.js",
+    "test:all": "node test/test-simple.js && node test/test-blockchain.js",
+    "test:telegram": "node test/test-real-telegram.js",
+    "test:blockchain": "node test/test-blockchain.js",
+    "test:all": "node test/test-api.js && node test/test-game-economy.js && node test/test-blockchain.js",
     "prisma:generate": "prisma generate",
     "prisma:push": "prisma db push",
     "prisma:migrate": "prisma migrate dev",
@@ -40,7 +49,9 @@
     "class-transformer": "^0.5.1",
     "class-validator": "^0.14.0",
     "reflect-metadata": "^0.1.13",
-    "rxjs": "^7.8.1"
+    "rxjs": "^7.8.1",
+    "@cedra-labs/ts-sdk": "^2.2.8",
+    "axios": "^1.13.2"
   },
   "devDependencies": {
     "@nestjs/cli": "^10.0.0",
