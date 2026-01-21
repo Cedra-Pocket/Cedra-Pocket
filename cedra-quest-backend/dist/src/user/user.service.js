@@ -32,8 +32,10 @@ let UserService = UserService_1 = class UserService {
     }
     async createUser(userData) {
         try {
+            this.logger.log(`🆕 Creating new user: telegram_id=${userData.telegram_id}, username=${userData.username}`);
             const tempWalletAddress = `temp_${userData.telegram_id}_${Date.now()}`;
             const tempPublicKey = `temp_pk_${userData.telegram_id}_${Date.now()}`;
+            this.logger.log(`🔑 Generated temp wallet: ${tempWalletAddress}`);
             const user = await this.prisma.users.create({
                 data: {
                     telegram_id: this.safeToBigInt(userData.telegram_id),
@@ -57,6 +59,7 @@ let UserService = UserService_1 = class UserService {
                     created_at: true,
                 },
             });
+            this.logger.log(`✅ User created successfully in database: ${user.telegram_id.toString()}`);
             return {
                 telegram_id: user.telegram_id.toString(),
                 wallet_address: user.wallet_address,
@@ -69,7 +72,7 @@ let UserService = UserService_1 = class UserService {
             };
         }
         catch (error) {
-            this.logger.error(`Failed to create user: ${userData.telegram_id}`, error);
+            this.logger.error(`❌ Failed to create user: ${userData.telegram_id}`, error);
             throw error;
         }
     }

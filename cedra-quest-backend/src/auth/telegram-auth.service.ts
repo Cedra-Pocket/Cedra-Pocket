@@ -30,6 +30,21 @@ export class TelegramAuthService {
       const parsed = this.parseInitData(initData);
       this.logger.debug(`Parsed user ID: ${parsed.telegram_id}, username: ${parsed.username}`);
       
+      // Development bypass for testing (only when NODE_ENV is not production)
+      const isDevelopment = process.env.NODE_ENV !== 'production';
+      if (isDevelopment) {
+        this.logger.warn('🚧 Development mode: Bypassing Telegram signature validation');
+        this.logger.warn('⚠️  In production, real Telegram signature validation will be enforced');
+        const user = {
+          id: parsed.telegram_id,
+          username: parsed.username,
+          first_name: parsed.first_name,
+          last_name: parsed.last_name,
+        };
+        this.logger.log(`Development user validated: ${user.id} (${user.username || user.first_name})`);
+        return user;
+      }
+      
       // Validate the signature
       if (!this.validateSignature(initData, parsed.hash)) {
         this.logger.warn('Telegram signature validation failed');

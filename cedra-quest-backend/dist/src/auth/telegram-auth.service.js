@@ -30,6 +30,19 @@ let TelegramAuthService = TelegramAuthService_1 = class TelegramAuthService {
             this.logger.debug('Validating Telegram initData...');
             const parsed = this.parseInitData(initData);
             this.logger.debug(`Parsed user ID: ${parsed.telegram_id}, username: ${parsed.username}`);
+            const isDevelopment = process.env.NODE_ENV !== 'production';
+            if (isDevelopment) {
+                this.logger.warn('🚧 Development mode: Bypassing Telegram signature validation');
+                this.logger.warn('⚠️  In production, real Telegram signature validation will be enforced');
+                const user = {
+                    id: parsed.telegram_id,
+                    username: parsed.username,
+                    first_name: parsed.first_name,
+                    last_name: parsed.last_name,
+                };
+                this.logger.log(`Development user validated: ${user.id} (${user.username || user.first_name})`);
+                return user;
+            }
             if (!this.validateSignature(initData, parsed.hash)) {
                 this.logger.warn('Telegram signature validation failed');
                 throw new common_1.UnauthorizedException('Invalid Telegram signature');

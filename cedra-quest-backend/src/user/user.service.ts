@@ -40,9 +40,13 @@ export class UserService {
     current_rank?: string;
   }): Promise<UserInfo> {
     try {
+      this.logger.log(`🆕 Creating new user: telegram_id=${userData.telegram_id}, username=${userData.username}`);
+      
       // Generate temporary wallet address and public key for new users
       const tempWalletAddress = `temp_${userData.telegram_id}_${Date.now()}`;
       const tempPublicKey = `temp_pk_${userData.telegram_id}_${Date.now()}`;
+      
+      this.logger.log(`🔑 Generated temp wallet: ${tempWalletAddress}`);
       
       const user = await this.prisma.users.create({
         data: {
@@ -68,6 +72,8 @@ export class UserService {
         },
       });
 
+      this.logger.log(`✅ User created successfully in database: ${user.telegram_id.toString()}`);
+
       return {
         telegram_id: user.telegram_id.toString(),
         wallet_address: user.wallet_address,
@@ -79,7 +85,7 @@ export class UserService {
         created_at: user.created_at,
       };
     } catch (error) {
-      this.logger.error(`Failed to create user: ${userData.telegram_id}`, error);
+      this.logger.error(`❌ Failed to create user: ${userData.telegram_id}`, error);
       throw error;
     }
   }
