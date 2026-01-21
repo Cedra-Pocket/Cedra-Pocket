@@ -12,6 +12,8 @@ async function bootstrap() {
       'http://localhost:3001', // Alternative port
       'https://t.me', // Telegram Web App
       'https://web.telegram.org', // Telegram Web
+      'https://cedra-pocket.vercel.app', // Production frontend
+      'https://*.vercel.app', // All Vercel apps
     ],
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
