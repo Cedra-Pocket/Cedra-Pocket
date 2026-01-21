@@ -153,23 +153,17 @@ let PetService = PetService_1 = class PetService {
             const elapsedMs = now.getTime() - lastCoinTime.getTime();
             const COIN_INTERVAL_MS = 60 * 1000;
             const intervalsElapsed = Math.floor(elapsedMs / COIN_INTERVAL_MS);
-            if (intervalsElapsed > 0) {
+            if (intervalsElapsed > 0 && pet.pending_coins <= 0) {
                 const coinsPerInterval = 100 + (pet.level - 1) * 50;
-                const newCoins = intervalsElapsed * coinsPerInterval;
-                const maxIntervals = 24 * 60;
-                const cappedIntervals = Math.min(intervalsElapsed, maxIntervals);
-                const cappedNewCoins = cappedIntervals * coinsPerInterval;
-                if (cappedNewCoins > 0) {
-                    await this.prisma.pets.update({
-                        where: { user_id: this.safeToBigInt(userId) },
-                        data: {
-                            pending_coins: { increment: cappedNewCoins },
-                            last_coin_time: new Date(lastCoinTime.getTime() + cappedIntervals * COIN_INTERVAL_MS),
-                            updated_at: new Date(),
-                        },
-                    });
-                    this.logger.log(`Updated pending coins for user ${userId}: +${cappedNewCoins} coins (${cappedIntervals} intervals)`);
-                }
+                const newCoins = coinsPerInterval;
+                await this.prisma.pets.update({
+                    where: { user_id: this.safeToBigInt(userId) },
+                    data: {
+                        pending_coins: newCoins,
+                        updated_at: new Date(),
+                    },
+                });
+                this.logger.log(`Generated pending coins for user ${userId}: ${newCoins} coins (level ${pet.level})`);
             }
         }
         catch (error) {

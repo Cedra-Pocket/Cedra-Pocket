@@ -189,28 +189,24 @@ export class PetService {
       const COIN_INTERVAL_MS = 60 * 1000;
       const intervalsElapsed = Math.floor(elapsedMs / COIN_INTERVAL_MS);
       
-      if (intervalsElapsed > 0) {
+      // FIXED: Only generate coins for 1 interval maximum (same as frontend logic)
+      if (intervalsElapsed > 0 && pet.pending_coins <= 0) {
         // Calculate coins per interval based on pet level
         const coinsPerInterval = 100 + (pet.level - 1) * 50; // Same as frontend logic
-        const newCoins = intervalsElapsed * coinsPerInterval;
         
-        // Cap at maximum intervals (e.g., 24 hours = 1440 intervals)
-        const maxIntervals = 24 * 60; // 24 hours
-        const cappedIntervals = Math.min(intervalsElapsed, maxIntervals);
-        const cappedNewCoins = cappedIntervals * coinsPerInterval;
+        // Only generate coins for 1 interval, not all elapsed intervals
+        const newCoins = coinsPerInterval;
         
-        if (cappedNewCoins > 0) {
-          await this.prisma.pets.update({
-            where: { user_id: this.safeToBigInt(userId) },
-            data: {
-              pending_coins: { increment: cappedNewCoins },
-              last_coin_time: new Date(lastCoinTime.getTime() + cappedIntervals * COIN_INTERVAL_MS),
-              updated_at: new Date(),
-            },
-          });
-          
-          this.logger.log(`Updated pending coins for user ${userId}: +${cappedNewCoins} coins (${cappedIntervals} intervals)`);
-        }
+        await this.prisma.pets.update({
+          where: { user_id: this.safeToBigInt(userId) },
+          data: {
+            pending_coins: newCoins, // Set to exact amount, don't increment
+            // Don't update last_coin_time here - only update when user claims
+            updated_at: new Date(),
+          },
+        });
+        
+        this.logger.log(`Generated pending coins for user ${userId}: ${newCoins} coins (level ${pet.level})`);
       }
     } catch (error) {
       this.logger.error(`Failed to update pending coins for user ${userId}`, error);
@@ -444,7 +440,7 @@ export class PetService {
           where: { user_id: this.safeToBigInt(userId) },
           data: {
             pending_coins: 0,
-            last_coin_time: new Date(),
+            last_coin_time: new Date(), // Update last_coin_time when user claims
             total_coins_earned: { increment: rewards },
             updated_at: new Date(),
           },
