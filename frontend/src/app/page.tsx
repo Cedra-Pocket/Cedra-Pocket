@@ -661,7 +661,7 @@ export default function HomePage() {
             </div>
 
             {/* Hero Section */}
-            <div className="flex-1 flex items-center justify-center" style={{ marginTop: 'clamp(-60px, -15vw, -30px)', transform: 'scale(0.7)' }}>
+            <div className="flex-1 flex items-center justify-center" style={{ marginTop: 'clamp(20px, 5vw, 40px)', transform: 'scale(0.7)' }}>
               <HeroSection mascotImageUrl="/mascot.png" showAnimation={true} />
             </div>
           </div>

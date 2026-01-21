@@ -9,6 +9,33 @@ export class AuthController {
   constructor(private authService: AuthService) {}
 
   /**
+   * Verify and auto-create user with Telegram initData
+   * POST /auth/verify
+   */
+  @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  async verify(@Body() authDto: TelegramAuthDto) {
+    this.logger.log('Verify attempt received');
+    
+    const result = await this.authService.verifyAndCreateUser(authDto.initData);
+    
+    if (!result.success) {
+      this.logger.warn(`Verify failed: ${result.error}`);
+      return result;
+    }
+    
+    if (result.user) {
+      this.logger.log(`User verified/created: ${result.user.telegram_id}`);
+      return {
+        access_token: 'mock_jwt_token', // TODO: Generate real JWT
+        user: result.user,
+      };
+    }
+    
+    return result;
+  }
+
+  /**
    * Authenticate user with Telegram initData
    * POST /auth/login
    */
