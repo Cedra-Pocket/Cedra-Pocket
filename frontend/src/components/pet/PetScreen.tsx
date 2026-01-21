@@ -175,6 +175,11 @@ export function PetScreen() {
     const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
     const remaining = COIN_INTERVAL_SECONDS - elapsed;
     
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`⏰ Timer useEffect: elapsed=${elapsed}s, remaining=${remaining}s, pendingCoins=${pet.pendingCoins}`);
+    }
+    
     // If there are already pending coins, just show timer as 0
     if (pet.pendingCoins > 0) { 
       setCoinTimer(0); 
@@ -184,7 +189,9 @@ export function PetScreen() {
     // If enough time has passed, generate coins immediately (only once)
     if (remaining <= 0) {
       const coins = getCoinsPerMinute(pet.level);
-      setPet({ pendingCoins: coins, lastCoinTime: Date.now() });
+      console.log(`💰 Generating ${coins} coins for level ${pet.level}`);
+      // DON'T update lastCoinTime here - it should only be updated when user claims
+      setPet({ pendingCoins: coins });
       setCoinTimer(0);
       return;
     }
@@ -192,16 +199,12 @@ export function PetScreen() {
     // Set initial timer
     setCoinTimer(remaining);
     
-    // Start countdown timer
+    // Start countdown timer - SIMPLIFIED: Only count down, don't generate coins here
     const interval = setInterval(() => {
       setCoinTimer(prev => {
         if (prev <= 1) {
-          // Generate coins when timer reaches 0 (only if no pending coins)
-          const currentPet = pet; // Capture current pet state
-          if (currentPet.pendingCoins <= 0) {
-            const coins = getCoinsPerMinute(currentPet.level);
-            setPet({ pendingCoins: coins, lastCoinTime: Date.now() });
-          }
+          // Timer reached 0, but don't generate coins here
+          // Let the next useEffect run handle coin generation
           return 0;
         }
         return prev - 1;
@@ -209,7 +212,22 @@ export function PetScreen() {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [pet.hatched, pet.lastCoinTime, pet.pendingCoins]); // Include pendingCoins to prevent multiple generation
+  }, [pet.hatched, pet.lastCoinTime, pet.pendingCoins, pet.level]); // Include level to recalculate when pet levels up
+
+  // Separate effect to handle coin generation when timer reaches 0
+  useEffect(() => {
+    if (!pet.hatched || pet.pendingCoins > 0) return;
+    
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    
+    // Only generate coins if enough time has passed and no pending coins
+    if (elapsed >= COIN_INTERVAL_SECONDS) {
+      const coins = getCoinsPerMinute(pet.level);
+      console.log(`💰 Auto-generating ${coins} coins for level ${pet.level} (${elapsed}s elapsed)`);
+      // DON'T update lastCoinTime here - it should only be updated when user claims
+      setPet({ pendingCoins: coins });
+    }
+  }, [coinTimer, pet.hatched, pet.pendingCoins, pet.lastCoinTime, pet.level]); // Trigger when coinTimer changes
 
   const [isClaimingCoins, setIsClaimingCoins] = useState(false);
 
@@ -219,6 +237,11 @@ export function PetScreen() {
     
     const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
     const timeRemaining = COIN_INTERVAL_SECONDS - elapsed;
+    
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 canClaim check: pendingCoins=${pet.pendingCoins}, elapsed=${elapsed}s, remaining=${timeRemaining}s`);
+    }
     
     // Can claim if there are pending coins AND enough time has passed
     return pet.pendingCoins > 0 && timeRemaining <= 0;
