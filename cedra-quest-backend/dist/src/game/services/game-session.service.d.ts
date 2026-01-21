@@ -6,6 +6,7 @@ export declare class GameSessionService {
     private energyService;
     private readonly logger;
     constructor(prisma: PrismaService, energyService: EnergyService);
+    private safeToBigInt;
     startGameSession(userId: string, gameType: string): Promise<{
         success: boolean;
         energyUsed: number;

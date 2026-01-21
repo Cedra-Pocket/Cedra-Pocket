@@ -55,7 +55,7 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  --font-sans: var(--font-bricolage);
+  --font-sans: var(--font-fredoka);
 }
 
 * {
@@ -90,7 +90,7 @@ html {
 
 body {
   color: var(--foreground);
-  font-family: 'Bricolage Grotesque', var(--font-bricolage), system-ui, sans-serif;
+  font-family: 'Fredoka', var(--font-fredoka), system-ui, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
   font-size: 1rem;
@@ -447,11 +447,30 @@ body {
   display: none;
 }
 
+/* Ẩn scroll bar cho trang Apps */
+.app-screen-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.app-screen-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ẩn scroll bar cho main container */
+main {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+main::-webkit-scrollbar {
+  display: none;
+}
+
 /* Mobile phone container for desktop viewing */
 @media (min-width: 500px) {
   html {
     background: #000000;
-    overflow: hidden;
     font-size: 16px;
   }
 

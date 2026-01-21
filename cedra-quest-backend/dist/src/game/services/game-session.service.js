@@ -21,6 +21,18 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
         this.energyService = energyService;
         this.logger = new common_1.Logger(GameSessionService_1.name);
     }
+    safeToBigInt(userId) {
+        if (!/^\d+$/.test(userId)) {
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
+                const char = userId.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return BigInt(Math.abs(hash) + 1000000000);
+        }
+        return BigInt(userId);
+    }
     async startGameSession(userId, gameType) {
         try {
             const validGameTypes = ['arcade', 'puzzle', 'memory', 'reaction'];
@@ -29,7 +41,7 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
             }
             const recentGames = await this.prisma.game_sessions.count({
                 where: {
-                    user_id: BigInt(userId),
+                    user_id: this.safeToBigInt(userId),
                     created_at: {
                         gte: new Date(Date.now() - 60 * 1000),
                     },
@@ -75,7 +87,7 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
             const pointsEarned = basePoints + scoreBonus;
             return await this.prisma.$transaction(async (tx) => {
                 const user = await tx.users.findUnique({
-                    where: { telegram_id: BigInt(userId) },
+                    where: { telegram_id: this.safeToBigInt(userId) },
                     select: {
                         total_points: true,
                         lifetime_points: true,
@@ -87,7 +99,7 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
                 const newTotalPoints = Number(user.total_points) + pointsEarned;
                 const newLifetimePoints = Number(user.lifetime_points) + pointsEarned;
                 await tx.users.update({
-                    where: { telegram_id: BigInt(userId) },
+                    where: { telegram_id: this.safeToBigInt(userId) },
                     data: {
                         total_points: newTotalPoints,
                         lifetime_points: newLifetimePoints,
@@ -96,7 +108,7 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
                 });
                 await tx.game_sessions.create({
                     data: {
-                        user_id: BigInt(userId),
+                        user_id: this.safeToBigInt(userId),
                         game_type: gameType,
                         score,
                         points_earned: pointsEarned,
@@ -126,20 +138,20 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
             today.setHours(0, 0, 0, 0);
             const [totalStats, todayStats, gameTypeStats] = await Promise.all([
                 this.prisma.game_sessions.aggregate({
-                    where: { user_id: BigInt(userId) },
+                    where: { user_id: this.safeToBigInt(userId) },
                     _count: { id: true },
                     _sum: { points_earned: true, score: true },
                     _avg: { score: true },
                 }),
                 this.prisma.game_sessions.count({
                     where: {
-                        user_id: BigInt(userId),
+                        user_id: this.safeToBigInt(userId),
                         created_at: { gte: today },
                     },
                 }),
                 this.prisma.game_sessions.groupBy({
                     by: ['game_type'],
-                    where: { user_id: BigInt(userId) },
+                    where: { user_id: this.safeToBigInt(userId) },
                     _count: { game_type: true },
                     orderBy: { _count: { game_type: 'desc' } },
                 }),

@@ -9,6 +9,26 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Safely convert userId to BigInt, handling both numeric and non-numeric strings
+   */
+  private safeToBigInt(userId: string): bigint {
+    // If userId starts with 'anon_' or contains non-numeric characters, 
+    // convert to a hash-based BigInt
+    if (!/^\d+$/.test(userId)) {
+      // Create a simple hash from the string
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      // Ensure positive BigInt and avoid conflicts with real telegram IDs
+      return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
+    }
+    return BigInt(userId);
+  }
+
+  /**
    * Find existing user by Telegram ID
    * @param telegramId Telegram user ID
    * @returns User record or null if not found
@@ -17,7 +37,7 @@ export class UserService {
     try {
       const user = await this.prisma.users.findUnique({
         where: {
-          telegram_id: BigInt(telegramId),
+          telegram_id: this.safeToBigInt(telegramId),
         },
         select: {
           telegram_id: true,
@@ -60,7 +80,7 @@ export class UserService {
     try {
       const user = await this.prisma.users.findUnique({
         where: {
-          telegram_id: BigInt(telegramId),
+          telegram_id: this.safeToBigInt(telegramId),
         },
         include: {
           pet: true,

@@ -4,6 +4,7 @@ export declare class WalletService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
+    private safeToBigInt;
     createUserWallet(walletData: WalletCreationData): Promise<WalletCreationResult>;
     saveUserWalletMapping(mapping: UserWalletMapping): Promise<void>;
 }

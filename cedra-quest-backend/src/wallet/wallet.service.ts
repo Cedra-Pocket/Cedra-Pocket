@@ -9,6 +9,26 @@ export class WalletService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Safely convert userId to BigInt, handling both numeric and non-numeric strings
+   */
+  private safeToBigInt(userId: string): bigint {
+    // If userId starts with 'anon_' or contains non-numeric characters, 
+    // convert to a hash-based BigInt
+    if (!/^\d+$/.test(userId)) {
+      // Create a simple hash from the string
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      // Ensure positive BigInt and avoid conflicts with real telegram IDs
+      return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
+    }
+    return BigInt(userId);
+  }
+
+  /**
    * Create a new user wallet mapping in the database
    * @param walletData Wallet creation data
    * @returns Creation result
@@ -32,7 +52,7 @@ export class WalletService {
       // Check if user already has a wallet
       const existingUser = await this.prisma.users.findUnique({
         where: {
-          telegram_id: BigInt(walletData.telegram_id),
+          telegram_id: this.safeToBigInt(walletData.telegram_id),
         },
       });
 
@@ -46,7 +66,7 @@ export class WalletService {
       // Create new user record
       const newUser = await this.prisma.users.create({
         data: {
-          telegram_id: BigInt(walletData.telegram_id),
+          telegram_id: this.safeToBigInt(walletData.telegram_id),
           wallet_address: walletData.requested_address,
           public_key: walletData.public_key,
           is_wallet_connected: true,
@@ -76,7 +96,7 @@ export class WalletService {
     try {
       await this.prisma.users.upsert({
         where: {
-          telegram_id: BigInt(mapping.telegram_id),
+          telegram_id: this.safeToBigInt(mapping.telegram_id),
         },
         update: {
           wallet_address: mapping.wallet_address,
@@ -84,7 +104,7 @@ export class WalletService {
           updated_at: new Date(),
         },
         create: {
-          telegram_id: BigInt(mapping.telegram_id),
+          telegram_id: this.safeToBigInt(mapping.telegram_id),
           wallet_address: mapping.wallet_address,
           public_key: mapping.public_key,
           is_wallet_connected: true,

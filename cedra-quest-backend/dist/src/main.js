@@ -11,6 +11,8 @@ async function bootstrap() {
             'http://localhost:3001',
             'https://t.me',
             'https://web.telegram.org',
+            'https://cedra-pocket.vercel.app',
+            'https://*.vercel.app',
         ],
         credentials: true,
         methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],

@@ -19,10 +19,22 @@ let RankingService = RankingService_1 = class RankingService {
         this.prisma = prisma;
         this.logger = new common_1.Logger(RankingService_1.name);
     }
+    safeToBigInt(userId) {
+        if (!/^\d+$/.test(userId)) {
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
+                const char = userId.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return BigInt(Math.abs(hash) + 1000000000);
+        }
+        return BigInt(userId);
+    }
     async getUserRankInfo(userId) {
         try {
             const user = await this.prisma.users.findUnique({
-                where: { telegram_id: BigInt(userId) },
+                where: { telegram_id: this.safeToBigInt(userId) },
                 select: {
                     lifetime_points: true,
                     current_rank: true,
@@ -35,7 +47,7 @@ let RankingService = RankingService_1 = class RankingService {
             const currentRank = this.calculateRank(lifetimePoints);
             if (currentRank !== user.current_rank) {
                 await this.prisma.users.update({
-                    where: { telegram_id: BigInt(userId) },
+                    where: { telegram_id: this.safeToBigInt(userId) },
                     data: { current_rank: currentRank },
                 });
             }
@@ -99,7 +111,7 @@ let RankingService = RankingService_1 = class RankingService {
     async getUserPosition(userId) {
         try {
             const user = await this.prisma.users.findUnique({
-                where: { telegram_id: BigInt(userId) },
+                where: { telegram_id: this.safeToBigInt(userId) },
                 select: { lifetime_points: true },
             });
             if (!user) {

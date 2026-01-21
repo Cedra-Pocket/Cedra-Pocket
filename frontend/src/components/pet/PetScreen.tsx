@@ -148,7 +148,7 @@ export function PetScreen() {
     };
     
     loadGameData();
-  }, [loadGameDashboard, regenerateEnergy, setPet]);
+  }, []); // Empty dependency array - only run once
 
   const syncToBackend = useCallback(async (petData: Partial<typeof pet>) => {
     if (!backendAPI.isAuthenticated() || isSyncing) return;
@@ -169,7 +169,7 @@ export function PetScreen() {
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [regenerateEnergy]);
+  }, []); // Empty dependency array - regenerateEnergy is stable
 
   // Timer logic - chỉ chạy khi pet đã nở
   useEffect(() => {
@@ -211,31 +211,32 @@ export function PetScreen() {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [pet.level, pet.pendingCoins, pet.lastCoinTime, pet.hatched, setPet, syncToBackend]);
+  }, [pet.level, pet.pendingCoins, pet.lastCoinTime, pet.hatched]); // Removed setPet and syncToBackend
 
   const collectCoins = useCallback(async () => {
     if (pet.pendingCoins > 0) {
       const coinsToCollect = pet.pendingCoins;
+      
+      // Immediately update UI - claim coins locally first
       setClaimedCoins(coinsToCollect);
       setShowCoinAnimation(true);
       setTimeout(() => setShowCoinAnimation(false), 1000);
       
+      // Update local state immediately for instant feedback
+      claimPetCoins(); // This updates local state instantly
+      setCoinTimer(COIN_INTERVAL_SECONDS);
+      
+      // Then sync to backend in background (non-blocking)
       try {
-        // Use new game system API to claim pet rewards
-        await claimGamePetRewards();
-        console.log('✅ Pet rewards claimed via new game system');
+        // Use new game system API to claim pet rewards (background sync)
+        claimGamePetRewards().catch(error => {
+          console.error('❌ Background sync failed:', error);
+          // Don't revert local changes - user already got the coins
+        });
+        console.log('🔄 Background sync started for pet rewards');
       } catch (error) {
-        console.error('❌ Failed to claim via new game system, using fallback:', error);
-        // Fallback to old system
-        claimPetCoins();
-        setCoinTimer(COIN_INTERVAL_SECONDS);
-        if (backendAPI.isAuthenticated()) {
-          try { 
-            await backendAPI.claimPetCoins(coinsToCollect); 
-          } catch (e) { 
-            console.error('❌ Fallback claim also failed:', e); 
-          }
-        }
+        console.error('❌ Failed to start background sync:', error);
+        // Still don't revert - local claim already happened
       }
     }
   }, [pet.pendingCoins, claimGamePetRewards, claimPetCoins]);
@@ -417,7 +418,7 @@ export function PetScreen() {
       <div className="flex flex-col items-center justify-center relative" style={{ backgroundColor: 'transparent', minHeight: 'calc(100vh - 80px)', padding: '20px' }}>
         {/* Egg Display */}
         <div className="flex flex-col items-center">
-          <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px' }}>
+          <div style={{ fontSize: 'clamp(12px, 3vw, 16px)', color: 'rgba(255,255,255,0.6)', marginBottom: 'clamp(12px, 3vw, 20px)' }}>
             Your egg is waiting to hatch!
           </div>
           
@@ -491,13 +492,13 @@ export function PetScreen() {
           </div>
 
           {/* Progress Bar */}
-          <div style={{ width: '200px', marginTop: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Hatch Progress</span>
-              <span style={{ color: '#ffd700', fontSize: '12px', fontWeight: '600' }}>{pet.hatchProgress || 0}%</span>
+          <div style={{ width: 'clamp(160px, 50vw, 280px)', marginTop: 'clamp(16px, 4vw, 32px)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(4px, 1vw, 8px)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'clamp(10px, 2.5vw, 14px)' }}>Hatch Progress</span>
+              <span style={{ color: '#ffd700', fontSize: 'clamp(10px, 2.5vw, 14px)', fontWeight: '600' }}>{pet.hatchProgress || 0}%</span>
             </div>
-            <div style={{ height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${pet.hatchProgress || 0}%`, height: '100%', background: 'linear-gradient(90deg, #ffd700, #f5a623)', borderRadius: '4px', transition: 'width 0.5s' }} />
+            <div style={{ height: 'clamp(6px, 1.5vw, 10px)', background: 'rgba(255,255,255,0.2)', borderRadius: 'clamp(3px, 0.8vw, 5px)', overflow: 'hidden' }}>
+              <div style={{ width: `${pet.hatchProgress || 0}%`, height: '100%', background: 'linear-gradient(90deg, #ffd700, #f5a623)', borderRadius: 'clamp(3px, 0.8vw, 5px)', transition: 'width 0.5s' }} />
             </div>
           </div>
 
@@ -506,13 +507,13 @@ export function PetScreen() {
             onClick={() => setShowHatchModal(true)}
             className="transition-all hover:scale-105 active:scale-95"
             style={{
-              marginTop: '24px',
-              padding: '14px 40px',
-              borderRadius: '16px',
+              marginTop: 'clamp(16px, 4vw, 32px)',
+              padding: 'clamp(12px, 3vw, 18px) clamp(32px, 8vw, 48px)',
+              borderRadius: 'clamp(12px, 3vw, 20px)',
               background: 'linear-gradient(135deg, #ffd700, #f5a623)',
               border: 'none',
               color: '#1a1a2e',
-              fontSize: '16px',
+              fontSize: 'clamp(14px, 3.5vw, 18px)',
               fontWeight: '700',
               cursor: 'pointer',
             }}
@@ -529,14 +530,36 @@ export function PetScreen() {
         {/* Hatch Modal - Task List */}
         {showHatchModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '16px', maxWidth: '300px', width: '100%', maxHeight: '70vh', overflowY: 'auto', backdropFilter: 'blur(20px)' }}>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.95)', 
+              borderRadius: 'clamp(16px, 4vw, 24px)', 
+              padding: 'clamp(12px, 3vw, 20px)', 
+              maxWidth: 'clamp(280px, 85vw, 360px)', 
+              width: '100%', 
+              maxHeight: '70vh', 
+              overflowY: 'auto', 
+              backdropFilter: 'blur(20px)' 
+            }}>
               {showBirthYearInput ? (
                 <>
                   {/* Birth Year Input */}
-                  <button onClick={() => setShowBirthYearInput(false)} className="absolute top-3 right-3" style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', width: '26px', height: '26px', color: '#333', cursor: 'pointer', fontSize: '12px' }}>✕</button>
+                  <button 
+                    onClick={() => setShowBirthYearInput(false)} 
+                    className="absolute top-3 right-3" 
+                    style={{ 
+                      background: 'rgba(0,0,0,0.1)', 
+                      border: 'none', 
+                      borderRadius: '50%', 
+                      width: 'clamp(22px, 5vw, 30px)', 
+                      height: 'clamp(22px, 5vw, 30px)', 
+                      color: '#333', 
+                      cursor: 'pointer', 
+                      fontSize: 'clamp(10px, 2.5vw, 14px)' 
+                    }}
+                  >✕</button>
                   <div className="text-center mb-3">
-                    <span style={{ fontSize: '40px' }}>🎂</span>
-                    <h3 style={{ color: '#1a1a2e', fontSize: '16px', fontWeight: '700', marginTop: '6px' }}>Enter Your Birth Year</h3>
+                    <span style={{ fontSize: 'clamp(32px, 8vw, 48px)' }}>🎂</span>
+                    <h3 style={{ color: '#1a1a2e', fontSize: 'clamp(14px, 3.5vw, 18px)', fontWeight: '700', marginTop: 'clamp(4px, 1vw, 8px)' }}>Enter Your Birth Year</h3>
                   </div>
                   
                   <input
@@ -742,13 +765,18 @@ export function PetScreen() {
         <div className="flex items-center">
           <div 
             className="relative flex items-center justify-center mr-3" 
-            style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #4facfe, #00f2fe)' }}
+            style={{ 
+              width: 'clamp(32px, 8vw, 48px)', 
+              height: 'clamp(32px, 8vw, 48px)', 
+              borderRadius: '50%', 
+              background: 'linear-gradient(135deg, #4facfe, #00f2fe)' 
+            }}
           >
             <svg className="absolute" viewBox="0 0 40 40" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
               <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
               <circle cx="20" cy="20" r="16" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray={`${(pet.exp / pet.maxExp) * 100} 100`} strokeLinecap="round" />
             </svg>
-            <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
+            <span style={{ fontSize: 'clamp(12px, 3vw, 16px)', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
           </div>
           <div>
             <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px', fontWeight: '600' }}>{petName}</div>
@@ -841,10 +869,12 @@ export function PetScreen() {
             fontSize: '14px', 
             fontWeight: '700', 
             cursor: pet.pendingCoins > 0 ? 'pointer' : 'not-allowed',
-            boxShadow: pet.pendingCoins > 0 ? '0 4px 20px rgba(255,215,0,0.4)' : 'none'
+            boxShadow: pet.pendingCoins > 0 ? '0 4px 20px rgba(255,215,0,0.4)' : 'none',
+            transform: showCoinAnimation ? 'scale(0.95)' : 'scale(1)', // Immediate visual feedback
+            opacity: showCoinAnimation ? 0.8 : 1, // Immediate visual feedback
           }}
         >
-          {pet.pendingCoins > 0 ? 'Claim' : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
+          {pet.pendingCoins > 0 ? (showCoinAnimation ? 'Claimed!' : 'Claim') : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
         </button>
       </div>
 

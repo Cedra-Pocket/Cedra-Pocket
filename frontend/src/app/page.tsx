@@ -91,12 +91,12 @@ export default function HomePage() {
     handleHashChange();
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
-  }, [setActiveTab]);
+  }, []); // Empty dependency - setActiveTab is stable
 
   const handleTabChange = useCallback((tab: NavigationTab) => {
     setActiveTab(tab);
     window.history.replaceState(null, '', `#${tab}`);
-  }, [setActiveTab]);
+  }, []); // Empty dependency - setActiveTab is stable
 
   useEffect(() => {
     if (!isInitialized) return;
@@ -104,7 +104,7 @@ export default function HomePage() {
       console.log('⚠️ Telegram not available, waiting for authentication...');
     }
     setIsAppReady(true);
-  }, [isInitialized, isAvailable, user, setUser]);
+  }, [isInitialized, isAvailable, user]); // Removed setUser dependency
 
   // Load game dashboard when user is authenticated
   useEffect(() => {
@@ -123,7 +123,7 @@ export default function HomePage() {
     };
 
     initializeGameData();
-  }, [user, loadGameDashboard, gameDataLoaded]);
+  }, [user, gameDataLoaded]); // Removed loadGameDashboard dependency
 
   // Hide loading screen when user data is ready
   useEffect(() => {
@@ -325,18 +325,18 @@ export default function HomePage() {
               {/* Total Balance Card */}
               <div 
                 style={{
-                  background: 'rgba(255, 255, 255, 0.95)',
+                  background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
+                  backdropFilter: 'blur(24px)',
+                  border: '1px solid rgba(255, 255, 255, 0.4)',
                   borderRadius: '16px',
-                  padding: '16px',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  boxShadow: '0 6px 24px rgba(0,0,0,0.1)',
-                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
                   width: '100%',
-                  maxWidth: '300px',
+                  maxWidth: 'clamp(280px, 75vw, 360px)',
+                  padding: 'clamp(12px, 3vw, 20px)',
                 }}
               >
                 {/* Header with eye icon */}
-                <div className="flex items-center justify-between mb-2">
+<div className="flex items-center justify-between mb-2">
                   <span className="text-gray-600 font-medium" style={{ fontSize: '13px' }}>
                     Total Balance
                   </span>
@@ -346,13 +346,13 @@ export default function HomePage() {
                   >
                     {showBalance ? (
                       // Open eye icon
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+                      <svg width="clamp(16px, 4vw, 24px)" height="clamp(16px, 4vw, 24px)" viewBox="0 0 24 24" fill="none" className="text-gray-400">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke="currentColor" strokeWidth="2" fill="none"/>
                         <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" fill="none"/>
                       </svg>
                     ) : (
                       // Closed eye icon (eye with slash)
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" className="text-gray-400">
+                      <svg width="clamp(16px, 4vw, 24px)" height="clamp(16px, 4vw, 24px)" viewBox="0 0 24 24" fill="none" className="text-gray-400">
                         <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" stroke="currentColor" strokeWidth="2" fill="none"/>
                         <line x1="1" y1="1" x2="23" y2="23" stroke="currentColor" strokeWidth="2"/>
                       </svg>
@@ -362,7 +362,7 @@ export default function HomePage() {
 
                 {/* Balance Amount */}
                 <div className="flex items-center gap-3 mb-3">
-                  <span className="text-gray-800 font-bold" style={{ fontSize: '28px' }}>
+                  <span className="text-gray-800 font-bold" style={{ fontSize: 'clamp(24px, 6vw, 32px)' }}>
                     {showBalance 
                       ? `$${(user?.walletBalance || 0).toLocaleString()}` 
                       : '****'
@@ -374,8 +374,8 @@ export default function HomePage() {
                     disabled={isRefreshing}
                   >
                     <svg 
-                      width="20" 
-                      height="20" 
+                      width="clamp(16px, 4vw, 24px)" 
+                      height="clamp(16px, 4vw, 24px)" 
                       viewBox="0 0 24 24" 
                       fill="none" 
                       className={`text-gray-400 transition-transform duration-500 ${isRefreshing ? 'animate-reverse-spin' : ''}`}
@@ -401,42 +401,58 @@ export default function HomePage() {
                 {/* Action Buttons */}
                 <div className="grid grid-cols-4 gap-2">
                   <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
-                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(255, 193, 7, 0.3)' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <div className="rounded-xl flex items-center justify-center mb-1" style={{ 
+                      background: 'rgba(255, 193, 7, 0.3)',
+                      width: 'clamp(24px, 6vw, 32px)',
+                      height: 'clamp(24px, 6vw, 32px)'
+                    }}>
+                      <svg width="clamp(12px, 3vw, 16px)" height="clamp(12px, 3vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="12" y1="5" x2="12" y2="19"></line>
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Deposit</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: 'clamp(9px, 2.2vw, 13px)' }}>Deposit</span>
                   </button>
 
                   <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
-                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <div className="rounded-xl flex items-center justify-center mb-1" style={{ 
+                      background: 'rgba(108, 117, 125, 0.2)',
+                      width: 'clamp(24px, 6vw, 32px)',
+                      height: 'clamp(24px, 6vw, 32px)'
+                    }}>
+                      <svg width="clamp(12px, 3vw, 16px)" height="clamp(12px, 3vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Bridge</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: 'clamp(9px, 2.2vw, 13px)' }}>Bridge</span>
                   </button>
 
                   <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
-                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(40, 167, 69, 0.2)' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <div className="rounded-xl flex items-center justify-center mb-1" style={{ 
+                      background: 'rgba(40, 167, 69, 0.2)',
+                      width: 'clamp(24px, 6vw, 32px)',
+                      height: 'clamp(24px, 6vw, 32px)'
+                    }}>
+                      <svg width="clamp(12px, 3vw, 16px)" height="clamp(12px, 3vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <path d="m9 12 2 2 4-4"></path>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Earn</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: 'clamp(9px, 2.2vw, 13px)' }}>Earn</span>
                   </button>
 
                   <button className="flex flex-col items-center p-2 rounded-xl transition-all hover:scale-105">
-                    <div className="w-7 h-7 rounded-xl flex items-center justify-center mb-1" style={{ background: 'rgba(108, 117, 125, 0.2)' }}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <div className="rounded-xl flex items-center justify-center mb-1" style={{ 
+                      background: 'rgba(108, 117, 125, 0.2)',
+                      width: 'clamp(24px, 6vw, 32px)',
+                      height: 'clamp(24px, 6vw, 32px)'
+                    }}>
+                      <svg width="clamp(12px, 3vw, 16px)" height="clamp(12px, 3vw, 16px)" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <line x1="7" y1="17" x2="17" y2="7"></line>
                         <polyline points="7,7 17,7 17,17"></polyline>
                       </svg>
                     </div>
-                    <span className="text-gray-700 font-medium" style={{ fontSize: '11px' }}>Transfer</span>
+                    <span className="text-gray-700 font-medium" style={{ fontSize: 'clamp(9px, 2.2vw, 13px)' }}>Transfer</span>
                   </button>
                 </div>
               </div>
@@ -448,8 +464,8 @@ export default function HomePage() {
               style={{ 
                 marginTop: 'clamp(16px, 4vw, 24px)',
                 zIndex: 10,
-                paddingLeft: '20px',
-                paddingRight: '20px',
+                paddingLeft: 'clamp(16px, 4vw, 24px)',
+                paddingRight: 'clamp(16px, 4vw, 24px)',
               }}
             >
               {/* Energy Widget - For Gaming */}
@@ -457,22 +473,22 @@ export default function HomePage() {
                 onClick={() => handleTabChange('game')}
                 className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
                 style={{ 
-                  width: '100px',
-                  height: '100px',
+                  width: 'clamp(80px, 22vw, 120px)',
+                  height: 'clamp(80px, 22vw, 120px)',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 255, 255, 0.4)',
-                  borderRadius: '16px',
+                  borderRadius: 'clamp(12px, 3vw, 20px)',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
                   cursor: 'pointer',
                   animation: 'bubble-float-slow 4s ease-in-out infinite',
-                  padding: '10px',
+                  padding: 'clamp(8px, 2vw, 12px)',
                 }}
               >
                 {/* Circular Progress */}
-                <div className="relative flex items-center justify-center" style={{ width: '50px', height: '50px' }}>
+                <div className="relative flex items-center justify-center" style={{ width: 'clamp(40px, 12vw, 60px)', height: 'clamp(40px, 12vw, 60px)' }}>
                   {/* Background Circle */}
-                  <svg width="50" height="50" className="absolute">
+                  <svg width="100%" height="100%" className="absolute" viewBox="0 0 50 50">
                     <circle
                       cx="25"
                       cy="25"
@@ -484,7 +500,7 @@ export default function HomePage() {
                   </svg>
                   
                   {/* Progress Circle */}
-                  <svg width="50" height="50" className="absolute" style={{ transform: 'rotate(-90deg)' }}>
+                  <svg width="100%" height="100%" className="absolute" viewBox="0 0 50 50" style={{ transform: 'rotate(-90deg)' }}>
                     <circle
                       cx="25"
                       cy="25"
@@ -510,14 +526,14 @@ export default function HomePage() {
                   
                   {/* Center Content */}
                   <div className="flex flex-col items-center">
-                    <div className="text-gray-800 font-bold" style={{ fontSize: '16px' }}>
+                    <div className="text-gray-800 font-bold" style={{ fontSize: 'clamp(14px, 3.5vw, 18px)' }}>
                       {Math.round((pet.hunger + pet.happiness) / 2)}
                     </div>
                   </div>
                 </div>
                 
                 {/* Status Text */}
-                <div className="text-gray-600 font-medium mt-1" style={{ fontSize: '10px' }}>
+                <div className="text-gray-600 font-medium mt-1" style={{ fontSize: 'clamp(8px, 2vw, 12px)' }}>
                   {Math.round((pet.hunger + pet.happiness) / 2) >= 75 ? 'Ready' : 
                    Math.round((pet.hunger + pet.happiness) / 2) >= 50 ? 'Neutral' : 
                    Math.round((pet.hunger + pet.happiness) / 2) >= 25 ? 'Low' : 'Empty'}
@@ -529,16 +545,16 @@ export default function HomePage() {
                 onClick={() => setShowSpinModal(true)}
                 className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
                 style={{ 
-                  width: '100px',
-                  height: '100px',
+                  width: 'clamp(80px, 22vw, 120px)',
+                  height: 'clamp(80px, 22vw, 120px)',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 255, 255, 0.4)',
-                  borderRadius: '16px',
+                  borderRadius: 'clamp(12px, 3vw, 20px)',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
                   cursor: 'pointer',
                   animation: 'bubble-float 3.5s ease-in-out infinite',
-                  padding: '10px',
+                  padding: 'clamp(8px, 2vw, 12px)',
                 }}
               >
                 {/* Spin Icon */}
@@ -547,8 +563,8 @@ export default function HomePage() {
                     src="/icons/spin.PNG" 
                     alt="Spin" 
                     style={{ 
-                      width: '40px', 
-                      height: '40px', 
+                      width: 'clamp(32px, 8vw, 48px)', 
+                      height: 'clamp(32px, 8vw, 48px)', 
                       objectFit: 'contain',
                       filter: 'drop-shadow(0 2px 4px rgba(0,0,0,0.2))'
                     }} 
@@ -557,14 +573,14 @@ export default function HomePage() {
                     <div 
                       className="absolute flex items-center justify-center"
                       style={{
-                        top: '-4px',
-                        right: '-4px',
-                        width: '18px',
-                        height: '18px',
+                        top: 'clamp(-3px, -0.8vw, -5px)',
+                        right: 'clamp(-3px, -0.8vw, -5px)',
+                        width: 'clamp(14px, 4vw, 20px)',
+                        height: 'clamp(14px, 4vw, 20px)',
                         borderRadius: '50%',
                         background: 'linear-gradient(135deg, #EF4444, #DC2626)',
                         border: '2px solid white',
-                        fontSize: '9px',
+                        fontSize: 'clamp(7px, 2vw, 10px)',
                         fontWeight: 'bold',
                         color: 'white',
                         boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
@@ -576,12 +592,12 @@ export default function HomePage() {
                 </div>
                 
                 {/* Spin Title */}
-                <div className="text-gray-800 font-bold mb-1" style={{ fontSize: '12px' }}>
+                <div className="text-gray-800 font-bold mb-1" style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}>
                   Lucky Spin
                 </div>
                 
                 {/* Status Text */}
-                <div className="text-gray-600 font-medium" style={{ fontSize: '10px' }}>
+                <div className="text-gray-600 font-medium" style={{ fontSize: 'clamp(8px, 2vw, 12px)' }}>
                   {spinsLeft > 0 ? `${spinsLeft} spins left` : 'No spins'}
                 </div>
               </button>
@@ -591,28 +607,31 @@ export default function HomePage() {
                 onClick={() => handleTabChange('pet')}
                 className="flex flex-col items-start justify-start transition-all hover:scale-105 active:scale-95"
                 style={{ 
-                  width: '100px',
-                  height: '100px',
+                  width: 'clamp(80px, 22vw, 120px)',
+                  height: 'clamp(80px, 22vw, 120px)',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 255, 255, 0.4)',
-                  borderRadius: '16px',
+                  borderRadius: 'clamp(12px, 3vw, 20px)',
                   boxShadow: '0 4px 16px rgba(0,0,0,0.15), inset 0 1px 2px rgba(255,255,255,0.5)',
                   cursor: 'pointer',
                   animation: 'bubble-float 3.2s ease-in-out infinite',
-                  padding: '10px',
+                  padding: 'clamp(8px, 2vw, 12px)',
                 }}
               >
                 {/* Storage Title */}
-                <div className="text-gray-800 font-bold mb-1" style={{ fontSize: '12px' }}>
+                <div className="text-gray-800 font-bold mb-1" style={{ fontSize: 'clamp(10px, 2.5vw, 14px)' }}>
                   Storage
                 </div>
                 
                 {/* Storage Bar */}
                 <div className="w-full mb-1">
                   <div 
-                    className="w-full h-5 rounded-lg overflow-hidden"
-                    style={{ background: 'rgba(0,0,0,0.1)' }}
+                    className="w-full rounded-lg overflow-hidden"
+                    style={{ 
+                      background: 'rgba(0,0,0,0.1)',
+                      height: 'clamp(16px, 4vw, 24px)'
+                    }}
                   >
                     <div 
                       className="h-full rounded-lg"
@@ -626,15 +645,15 @@ export default function HomePage() {
                 
                 {/* Status */}
                 <div className="flex items-center mb-1">
-                  <span className="text-green-600 font-medium" style={{ fontSize: '11px' }}>
+                  <span className="text-green-600 font-medium" style={{ fontSize: 'clamp(9px, 2.2vw, 13px)' }}>
                     {pet.pendingCoins > 0 ? 'Ready' : 'Empty'}
                   </span>
                 </div>
                 
                 {/* Collected Amount */}
                 <div>
-                  <div className="text-gray-500" style={{ fontSize: '9px' }}>Collected</div>
-                  <div className="text-gray-800 font-bold" style={{ fontSize: '14px' }}>
+                  <div className="text-gray-500" style={{ fontSize: 'clamp(7px, 1.8vw, 11px)' }}>Collected</div>
+                  <div className="text-gray-800 font-bold" style={{ fontSize: 'clamp(12px, 3vw, 16px)' }}>
                     {pet.pendingCoins.toLocaleString()}
                   </div>
                 </div>
@@ -655,7 +674,7 @@ export default function HomePage() {
       case 'wallet':
         return <AppScreen />;
       case 'game':
-        return <div className="px-6"><GameScreen /></div>;
+        return <GameScreen />;
       default:
         return (
           <div className="flex-1 flex items-center justify-center">
@@ -666,8 +685,19 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen-safe flex flex-col pb-24 safe-area-inset-top relative hide-scrollbar" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-      <main className="flex-1 flex flex-col" style={{ zIndex: 2 }}>{renderActiveScreen()}</main>
+    <div className="min-h-screen-safe flex flex-col safe-area-inset-top relative">
+      <main 
+        className="flex-1 flex flex-col" 
+        style={{ 
+          zIndex: 2, 
+          paddingBottom: '120px',
+          overflowY: 'auto',
+          height: '100vh', // Đảm bảo có height cố định để scroll
+          maxHeight: '100vh'
+        }}
+      >
+        {renderActiveScreen()}
+      </main>
       <BottomNavigation activeTab={activeTab} onTabChange={handleTabChange} />
 
       {/* Rank Progress Modal */}
@@ -834,18 +864,8 @@ export default function HomePage() {
       {/* Spin Modal */}
       <SpinModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
 
-      {/* Custom CSS for reverse spin animation and hide scrollbars */}
+      {/* Custom CSS for reverse spin animation */}
       <style jsx global>{`
-        /* Hide scrollbars */
-        ::-webkit-scrollbar {
-          display: none;
-        }
-        
-        html, body {
-          scrollbar-width: none;
-          -ms-overflow-style: none;
-        }
-        
         @keyframes reverse-spin {
           from {
             transform: rotate(0deg);

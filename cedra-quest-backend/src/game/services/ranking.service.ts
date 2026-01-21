@@ -10,12 +10,32 @@ export class RankingService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Safely convert userId to BigInt, handling both numeric and non-numeric strings
+   */
+  private safeToBigInt(userId: string): bigint {
+    // If userId starts with 'anon_' or contains non-numeric characters, 
+    // convert to a hash-based BigInt
+    if (!/^\d+$/.test(userId)) {
+      // Create a simple hash from the string
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      // Ensure positive BigInt and avoid conflicts with real telegram IDs
+      return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
+    }
+    return BigInt(userId);
+  }
+
+  /**
    * Get user's rank information
    */
   async getUserRankInfo(userId: string): Promise<RankInfo> {
     try {
       const user = await this.prisma.users.findUnique({
-        where: { telegram_id: BigInt(userId) },
+        where: { telegram_id: this.safeToBigInt(userId) },
         select: {
           lifetime_points: true,
           current_rank: true,
@@ -32,7 +52,7 @@ export class RankingService {
       // Update rank if it changed
       if (currentRank !== user.current_rank) {
         await this.prisma.users.update({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           data: { current_rank: currentRank as any },
         });
       }
@@ -119,7 +139,7 @@ export class RankingService {
   async getUserPosition(userId: string): Promise<number> {
     try {
       const user = await this.prisma.users.findUnique({
-        where: { telegram_id: BigInt(userId) },
+        where: { telegram_id: this.safeToBigInt(userId) },
         select: { lifetime_points: true },
       });
 

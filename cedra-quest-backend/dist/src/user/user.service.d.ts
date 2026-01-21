@@ -4,6 +4,7 @@ export declare class UserService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
+    private safeToBigInt;
     findUserByTelegramId(telegramId: string): Promise<UserInfo | null>;
     getUserProfile(telegramId: string): Promise<UserInfo | null>;
     checkWalletAddressExists(walletAddress: string): Promise<boolean>;

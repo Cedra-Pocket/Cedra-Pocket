@@ -18,11 +18,23 @@ let UserService = UserService_1 = class UserService {
         this.prisma = prisma;
         this.logger = new common_1.Logger(UserService_1.name);
     }
+    safeToBigInt(userId) {
+        if (!/^\d+$/.test(userId)) {
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
+                const char = userId.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return BigInt(Math.abs(hash) + 1000000000);
+        }
+        return BigInt(userId);
+    }
     async findUserByTelegramId(telegramId) {
         try {
             const user = await this.prisma.users.findUnique({
                 where: {
-                    telegram_id: BigInt(telegramId),
+                    telegram_id: this.safeToBigInt(telegramId),
                 },
                 select: {
                     telegram_id: true,
@@ -58,7 +70,7 @@ let UserService = UserService_1 = class UserService {
         try {
             const user = await this.prisma.users.findUnique({
                 where: {
-                    telegram_id: BigInt(telegramId),
+                    telegram_id: this.safeToBigInt(telegramId),
                 },
                 include: {
                     pet: true,
