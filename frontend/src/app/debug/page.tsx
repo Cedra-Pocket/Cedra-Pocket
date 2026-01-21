@@ -11,6 +11,11 @@ export default function DebugPage() {
   const [backendStatus, setBackendStatus] = useState('Testing...');
   const [error, setError] = useState('');
   const [envVars, setEnvVars] = useState({});
+  const [browserInfo, setBrowserInfo] = useState({
+    userAgent: '',
+    url: '',
+    origin: ''
+  });
 
   useEffect(() => {
     // Get environment variables
@@ -20,6 +25,15 @@ export default function DebugPage() {
     };
     setEnvVars(env);
     setApiUrl(process.env.NEXT_PUBLIC_API_URL || 'https://cedra-pocket-wybm.vercel.app');
+    
+    // Set browser info safely
+    if (typeof window !== 'undefined') {
+      setBrowserInfo({
+        userAgent: navigator.userAgent,
+        url: window.location.href,
+        origin: window.location.origin
+      });
+    }
     
     testBackend();
   }, []);
@@ -133,9 +147,9 @@ export default function DebugPage() {
         margin: '20px 0'
       }}>
         <h2>Browser Info</h2>
-        <p><strong>User Agent:</strong> {navigator.userAgent}</p>
-        <p><strong>URL:</strong> {window.location.href}</p>
-        <p><strong>Origin:</strong> {window.location.origin}</p>
+        <p><strong>User Agent:</strong> {browserInfo.userAgent}</p>
+        <p><strong>URL:</strong> {browserInfo.url}</p>
+        <p><strong>Origin:</strong> {browserInfo.origin}</p>
       </div>
 
       <div style={{ 
@@ -147,7 +161,11 @@ export default function DebugPage() {
         <h2>Console Logs</h2>
         <p>Check browser console (F12) for detailed error messages</p>
         <button 
-          onClick={() => console.log('Debug info:', { envVars, apiUrl, backendStatus, error })}
+          onClick={() => {
+            if (typeof window !== 'undefined') {
+              console.log('Debug info:', { envVars, apiUrl, backendStatus, error });
+            }
+          }}
           style={{
             backgroundColor: '#2196F3',
             color: 'white',
