@@ -86,7 +86,6 @@ export function PetScreen() {
   const [isFeeding, setIsFeeding] = useState(false);
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const [claimedCoins, setClaimedCoins] = useState(0);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [showBoostModal, setShowBoostModal] = useState(false);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [showRecoverInviter, setShowRecoverInviter] = useState(false);
@@ -160,18 +159,6 @@ export function PetScreen() {
     loadGameData();
   }, []); // Empty dependency array - only run once
 
-  const syncToBackend = useCallback(async (petData: Partial<typeof pet>) => {
-    if (!backendAPI.isAuthenticated() || isSyncing) return;
-    try {
-      setIsSyncing(true);
-      await backendAPI.updatePet(petData);
-    } catch (error) {
-      console.error('Failed to sync pet to backend:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [isSyncing]);
-
   // Energy regeneration timer
   useEffect(() => {
     const interval = setInterval(() => {
@@ -184,36 +171,37 @@ export function PetScreen() {
   // Timer logic - chỉ chạy khi pet đã nở
   useEffect(() => {
     if (!pet.hatched) return;
+    
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    const remaining = COIN_INTERVAL_SECONDS - elapsed;
+    
+    // If there are already pending coins, just show timer as 0
     if (pet.pendingCoins > 0) { 
       setCoinTimer(0); 
       return; 
     }
     
-    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
-    const remaining = COIN_INTERVAL_SECONDS - elapsed;
-    
+    // If enough time has passed, generate coins immediately (only once)
     if (remaining <= 0) {
-      // Dùng setTimeout để tránh setState trong render
-      setTimeout(() => {
-        const coins = getCoinsPerMinute(pet.level);
-        setPet({ pendingCoins: coins });
-        syncToBackend({ pendingCoins: coins });
-      }, 0);
+      const coins = getCoinsPerMinute(pet.level);
+      setPet({ pendingCoins: coins, lastCoinTime: Date.now() });
       setCoinTimer(0);
       return;
     }
     
+    // Set initial timer
     setCoinTimer(remaining);
     
+    // Start countdown timer
     const interval = setInterval(() => {
       setCoinTimer(prev => {
         if (prev <= 1) {
-          // Dùng setTimeout để tránh setState trong render
-          setTimeout(() => {
-            const coins = getCoinsPerMinute(pet.level);
-            setPet({ pendingCoins: coins });
-            syncToBackend({ pendingCoins: coins });
-          }, 0);
+          // Generate coins when timer reaches 0 (only if no pending coins)
+          const currentPet = pet; // Capture current pet state
+          if (currentPet.pendingCoins <= 0) {
+            const coins = getCoinsPerMinute(currentPet.level);
+            setPet({ pendingCoins: coins, lastCoinTime: Date.now() });
+          }
           return 0;
         }
         return prev - 1;
@@ -221,10 +209,41 @@ export function PetScreen() {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [pet.level, pet.pendingCoins, pet.lastCoinTime, pet.hatched]); // Removed setPet and syncToBackend
+  }, [pet.hatched, pet.lastCoinTime, pet.pendingCoins]); // Include pendingCoins to prevent multiple generation
+
+  const [isClaimingCoins, setIsClaimingCoins] = useState(false);
+
+  // Helper function to check if claiming is allowed
+  const canClaim = useCallback(() => {
+    if (pet.pendingCoins <= 0) return false;
+    
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    const timeRemaining = COIN_INTERVAL_SECONDS - elapsed;
+    
+    // Can claim if there are pending coins AND enough time has passed
+    return pet.pendingCoins > 0 && timeRemaining <= 0;
+  }, [pet.pendingCoins, pet.lastCoinTime]);
 
   const collectCoins = useCallback(async () => {
-    if (pet.pendingCoins > 0) {
+    // Check if enough time has passed since last claim
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    const timeRemaining = COIN_INTERVAL_SECONDS - elapsed;
+    
+    // Prevent claims if not enough time has passed AND no pending coins
+    if (timeRemaining > 0 && pet.pendingCoins <= 0) {
+      console.log(`⚠️ Claim blocked: Need to wait ${timeRemaining} more seconds`);
+      return;
+    }
+    
+    // Prevent multiple simultaneous claims
+    if (isClaimingCoins || pet.pendingCoins <= 0) {
+      console.log('⚠️ Claim blocked: already claiming or no coins available');
+      return;
+    }
+
+    setIsClaimingCoins(true);
+    
+    try {
       const coinsToCollect = pet.pendingCoins;
       
       // Immediately update UI for instant feedback
@@ -232,7 +251,7 @@ export function PetScreen() {
       setShowCoinAnimation(true);
       setTimeout(() => setShowCoinAnimation(false), 1000);
       
-      // Reset pet pending coins immediately
+      // Reset pet pending coins immediately and set new claim time
       setPet({ 
         pendingCoins: 0, 
         lastCoinTime: Date.now() 
@@ -242,19 +261,19 @@ export function PetScreen() {
       console.log(`💰 Claiming ${coinsToCollect} coins...`);
       
       // SIMPLIFIED: Only call updateBalance once - no complex sync logic
-      try {
-        await updateBalance(coinsToCollect, 'token');
-        console.log(`✅ Successfully claimed ${coinsToCollect} coins`);
-      } catch (error) {
-        console.error('❌ Failed to claim coins:', error);
-        // Revert pet state if failed
-        setPet({ 
-          pendingCoins: coinsToCollect, 
-          lastCoinTime: Date.now() - COIN_INTERVAL_SECONDS * 1000 
-        });
-      }
+      await updateBalance(coinsToCollect, 'token');
+      console.log(`✅ Successfully claimed ${coinsToCollect} coins`);
+    } catch (error) {
+      console.error('❌ Failed to claim coins:', error);
+      // Revert pet state if failed
+      setPet({ 
+        pendingCoins: pet.pendingCoins, 
+        lastCoinTime: Date.now() - COIN_INTERVAL_SECONDS * 1000 
+      });
+    } finally {
+      setIsClaimingCoins(false);
     }
-  }, [pet.pendingCoins, setPet, updateBalance]);
+  }, [pet.pendingCoins, pet.lastCoinTime, setPet, updateBalance, isClaimingCoins]);
 
   const handleFeed = async () => {
     if ((user?.tokenBalance || 0) >= 20 && pet.hunger < 100) { // New system uses 20 points per feed
@@ -281,7 +300,6 @@ export function PetScreen() {
           newPetData = { hunger: newHunger, exp: newExp };
         }
         setPet(newPetData);
-        syncToBackend(newPetData);
       }
       
       setTimeout(() => setIsFeeding(false), 1000);
@@ -295,7 +313,7 @@ export function PetScreen() {
       updateBalance(-boost.cost, 'token');
       const newPetData = { level: pet.level + 1, exp: 0, maxExp: Math.floor(pet.maxExp * 1.5) };
       setPet(newPetData);
-      syncToBackend(newPetData);
+      // Note: syncToBackend removed - data will sync automatically through updateBalance
     }
   };
 
@@ -314,7 +332,7 @@ export function PetScreen() {
       // Complete hatch - reset pendingCoins = 0
       setTimeout(() => {
         setPet({ hatched: true, pendingCoins: 0, lastCoinTime: Date.now() });
-        syncToBackend({ hatched: true, pendingCoins: 0 });
+        // Note: syncToBackend removed - data will sync automatically
         setIsHatching(false);
         setHatchStage(0);
       }, 3000);
@@ -335,7 +353,7 @@ export function PetScreen() {
       // Update progress
       const newProgress = Math.min(100, (pet.hatchProgress || 0) + 25);
       setPet({ hatchProgress: newProgress });
-      syncToBackend({ hatchProgress: newProgress });
+      // Note: syncToBackend removed - data will sync automatically
     }
   };
   
@@ -350,7 +368,7 @@ export function PetScreen() {
       // Update progress
       const newProgress = Math.min(100, (pet.hatchProgress || 0) + 25);
       setPet({ hatchProgress: newProgress, birthYear: year });
-      syncToBackend({ hatchProgress: newProgress, birthYear: year });
+      // Note: syncToBackend removed - data will sync automatically
     }
   };
 
@@ -873,23 +891,23 @@ export function PetScreen() {
       >
         <button 
           onClick={collectCoins} 
-          disabled={pet.pendingCoins <= 0} 
+          disabled={!canClaim() || isClaimingCoins} 
           className="transition-all hover:scale-105 active:scale-95"
           style={{ 
             padding: '10px 28px', 
             borderRadius: '14px', 
-            background: pet.pendingCoins > 0 ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(100,100,100,0.3)', 
+            background: canClaim() && !isClaimingCoins ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(100,100,100,0.3)', 
             border: 'none', 
-            color: pet.pendingCoins > 0 ? '#1a1a1f' : 'rgba(0,0,0,0.4)', 
+            color: canClaim() && !isClaimingCoins ? '#1a1a1f' : 'rgba(0,0,0,0.4)', 
             fontSize: 'var(--fs-md)', 
             fontWeight: '700', 
-            cursor: pet.pendingCoins > 0 ? 'pointer' : 'not-allowed',
-            boxShadow: pet.pendingCoins > 0 ? '0 4px 20px rgba(255,215,0,0.4)' : 'none',
+            cursor: canClaim() && !isClaimingCoins ? 'pointer' : 'not-allowed',
+            boxShadow: canClaim() && !isClaimingCoins ? '0 4px 20px rgba(255,215,0,0.4)' : 'none',
             transform: showCoinAnimation ? 'scale(0.95)' : 'scale(1)', // Immediate visual feedback
             opacity: showCoinAnimation ? 0.8 : 1, // Immediate visual feedback
           }}
         >
-          {pet.pendingCoins > 0 ? (showCoinAnimation ? 'Claimed!' : 'Claim') : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
+          {isClaimingCoins ? 'Claiming...' : canClaim() ? (showCoinAnimation ? 'Claimed!' : 'Claim') : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
         </button>
       </div>
 
