@@ -13,9 +13,6 @@ import { PetScreen } from '../components/pet/PetScreen';
 import { useTelegram } from '../components/providers';
 import { useSpinsLeft } from '../store/useAppStore';
 import { backendAPI } from '../services/backend-api.service';
-import { useSyncEventListener } from '../hooks/useSyncEventListener';
-import { SyncDebugInfo } from '../components/shared/SyncDebugInfo';
-import { InstantSyncButton } from '../components/shared/InstantSyncButton';
 
 // Rank tiers based on points
 const RANK_TIERS = [
@@ -52,10 +49,6 @@ export default function HomePage() {
   const [showBalance, setShowBalance] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [gameDataLoaded, setGameDataLoaded] = useState(false);
-  const [showSyncDebug, setShowSyncDebug] = useState(false);
-
-  // Enable sync event listener for cross-device synchronization
-  useSyncEventListener();
 
   // Refresh balance function
   const handleRefreshBalance = async () => {
@@ -879,24 +872,6 @@ export default function HomePage() {
 
       {/* Spin Modal */}
       <SpinModal isOpen={showSpinModal} onClose={() => setShowSpinModal(false)} />
-
-      {/* Sync Debug Info - Development Only */}
-      {process.env.NODE_ENV === 'development' && (
-        <>
-          <button
-            onClick={() => setShowSyncDebug(!showSyncDebug)}
-            className="fixed bottom-4 left-4 z-40 px-2 py-1 bg-red-500 text-white text-xs rounded"
-          >
-            Sync
-          </button>
-          <SyncDebugInfo show={showSyncDebug} onClose={() => setShowSyncDebug(false)} />
-          
-          {/* Instant Sync Button */}
-          <div className="fixed bottom-4 left-16 z-40">
-            <InstantSyncButton size="sm" variant="primary" />
-          </div>
-        </>
-      )}
 
       {/* Custom CSS for reverse spin animation */}
       <style jsx global>{`

@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { useAppStore } from '../../store/useAppStore';
 
 export default function ClaimTestPage() {
-  const { user, pet, claimPetCoins, updateBalance } = useAppStore();
+  const { user, pet, updateBalance, setPet } = useAppStore();
   const [claimHistory, setClaimHistory] = useState<Array<{
     timestamp: string;
     amount: number;
@@ -12,23 +12,39 @@ export default function ClaimTestPage() {
     balanceAfter: number;
   }>>([]);
 
-  const handleTestClaim = () => {
+  const handleTestClaim = async () => {
     if (pet.pendingCoins > 0) {
       const balanceBefore = user?.tokenBalance || 0;
       const amount = pet.pendingCoins;
       
-      // Record claim
-      const claimRecord = {
-        timestamp: new Date().toLocaleTimeString(),
-        amount,
-        balanceBefore,
-        balanceAfter: balanceBefore + amount
-      };
+      // SIMPLIFIED CLAIM LOGIC - same as PetScreen
+      // Reset pet pending coins immediately
+      setPet({ 
+        pendingCoins: 0, 
+        lastCoinTime: Date.now() 
+      });
       
-      setClaimHistory(prev => [claimRecord, ...prev.slice(0, 9)]);
-      
-      // Perform claim
-      claimPetCoins();
+      // Update balance (this will save to database)
+      try {
+        await updateBalance(amount, 'token');
+        
+        // Record successful claim
+        const claimRecord = {
+          timestamp: new Date().toLocaleTimeString(),
+          amount,
+          balanceBefore,
+          balanceAfter: balanceBefore + amount
+        };
+        
+        setClaimHistory(prev => [claimRecord, ...prev.slice(0, 9)]);
+      } catch (error) {
+        console.error('Claim failed:', error);
+        // Revert pet state if failed
+        setPet({ 
+          pendingCoins: amount, 
+          lastCoinTime: Date.now() - 60000 
+        });
+      }
     }
   };
 

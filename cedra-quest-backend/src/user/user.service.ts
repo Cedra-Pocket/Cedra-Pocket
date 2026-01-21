@@ -193,6 +193,80 @@ export class UserService {
   }
 
   /**
+   * Add points to user
+   * @param telegramId Telegram user ID
+   * @param points Points to add (can be negative for deduction)
+   * @returns Updated user info
+   */
+  async addPoints(telegramId: string, points: number): Promise<UserInfo> {
+    try {
+      this.logger.log(`💰 Adding ${points} points to user: ${telegramId}`);
+      
+      // First, try to find existing user
+      let user = await this.prisma.users.findUnique({
+        where: {
+          telegram_id: this.safeToBigInt(telegramId),
+        },
+      });
+
+      if (!user) {
+        // Create user if not exists
+        this.logger.log(`🆕 User not found, creating new user: ${telegramId}`);
+        const newUser = await this.createUser({
+          telegram_id: telegramId,
+          username: `user_${telegramId}`,
+          total_points: Math.max(0, points), // Don't allow negative starting balance
+        });
+        
+        return newUser;
+      }
+
+      // Update user points
+      const newTotalPoints = Math.max(0, Number(user.total_points) + points);
+      const newLifetimePoints = Math.max(Number(user.lifetime_points || 0), newTotalPoints);
+      
+      const updatedUser = await this.prisma.users.update({
+        where: {
+          telegram_id: this.safeToBigInt(telegramId),
+        },
+        data: {
+          total_points: newTotalPoints,
+          lifetime_points: newLifetimePoints,
+          updated_at: new Date(),
+        },
+        select: {
+          telegram_id: true,
+          wallet_address: true,
+          username: true,
+          total_points: true,
+          lifetime_points: true,
+          level: true,
+          current_xp: true,
+          current_rank: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
+
+      this.logger.log(`✅ Points updated: ${user.total_points} → ${updatedUser.total_points}`);
+
+      return {
+        telegram_id: updatedUser.telegram_id.toString(),
+        wallet_address: updatedUser.wallet_address,
+        username: updatedUser.username,
+        total_points: Number(updatedUser.total_points),
+        level: updatedUser.level,
+        current_xp: updatedUser.current_xp,
+        current_rank: updatedUser.current_rank,
+        created_at: updatedUser.created_at,
+      };
+    } catch (error) {
+      this.logger.error(`❌ Failed to add points to user: ${telegramId}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Find user by public key
    * @param publicKey Public key to search for
    * @returns User info or null if not found

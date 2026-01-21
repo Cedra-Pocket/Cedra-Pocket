@@ -47,16 +47,32 @@ let PetService = PetService_1 = class PetService {
             });
             if (!user) {
                 this.logger.log(`Creating new user with pet data for userId: ${userId}`);
-                await this.prisma.users.create({
-                    data: {
-                        telegram_id: this.safeToBigInt(userId),
-                        username: `user_${userId}`,
-                        wallet_address: `temp_wallet_${userId}`,
-                        public_key: `temp_key_${userId}`,
-                        pet_level: 1,
-                        pet_current_xp: 0,
-                        pet_last_claim_time: new Date(),
-                    },
+                await this.prisma.$transaction(async (tx) => {
+                    await tx.users.create({
+                        data: {
+                            telegram_id: this.safeToBigInt(userId),
+                            username: `user_${userId}`,
+                            wallet_address: `temp_wallet_${userId}`,
+                            public_key: `temp_key_${userId}`,
+                            pet_level: 1,
+                            pet_current_xp: 0,
+                            pet_last_claim_time: new Date(),
+                        },
+                    });
+                    await tx.pets.create({
+                        data: {
+                            user_id: this.safeToBigInt(userId),
+                            level: 1,
+                            exp: 0,
+                            max_exp: 100,
+                            hunger: 100,
+                            happiness: 100,
+                            last_coin_time: new Date(),
+                            pending_coins: 0,
+                            total_coins_earned: 0,
+                            coin_rate: 1.0,
+                        },
+                    });
                 });
                 user = await this.prisma.users.findUnique({
                     where: { telegram_id: this.safeToBigInt(userId) },
@@ -70,6 +86,29 @@ let PetService = PetService_1 = class PetService {
                     throw new common_1.BadRequestException('Failed to create user');
                 }
             }
+            let pet = await this.prisma.pets.findUnique({
+                where: { user_id: this.safeToBigInt(userId) },
+            });
+            if (!pet) {
+                pet = await this.prisma.pets.create({
+                    data: {
+                        user_id: this.safeToBigInt(userId),
+                        level: user.pet_level || 1,
+                        exp: user.pet_current_xp || 0,
+                        max_exp: 100,
+                        hunger: 100,
+                        happiness: 100,
+                        last_coin_time: user.pet_last_claim_time || new Date(),
+                        pending_coins: 0,
+                        total_coins_earned: 0,
+                        coin_rate: 1.0,
+                    },
+                });
+            }
+            await this.updatePendingCoins(userId);
+            pet = await this.prisma.pets.findUnique({
+                where: { user_id: this.safeToBigInt(userId) },
+            });
             const petLevel = user.pet_level || 1;
             const petCurrentXp = user.pet_current_xp || 0;
             const petLastClaimTime = user.pet_last_claim_time || new Date();
@@ -83,7 +122,6 @@ let PetService = PetService_1 = class PetService {
                 },
             });
             const dailyFeedSpent = feedingLog?.total_daily_spent || 0;
-            const pendingRewards = await this.calculatePendingRewards(petLevel, petLastClaimTime);
             const canLevelUp = petCurrentXp >= game_constants_1.PET_CONSTANTS.XP_FOR_LEVEL_UP &&
                 petLevel < game_constants_1.PET_CONSTANTS.MAX_LEVEL;
             return {
@@ -91,7 +129,7 @@ let PetService = PetService_1 = class PetService {
                 currentXp: petCurrentXp,
                 xpForNextLevel: game_constants_1.PET_CONSTANTS.XP_FOR_LEVEL_UP,
                 lastClaimTime: petLastClaimTime,
-                pendingRewards,
+                pendingRewards: pet?.pending_coins || 0,
                 canLevelUp,
                 dailyFeedSpent,
                 dailyFeedLimit: game_constants_1.PET_CONSTANTS.MAX_DAILY_SPEND,
@@ -101,6 +139,41 @@ let PetService = PetService_1 = class PetService {
         catch (error) {
             this.logger.error(`Failed to get pet status for user ${userId}`, error);
             throw error;
+        }
+    }
+    async updatePendingCoins(userId) {
+        try {
+            const pet = await this.prisma.pets.findUnique({
+                where: { user_id: this.safeToBigInt(userId) },
+            });
+            if (!pet)
+                return;
+            const now = new Date();
+            const lastCoinTime = pet.last_coin_time || now;
+            const elapsedMs = now.getTime() - lastCoinTime.getTime();
+            const COIN_INTERVAL_MS = 60 * 1000;
+            const intervalsElapsed = Math.floor(elapsedMs / COIN_INTERVAL_MS);
+            if (intervalsElapsed > 0) {
+                const coinsPerInterval = 100 + (pet.level - 1) * 50;
+                const newCoins = intervalsElapsed * coinsPerInterval;
+                const maxIntervals = 24 * 60;
+                const cappedIntervals = Math.min(intervalsElapsed, maxIntervals);
+                const cappedNewCoins = cappedIntervals * coinsPerInterval;
+                if (cappedNewCoins > 0) {
+                    await this.prisma.pets.update({
+                        where: { user_id: this.safeToBigInt(userId) },
+                        data: {
+                            pending_coins: { increment: cappedNewCoins },
+                            last_coin_time: new Date(lastCoinTime.getTime() + cappedIntervals * COIN_INTERVAL_MS),
+                            updated_at: new Date(),
+                        },
+                    });
+                    this.logger.log(`Updated pending coins for user ${userId}: +${cappedNewCoins} coins (${cappedIntervals} intervals)`);
+                }
+            }
+        }
+        catch (error) {
+            this.logger.error(`Failed to update pending coins for user ${userId}`, error);
         }
     }
     async feedPet(userId, request) {
@@ -227,15 +300,45 @@ let PetService = PetService_1 = class PetService {
                     select: {
                         total_points: true,
                         lifetime_points: true,
-                        pet_level: true,
-                        pet_last_claim_time: true,
                         wallet_address: true,
                     },
                 });
                 if (!user) {
                     throw new common_1.BadRequestException('User not found');
                 }
-                const rewards = await this.calculatePendingRewards(user.pet_level, user.pet_last_claim_time);
+                let pet = await tx.pets.findUnique({
+                    where: { user_id: this.safeToBigInt(userId) },
+                    select: {
+                        pending_coins: true,
+                        last_coin_time: true,
+                        level: true,
+                        total_coins_earned: true,
+                    },
+                });
+                if (!pet) {
+                    this.logger.log(`Creating pet record for user ${userId}`);
+                    pet = await tx.pets.create({
+                        data: {
+                            user_id: this.safeToBigInt(userId),
+                            level: 1,
+                            exp: 0,
+                            max_exp: 100,
+                            hunger: 100,
+                            happiness: 100,
+                            last_coin_time: new Date(),
+                            pending_coins: 0,
+                            total_coins_earned: 0,
+                            coin_rate: 1.0,
+                        },
+                        select: {
+                            pending_coins: true,
+                            last_coin_time: true,
+                            level: true,
+                            total_coins_earned: true,
+                        },
+                    });
+                }
+                const rewards = pet.pending_coins || 0;
                 if (rewards <= 0) {
                     return {
                         success: false,
@@ -253,7 +356,15 @@ let PetService = PetService_1 = class PetService {
                     data: {
                         total_points: newTotalPoints,
                         lifetime_points: newLifetimePoints,
-                        pet_last_claim_time: new Date(),
+                        updated_at: new Date(),
+                    },
+                });
+                await tx.pets.update({
+                    where: { user_id: this.safeToBigInt(userId) },
+                    data: {
+                        pending_coins: 0,
+                        last_coin_time: new Date(),
+                        total_coins_earned: { increment: rewards },
                         updated_at: new Date(),
                     },
                 });

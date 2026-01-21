@@ -71,7 +71,7 @@ export function PetScreen() {
   const user = useUser();
   const pet = usePet();
   const energy = useEnergy();
-  const { updateBalance, setPet, claimPetCoins } = useAppStore();
+  const { updateBalance, setPet } = useAppStore();
   const { 
     feedGamePet, 
     loadGameDashboard,
@@ -232,26 +232,29 @@ export function PetScreen() {
       setShowCoinAnimation(true);
       setTimeout(() => setShowCoinAnimation(false), 1000);
       
-      // Update local state immediately - this is the primary source of truth
-      claimPetCoins(); // This updates local state instantly AND updates user balance
+      // Reset pet pending coins immediately
+      setPet({ 
+        pendingCoins: 0, 
+        lastCoinTime: Date.now() 
+      });
       setCoinTimer(COIN_INTERVAL_SECONDS);
       
-      console.log(`💰 Claimed ${coinsToCollect} coins locally`);
+      console.log(`💰 Claiming ${coinsToCollect} coins...`);
       
-      // INSTANT SYNC - sync ngay lập tức với priority cao
+      // SIMPLIFIED: Only call updateBalance once - no complex sync logic
       try {
-        const { instantSyncService } = await import('../../services/instant-sync.service');
-        await instantSyncService.syncPointsInstantly(coinsToCollect, {
-          priority: 'high',
-          timeout: 2000,
-          retries: 2
-        });
-        console.log('⚡ Instant sync completed for pet coins');
+        await updateBalance(coinsToCollect, 'token');
+        console.log(`✅ Successfully claimed ${coinsToCollect} coins`);
       } catch (error) {
-        console.warn('⚠️ Instant sync failed, will retry with auto-sync:', error);
+        console.error('❌ Failed to claim coins:', error);
+        // Revert pet state if failed
+        setPet({ 
+          pendingCoins: coinsToCollect, 
+          lastCoinTime: Date.now() - COIN_INTERVAL_SECONDS * 1000 
+        });
       }
     }
-  }, [pet.pendingCoins, claimPetCoins]);
+  }, [pet.pendingCoins, setPet, updateBalance]);
 
   const handleFeed = async () => {
     if ((user?.tokenBalance || 0) >= 20 && pet.hunger < 100) { // New system uses 20 points per feed

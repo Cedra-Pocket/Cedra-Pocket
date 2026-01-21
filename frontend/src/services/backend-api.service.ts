@@ -137,6 +137,34 @@ export class BackendAPIService {
   }
 
   /**
+   * Get Telegram ID from WebApp context
+   */
+  private getTelegramId(): string {
+    if (typeof window !== 'undefined') {
+      const webApp = (window as any).Telegram?.WebApp;
+      if (webApp?.initDataUnsafe?.user?.id) {
+        return String(webApp.initDataUnsafe.user.id);
+      }
+    }
+    
+    // Fallback: try to get from localStorage
+    const storedData = localStorage.getItem('tg-mini-app-storage');
+    if (storedData) {
+      try {
+        const parsed = JSON.parse(storedData);
+        if (parsed.state?.user?.telegramId) {
+          return parsed.state.user.telegramId;
+        }
+      } catch (e) {
+        console.warn('Failed to parse stored data:', e);
+      }
+    }
+    
+    // Default fallback for testing
+    return '123456789';
+  }
+
+  /**
    * Check if backend is available
    */
   async isBackendAvailable(): Promise<boolean> {
@@ -364,6 +392,7 @@ export class BackendAPIService {
     try {
       const response = await this.client.post<BackendUser>('/users/add-points', {
         points,
+        telegramId: this.getTelegramId(), // Add telegram ID to request
       });
       console.log(`✅ Backend add-points response: ${response.data.total_points}`);
       return response.data;

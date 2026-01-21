@@ -6,7 +6,6 @@
 
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
-import { autoSyncService } from '../services/auto-sync.service';
 import type {
   UserData,
   Quest,
@@ -162,7 +161,6 @@ export interface AppActions {
 
   // Pet Actions
   setPet: (pet: Partial<AppState['pet']>) => void;
-  claimPetCoins: () => void;
 
   // New Game System Actions
   setEnergy: (energy: Partial<AppState['energy']>) => void;
@@ -330,12 +328,6 @@ export const useAppStore = create<AppStore>()(
       // User Actions
       setUser: (user) => {
         set({ user });
-        // Trigger auto-sync when user data changes (but not during sync updates)
-        if (autoSyncService.getSyncStatus().isInitialized && !autoSyncService.getSyncStatus().isSyncing) {
-          autoSyncService.forceSyncNow().catch(error => {
-            console.warn('Auto-sync failed after user update:', error);
-          });
-        }
       },
 
       updateBalance: async (amount, currency) => {
@@ -355,54 +347,27 @@ export const useAppStore = create<AppStore>()(
           
           console.log(`💰 Balance updated locally: ${amount > 0 ? '+' : ''}${amount} (new total: ${newBalance})`);
           
-          // INSTANT SYNC cho các thay đổi quan trọng
-          if (Math.abs(amount) >= 1) {
-            // Sync ngay lập tức, không chờ
-            const syncPromise = (async () => {
-              try {
-                const { backendAPI } = await import('../services/backend-api.service');
-                console.log(`⚡ INSTANT sync to backend: ${amount > 0 ? '+' : ''}${amount}`);
-                const result = await Promise.race([
-                  backendAPI.addPoints(amount),
-                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
-                ]) as any; // Cast to handle Promise.race type
-                console.log(`✅ Instant sync success: ${result.total_points}`);
-                
-                // Update local state with backend's authoritative value nếu chênh lệch lớn
-                const currentUser = get().user;
-                if (currentUser && result.total_points) {
-                  const backendTotal = Number(result.total_points);
-                  const localTotal = currentUser.tokenBalance;
-                  if (Math.abs(localTotal - backendTotal) > 5) {
-                    console.log(`🔄 Adjusting local balance from ${localTotal} to ${backendTotal}`);
-                    set({
-                      user: {
-                        ...currentUser,
-                        tokenBalance: backendTotal,
-                      },
-                    });
-                  }
-                }
-                
-                // Trigger cross-device sync event
-                if (typeof window !== 'undefined') {
-                  const syncEvent = new CustomEvent('instantSyncCompleted', {
-                    detail: { amount, newTotal: result.total_points }
-                  });
-                  window.dispatchEvent(syncEvent);
-                }
-                
-              } catch (err) {
-                console.error('❌ Instant sync failed:', err);
-                // Fallback to auto-sync
-                if (autoSyncService.getSyncStatus().isInitialized) {
-                  setTimeout(() => autoSyncService.forceSyncNow(), 1000);
-                }
-              }
-            })();
+          // SIMPLIFIED: Just save to backend database, no complex sync logic
+          try {
+            const { backendAPI } = await import('../services/backend-api.service');
+            console.log(`💾 Saving to database: ${amount > 0 ? '+' : ''}${amount}`);
+            const result = await backendAPI.addPoints(amount);
+            console.log(`✅ Database save success: ${result.total_points}`);
             
-            // Don't await - let it run in background
-            syncPromise.catch(() => {}); // Prevent unhandled rejection
+            // Update local state with backend's authoritative value if different
+            const backendTotal = Number(result.total_points);
+            if (Math.abs(newBalance - backendTotal) > 1) {
+              console.log(`🔄 Adjusting local balance from ${newBalance} to ${backendTotal}`);
+              set({
+                user: {
+                  ...user,
+                  tokenBalance: backendTotal,
+                },
+              });
+            }
+          } catch (err) {
+            console.error('❌ Database save failed:', err);
+            // Keep local state - user still gets their coins
           }
         } else if (currency === 'wallet') {
           // Update wallet balance (USD)
@@ -450,13 +415,6 @@ export const useAppStore = create<AppStore>()(
             updatedAt: new Date(),
           },
         });
-        
-        // Trigger auto-sync after XP update (but not during sync)
-        if (autoSyncService.getSyncStatus().isInitialized && !autoSyncService.getSyncStatus().isSyncing) {
-          autoSyncService.forceSyncNow().catch(error => {
-            console.warn('Auto-sync failed after XP update:', error);
-          });
-        }
       },
 
       setLoading: (isLoading) => set({ isLoading }),
@@ -682,27 +640,6 @@ export const useAppStore = create<AppStore>()(
         const { pet } = get();
         set({ pet: { ...pet, ...petUpdates } });
       },
-      claimPetCoins: () => {
-        const { pet } = get();
-        if (pet.pendingCoins > 0) {
-          const coinsToAdd = pet.pendingCoins;
-          console.log(`🪙 Claiming ${coinsToAdd} pet coins locally`);
-          
-          // Update user balance immediately
-          get().updateBalance(coinsToAdd, 'token');
-          
-          // Reset pet pending coins and update last claim time
-          set({ 
-            pet: { 
-              ...pet, 
-              pendingCoins: 0, 
-              lastCoinTime: Date.now() 
-            } 
-          });
-          
-          console.log(`✅ Pet coins claimed: +${coinsToAdd} tokens`);
-        }
-      },
 
       // New Game System Actions
       setEnergy: (energyUpdates) => {
@@ -847,37 +784,9 @@ export const useAppStore = create<AppStore>()(
       },
 
       claimGamePetRewards: async () => {
-        // This function now runs in background and doesn't block UI
-        try {
-          console.log('🔄 Background sync: Starting pet rewards claim...');
-          const { backendAPI } = await import('../services/backend-api.service');
-          const result = await backendAPI.claimGamePetRewards();
-          
-          console.log('🔄 Background sync: Claim result:', result);
-          
-          if (result && result.success) {
-            console.log('✅ Background sync: Claim successful');
-            
-            // Only sync the authoritative backend values if they differ significantly
-            // Don't override local state unless there's a meaningful difference
-            if (result.pointsEarned && Math.abs(result.pointsEarned - get().pet.pendingCoins) > 10) {
-              console.log(`🔄 Syncing backend authoritative points: ${result.pointsEarned}`);
-              // Adjust local balance to match backend
-              const difference = result.pointsEarned - get().pet.pendingCoins;
-              if (difference !== 0) {
-                get().updateBalance(difference, 'token');
-              }
-            }
-
-            console.log(`✅ Background sync completed successfully`);
-          } else {
-            console.log('⚠️ Background sync: Invalid response, keeping local state');
-          }
-        } catch (error) {
-          console.error('❌ Background sync failed:', error);
-          // Don't modify local state - user already got their coins locally
-          console.log('⚠️ Local state preserved despite sync failure');
-        }
+        // SIMPLIFIED: This function is now a no-op to prevent double claiming
+        // All pet coin claiming is handled through the simple collectCoins() function
+        console.log('🔄 claimGamePetRewards called but disabled to prevent double claiming');
       },
 
       startGameSession: async (gameType) => {

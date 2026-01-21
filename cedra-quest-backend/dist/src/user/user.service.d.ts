@@ -14,5 +14,6 @@ export declare class UserService {
     findUserByTelegramId(telegramId: string): Promise<UserInfo | null>;
     getUserProfile(telegramId: string): Promise<UserInfo | null>;
     checkWalletAddressExists(walletAddress: string): Promise<boolean>;
+    addPoints(telegramId: string, points: number): Promise<UserInfo>;
     findUserByPublicKey(publicKey: string): Promise<UserInfo | null>;
 }

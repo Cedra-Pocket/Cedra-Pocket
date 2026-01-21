@@ -46,10 +46,3 @@ export {
   type QueuedActionType,
   type SyncResult,
 } from './offline-queue.service';
-
-// Auto Sync Service
-export {
-  AutoSyncService,
-  autoSyncService,
-  type SyncData,
-} from './auto-sync.service';
