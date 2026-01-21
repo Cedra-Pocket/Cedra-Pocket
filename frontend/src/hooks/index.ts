@@ -3,3 +3,4 @@ export { useQuests } from './useQuests';
 export { useAuth } from './useAuth';
 export { useAutoSync } from './useAutoSync';
 export { useSyncEventListener } from './useSyncEventListener';
+export { useInstantSync } from './useInstantSync';

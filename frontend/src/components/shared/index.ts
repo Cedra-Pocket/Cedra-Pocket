@@ -26,3 +26,6 @@ export { SyncIndicator } from './SyncIndicator';
 
 // Debug components
 export { SyncDebugInfo } from './SyncDebugInfo';
+
+// Instant sync components
+export { InstantSyncButton } from './InstantSyncButton';

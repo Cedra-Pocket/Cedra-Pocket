@@ -353,34 +353,56 @@ export const useAppStore = create<AppStore>()(
             },
           });
           
-          // Sync to backend (but don't block UI)
-          if (amount !== 0) {
-            try {
-              const { backendAPI } = await import('../services/backend-api.service');
-              console.log(`💰 Syncing points to backend: ${amount > 0 ? '+' : ''}${amount}`);
-              const result = await backendAPI.addPoints(amount);
-              console.log(`✅ Backend sync success. New total: ${result.total_points}`);
-              
-              // Update local state with backend's authoritative value
-              const currentUser = get().user;
-              if (currentUser) {
-                const backendTotal = Number(result.total_points);
-                // Only update if there's a significant difference (more than 1 point)
-                if (Math.abs(currentUser.tokenBalance - backendTotal) > 1) {
-                  console.log(`🔄 Adjusting local balance from ${currentUser.tokenBalance} to ${backendTotal}`);
-                  set({
-                    user: {
-                      ...currentUser,
-                      tokenBalance: backendTotal,
-                    },
+          console.log(`💰 Balance updated locally: ${amount > 0 ? '+' : ''}${amount} (new total: ${newBalance})`);
+          
+          // INSTANT SYNC cho các thay đổi quan trọng
+          if (Math.abs(amount) >= 1) {
+            // Sync ngay lập tức, không chờ
+            const syncPromise = (async () => {
+              try {
+                const { backendAPI } = await import('../services/backend-api.service');
+                console.log(`⚡ INSTANT sync to backend: ${amount > 0 ? '+' : ''}${amount}`);
+                const result = await Promise.race([
+                  backendAPI.addPoints(amount),
+                  new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), 3000))
+                ]);
+                console.log(`✅ Instant sync success: ${result.total_points}`);
+                
+                // Update local state with backend's authoritative value nếu chênh lệch lớn
+                const currentUser = get().user;
+                if (currentUser) {
+                  const backendTotal = Number(result.total_points);
+                  const localTotal = currentUser.tokenBalance;
+                  if (Math.abs(localTotal - backendTotal) > 5) {
+                    console.log(`🔄 Adjusting local balance from ${localTotal} to ${backendTotal}`);
+                    set({
+                      user: {
+                        ...currentUser,
+                        tokenBalance: backendTotal,
+                      },
+                    });
+                  }
+                }
+                
+                // Trigger cross-device sync event
+                if (typeof window !== 'undefined') {
+                  const syncEvent = new CustomEvent('instantSyncCompleted', {
+                    detail: { amount, newTotal: result.total_points }
                   });
+                  window.dispatchEvent(syncEvent);
+                }
+                
+              } catch (err) {
+                console.error('❌ Instant sync failed:', err);
+                // Fallback to auto-sync
+                if (autoSyncService.getSyncStatus().isInitialized) {
+                  setTimeout(() => autoSyncService.forceSyncNow(), 1000);
                 }
               }
-            } catch (err) {
-              console.error('❌ Failed to sync points to backend:', err);
-              // Don't revert local change - keep optimistic update
-              // The auto-sync will handle eventual consistency
-            }
+            })();
+            
+            // Don't await - let it run in background
+            syncPromise.catch(() => {}); // Prevent unhandled rejection
           }
         } else if (currency === 'wallet') {
           // Update wallet balance (USD)
@@ -399,13 +421,6 @@ export const useAppStore = create<AppStore>()(
               gemBalance: user.gemBalance + amount,
               updatedAt: new Date(),
             },
-          });
-        }
-        
-        // Trigger auto-sync after balance update (but not during sync)
-        if (autoSyncService.getSyncStatus().isInitialized && !autoSyncService.getSyncStatus().isSyncing) {
-          autoSyncService.forceSyncNow().catch(error => {
-            console.warn('Auto-sync failed after balance update:', error);
           });
         }
       },

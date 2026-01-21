@@ -14,10 +14,13 @@ export interface SyncData {
 
 export class AutoSyncService {
   private syncInterval: NodeJS.Timeout | null = null;
-  private readonly SYNC_INTERVAL = 30000; // 30 seconds
+  private readonly SYNC_INTERVAL = 5000; // Giảm xuống 5s để sync cực nhanh
   private readonly DEVICE_ID_KEY = 'device_id';
   private isInitialized = false;
   private isSyncing = false;
+  private lastSyncAttempt = 0;
+  private readonly MIN_SYNC_INTERVAL = 2000; // Tối thiểu 2s giữa các lần sync
+  private readonly INSTANT_SYNC_THRESHOLD = 1000; // Nếu có thay đổi trong 1s, sync ngay
 
   /**
    * Initialize auto-sync service
@@ -92,12 +95,23 @@ export class AutoSyncService {
   }
 
   /**
-   * Perform sync operation
+   * Perform sync operation with rate limiting
    */
   async performSync(): Promise<void> {
-    if (this.isSyncing) return; // Prevent concurrent syncs
+    if (this.isSyncing) {
+      console.log('🔄 Sync already in progress, skipping...');
+      return;
+    }
+    
+    // Rate limiting - không sync quá thường xuyên
+    const now = Date.now();
+    if (now - this.lastSyncAttempt < this.MIN_SYNC_INTERVAL) {
+      console.log('🔄 Rate limited, skipping sync...');
+      return;
+    }
     
     this.isSyncing = true;
+    this.lastSyncAttempt = now;
     
     try {
       console.log('🔄 Starting auto-sync...');
@@ -106,20 +120,25 @@ export class AutoSyncService {
       const localData = this.getLocalSyncData();
       if (!localData) {
         console.log('⚠️ No local data to sync');
-        this.isSyncing = false;
         return;
       }
 
-      // Check if backend is available
-      const backendAvailable = await backendAPI.isBackendAvailable();
+      // Check if backend is available với timeout ngắn
+      const backendAvailable = await Promise.race([
+        backendAPI.isBackendAvailable(),
+        new Promise<boolean>((resolve) => setTimeout(() => resolve(false), 3000)) // 3s timeout
+      ]);
+      
       if (!backendAvailable) {
         console.log('⚠️ Backend not available, skipping sync');
-        this.isSyncing = false;
         return;
       }
 
-      // Get backend data
-      const backendData = await this.getBackendSyncData();
+      // Get backend data với timeout
+      const backendData = await Promise.race([
+        this.getBackendSyncData(),
+        new Promise<null>((resolve) => setTimeout(() => resolve(null), 5000)) // 5s timeout
+      ]);
       
       // Determine sync direction
       const syncResult = await this.determineSyncDirection(localData, backendData);
@@ -205,6 +224,15 @@ export class AutoSyncService {
       return { action: 'push', reason: 'No backend data found' };
     }
 
+    const localBalance = localData.user.tokenBalance;
+    const backendBalance = backendData.user.tokenBalance;
+    const balanceDiff = Math.abs(localBalance - backendBalance);
+    
+    // Nếu chênh lệch nhỏ (< 10 points), coi như đã sync
+    if (balanceDiff < 10) {
+      return { action: 'none', reason: 'Balances are similar (difference < 10)' };
+    }
+
     // Compare last update times
     const localUpdateTime = Math.max(
       localData.user.updatedAt.getTime(),
@@ -212,28 +240,33 @@ export class AutoSyncService {
     );
     
     const backendUpdateTime = backendData.lastSyncTime;
+    const timeDiff = Math.abs(localUpdateTime - backendUpdateTime);
 
-    // If local is significantly newer (more than 2 minutes), push to backend
-    if (localUpdateTime > backendUpdateTime + 120000) {
-      return { action: 'push', reason: 'Local data is newer' };
-    }
-
-    // If backend is significantly newer (more than 2 minutes), pull from backend
-    if (backendUpdateTime > localUpdateTime + 120000) {
-      return { action: 'pull', reason: 'Backend data is newer' };
-    }
-
-    // Compare key data points to detect conflicts
-    const hasDataConflict = this.detectDataConflicts(localData.user, backendData.user);
-    
-    if (hasDataConflict) {
-      // In case of conflict, prefer the data with higher token balance
-      // This handles the case where user earned coins on one device
-      if (localData.user.tokenBalance > backendData.user.tokenBalance) {
-        return { action: 'push', reason: 'Local has higher balance' };
-      } else if (backendData.user.tokenBalance > localData.user.tokenBalance) {
-        return { action: 'pull', reason: 'Backend has higher balance' };
+    // Nếu thời gian gần nhau (< 30s) nhưng balance khác nhau
+    if (timeDiff < 30000) {
+      // Ưu tiên balance cao hơn để tránh mất points
+      if (localBalance > backendBalance) {
+        return { action: 'push', reason: `Local balance higher (${localBalance} vs ${backendBalance})` };
+      } else if (backendBalance > localBalance) {
+        return { action: 'pull', reason: `Backend balance higher (${backendBalance} vs ${localBalance})` };
       }
+    }
+
+    // Nếu local data mới hơn đáng kể (> 1 phút)
+    if (localUpdateTime > backendUpdateTime + 60000) {
+      return { action: 'push', reason: 'Local data is significantly newer' };
+    }
+
+    // Nếu backend data mới hơn đáng kể (> 1 phút)
+    if (backendUpdateTime > localUpdateTime + 60000) {
+      return { action: 'pull', reason: 'Backend data is significantly newer' };
+    }
+
+    // Trường hợp mặc định: ưu tiên balance cao hơn
+    if (localBalance > backendBalance) {
+      return { action: 'push', reason: 'Local balance is higher' };
+    } else if (backendBalance > localBalance) {
+      return { action: 'pull', reason: 'Backend balance is higher' };
     }
 
     return { action: 'none', reason: 'Data is in sync' };
@@ -253,27 +286,36 @@ export class AutoSyncService {
   }
 
   /**
-   * Push local data to backend
+   * Push local data to backend với logic cải tiến
    */
   private async pushToBackend(localData: SyncData): Promise<void> {
     try {
-      // Get current backend user to compare
-      const backendUser = await backendAPI.getUserProfile();
+      // Get current backend user để so sánh chính xác
+      const backendUser = await Promise.race([
+        backendAPI.getUserProfile(),
+        new Promise<any>((_, reject) => setTimeout(() => reject(new Error('Timeout')), 5000))
+      ]);
+      
       const currentBackendTotal = Number(backendUser.total_points);
       const localTotal = localData.user.tokenBalance;
       
-      // Calculate the difference to add
+      // Tính toán chênh lệch cần sync
       const pointsToAdd = localTotal - currentBackendTotal;
       
-      if (Math.abs(pointsToAdd) > 0.01) { // Only sync if there's a meaningful difference
+      console.log(`🔄 Sync comparison: Local=${localTotal}, Backend=${currentBackendTotal}, Diff=${pointsToAdd}`);
+      
+      // Chỉ sync nếu có chênh lệch đáng kể (>= 1 point)
+      if (Math.abs(pointsToAdd) >= 1) {
         console.log(`🔄 Syncing ${pointsToAdd > 0 ? '+' : ''}${pointsToAdd} points to backend`);
-        await backendAPI.addPoints(pointsToAdd);
+        const result = await backendAPI.addPoints(pointsToAdd);
+        console.log(`✅ Backend sync result: ${result.total_points}`);
+      } else {
+        console.log('✅ No significant difference, skipping backend update');
       }
       
       // Update last sync time
       localStorage.setItem('last_sync_time', Date.now().toString());
       
-      console.log('✅ Successfully pushed data to backend');
     } catch (error) {
       console.error('❌ Failed to push data to backend:', error);
       throw error;

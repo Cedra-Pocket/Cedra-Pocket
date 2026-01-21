@@ -238,15 +238,17 @@ export function PetScreen() {
       
       console.log(`💰 Claimed ${coinsToCollect} coins locally`);
       
-      // Background sync to backend (don't block UI or revert on failure)
+      // INSTANT SYNC - sync ngay lập tức với priority cao
       try {
-        // Use the new game system's claim endpoint for better backend integration
-        const { claimGamePetRewards } = useAppStore.getState();
-        await claimGamePetRewards();
-        console.log('✅ Background sync to backend completed');
+        const { instantSyncService } = await import('../../services/instant-sync.service');
+        await instantSyncService.syncPointsInstantly(coinsToCollect, {
+          priority: 'high',
+          timeout: 2000,
+          retries: 2
+        });
+        console.log('⚡ Instant sync completed for pet coins');
       } catch (error) {
-        console.warn('⚠️ Background sync failed, but local coins are already claimed:', error);
-        // Don't revert - user already got their coins locally
+        console.warn('⚠️ Instant sync failed, will retry with auto-sync:', error);
       }
     }
   }, [pet.pendingCoins, claimPetCoins]);

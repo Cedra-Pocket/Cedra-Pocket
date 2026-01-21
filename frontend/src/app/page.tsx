@@ -15,6 +15,7 @@ import { useSpinsLeft } from '../store/useAppStore';
 import { backendAPI } from '../services/backend-api.service';
 import { useSyncEventListener } from '../hooks/useSyncEventListener';
 import { SyncDebugInfo } from '../components/shared/SyncDebugInfo';
+import { InstantSyncButton } from '../components/shared/InstantSyncButton';
 
 // Rank tiers based on points
 const RANK_TIERS = [
@@ -273,7 +274,7 @@ export default function HomePage() {
 
               {/* Username - center */}
               <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: 'clamp(12px, 3.5vw, 18px)' }}>
-                <span style={{ fontSize: 'var(--fs-base)' }} className="font-bold text-gray-800">{user.username}</span>
+                <span style={{ fontSize: 'var(--fs-sm)' }} className="font-bold text-gray-800">{user.username}</span>
               </div>
 
               {/* Glass background */}
@@ -494,8 +495,8 @@ export default function HomePage() {
                 onClick={() => handleTabChange('game')}
                 className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
                 style={{ 
-                  width: 'clamp(80px, 22vw, 120px)',
-                  height: 'clamp(80px, 22vw, 120px)',
+                  width: 'clamp(90px, 25vw, 135px)',
+                  height: 'clamp(90px, 25vw, 135px)',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 255, 255, 0.4)',
@@ -566,8 +567,8 @@ export default function HomePage() {
                 onClick={() => setShowSpinModal(true)}
                 className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
                 style={{ 
-                  width: 'clamp(80px, 22vw, 120px)',
-                  height: 'clamp(80px, 22vw, 120px)',
+                  width: 'clamp(90px, 25vw, 135px)',
+                  height: 'clamp(90px, 25vw, 135px)',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 255, 255, 0.4)',
@@ -628,8 +629,8 @@ export default function HomePage() {
                 onClick={() => handleTabChange('pet')}
                 className="flex flex-col items-center justify-center transition-all hover:scale-105 active:scale-95"
                 style={{ 
-                  width: 'clamp(80px, 22vw, 120px)',
-                  height: 'clamp(80px, 22vw, 120px)',
+                  width: 'clamp(90px, 25vw, 135px)',
+                  height: 'clamp(90px, 25vw, 135px)',
                   background: 'linear-gradient(135deg, rgba(255, 255, 255, 0.4) 0%, rgba(255, 255, 255, 0.25) 100%)',
                   backdropFilter: 'blur(24px)',
                   border: '1px solid rgba(255, 255, 255, 0.4)',
@@ -889,6 +890,11 @@ export default function HomePage() {
             Sync
           </button>
           <SyncDebugInfo show={showSyncDebug} onClose={() => setShowSyncDebug(false)} />
+          
+          {/* Instant Sync Button */}
+          <div className="fixed bottom-4 left-16 z-40">
+            <InstantSyncButton size="sm" variant="primary" />
+          </div>
         </>
       )}
 
