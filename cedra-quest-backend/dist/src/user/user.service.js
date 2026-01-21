@@ -30,6 +30,49 @@ let UserService = UserService_1 = class UserService {
         }
         return BigInt(userId);
     }
+    async createUser(userData) {
+        try {
+            const tempWalletAddress = `temp_${userData.telegram_id}_${Date.now()}`;
+            const tempPublicKey = `temp_pk_${userData.telegram_id}_${Date.now()}`;
+            const user = await this.prisma.users.create({
+                data: {
+                    telegram_id: this.safeToBigInt(userData.telegram_id),
+                    wallet_address: tempWalletAddress,
+                    public_key: tempPublicKey,
+                    username: userData.username || null,
+                    total_points: userData.total_points || 0,
+                    current_rank: 'BRONZE',
+                    level: 1,
+                    current_xp: 0,
+                    is_wallet_connected: false,
+                },
+                select: {
+                    telegram_id: true,
+                    wallet_address: true,
+                    username: true,
+                    total_points: true,
+                    level: true,
+                    current_xp: true,
+                    current_rank: true,
+                    created_at: true,
+                },
+            });
+            return {
+                telegram_id: user.telegram_id.toString(),
+                wallet_address: user.wallet_address,
+                username: user.username,
+                total_points: Number(user.total_points),
+                level: user.level,
+                current_xp: user.current_xp,
+                current_rank: user.current_rank,
+                created_at: user.created_at,
+            };
+        }
+        catch (error) {
+            this.logger.error(`Failed to create user: ${userData.telegram_id}`, error);
+            throw error;
+        }
+    }
     async findUserByTelegramId(telegramId) {
         try {
             const user = await this.prisma.users.findUnique({

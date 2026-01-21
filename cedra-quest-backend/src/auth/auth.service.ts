@@ -48,7 +48,7 @@ export class AuthService {
             telegram_id: String(telegramUser.id),
             username: telegramUser.username || telegramUser.first_name || null,
             total_points: 0,
-            current_rank: 'Shrimp',
+            current_rank: 'BRONZE',
           });
           
           return {

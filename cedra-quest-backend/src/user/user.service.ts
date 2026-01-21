@@ -29,6 +29,62 @@ export class UserService {
   }
 
   /**
+   * Create new user
+   * @param userData User data to create
+   * @returns Created user info
+   */
+  async createUser(userData: {
+    telegram_id: string;
+    username?: string | null;
+    total_points?: number;
+    current_rank?: string;
+  }): Promise<UserInfo> {
+    try {
+      // Generate temporary wallet address and public key for new users
+      const tempWalletAddress = `temp_${userData.telegram_id}_${Date.now()}`;
+      const tempPublicKey = `temp_pk_${userData.telegram_id}_${Date.now()}`;
+      
+      const user = await this.prisma.users.create({
+        data: {
+          telegram_id: this.safeToBigInt(userData.telegram_id),
+          wallet_address: tempWalletAddress,
+          public_key: tempPublicKey,
+          username: userData.username || null,
+          total_points: userData.total_points || 0,
+          current_rank: 'BRONZE', // Use valid enum value
+          level: 1,
+          current_xp: 0,
+          is_wallet_connected: false, // Mark as not connected since it's temporary
+        },
+        select: {
+          telegram_id: true,
+          wallet_address: true,
+          username: true,
+          total_points: true,
+          level: true,
+          current_xp: true,
+          current_rank: true,
+          created_at: true,
+        },
+      });
+
+      return {
+        telegram_id: user.telegram_id.toString(),
+        wallet_address: user.wallet_address,
+        username: user.username,
+        total_points: Number(user.total_points),
+        level: user.level,
+        current_xp: user.current_xp,
+        current_rank: user.current_rank,
+        created_at: user.created_at,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create user: ${userData.telegram_id}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Find existing user by Telegram ID
    * @param telegramId Telegram user ID
    * @returns User record or null if not found

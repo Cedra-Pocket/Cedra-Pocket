@@ -12,6 +12,7 @@ export declare class AuthService {
     private walletService;
     private readonly logger;
     constructor(telegramAuthService: TelegramAuthService, userService: UserService, walletNameService: WalletNameService, walletService: WalletService);
+    verifyAndCreateUser(initData: string): Promise<AuthenticationResult>;
     authenticateUser(initData: string): Promise<AuthenticationResult>;
     createWallet(walletData: WalletCreationDto): Promise<WalletCreationResult>;
     recoverWallet(recoveryData: WalletRecoveryDto): Promise<AuthenticationResult>;

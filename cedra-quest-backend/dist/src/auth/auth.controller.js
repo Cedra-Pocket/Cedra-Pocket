@@ -22,6 +22,22 @@ let AuthController = AuthController_1 = class AuthController {
         this.authService = authService;
         this.logger = new common_1.Logger(AuthController_1.name);
     }
+    async verify(authDto) {
+        this.logger.log('Verify attempt received');
+        const result = await this.authService.verifyAndCreateUser(authDto.initData);
+        if (!result.success) {
+            this.logger.warn(`Verify failed: ${result.error}`);
+            return result;
+        }
+        if (result.user) {
+            this.logger.log(`User verified/created: ${result.user.telegram_id}`);
+            return {
+                access_token: 'mock_jwt_token',
+                user: result.user,
+            };
+        }
+        return result;
+    }
     async login(authDto) {
         this.logger.log('Login attempt received');
         const result = await this.authService.authenticateUser(authDto.initData);
@@ -60,6 +76,14 @@ let AuthController = AuthController_1 = class AuthController {
     }
 };
 exports.AuthController = AuthController;
+__decorate([
+    (0, common_1.Post)('verify'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [auth_dto_1.TelegramAuthDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "verify", null);
 __decorate([
     (0, common_1.Post)('login'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
