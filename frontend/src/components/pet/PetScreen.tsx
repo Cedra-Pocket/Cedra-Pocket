@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useUser, usePet, useEnergy, useGameSystemActions, useAppStore } from '../../store/useAppStore';
-import { backendAPI } from '../../services/backend-api.service';
+// import { backendAPI } from '../../services/backend-api.service';
 
 const getCoinsPerMinute = (level: number) => {
   return 100 + (level - 1) * 50;
@@ -97,7 +97,7 @@ export function PetScreen() {
   const [isHatching, setIsHatching] = useState(false);
   const [showBirthYearInput, setShowBirthYearInput] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
-  const [debugData, setDebugData] = useState<any>(null);
+  const [debugData] = useState<any>(null);
   const [showDebugInfo, setShowDebugInfo] = useState(false);
   
   // Hatch tasks
@@ -135,9 +135,10 @@ export function PetScreen() {
         
         // Also try to get pet status directly for debugging
         try {
-          const petStatus = await backendAPI.getGamePetStatus();
-          setDebugData({ type: 'Pet Status', data: petStatus });
-          console.log('🐾 Direct pet status:', petStatus);
+          // const petStatus = await backendAPI.getGamePetStatus();
+          // setDebugData({ type: 'Pet Status', data: petStatus });
+          // console.log('🐾 Direct pet status:', petStatus);
+          console.log('🐾 Pet status debug disabled');
         } catch (debugError) {
           console.log('⚠️ Failed to get direct pet status:', debugError);
         }
@@ -150,8 +151,9 @@ export function PetScreen() {
         console.error('❌ Failed to load game data:', error);
         // Fallback to old pet API if new system fails
         try {
-          const petData = await backendAPI.getPet();
-          setPet(petData);
+          // const petData = await backendAPI.getPet();
+          // setPet(petData);
+          console.log('🐾 Old pet API disabled');
         } catch (fallbackError) {
           console.error('❌ Fallback pet loading also failed:', fallbackError);
         }

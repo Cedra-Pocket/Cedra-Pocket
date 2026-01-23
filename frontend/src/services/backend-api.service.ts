@@ -7,7 +7,6 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import type {
   UserData,
   Quest,
-  ReferralStats,
 } from '../models';
 
 // API Base URL from environment
@@ -144,6 +143,133 @@ export class BackendAPIService {
       return Boolean((window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) || Boolean(this.token);
     }
     return Boolean(this.token);
+  }
+
+  /**
+   * Check if backend is available
+   */
+  async isBackendAvailable(): Promise<boolean> {
+    try {
+      // Quick health check with short timeout
+      const response = await this.client.get('/health', {
+        timeout: 2000 // Reduced from default to 2 seconds
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.log('Backend not available:', error);
+      return false;
+    }
+  }
+
+  /**
+   * Authenticate with Telegram initData
+   */
+  async authenticate(initData: string): Promise<AuthResponse> {
+    try {
+      const response = await this.client.post<AuthResponse>('/auth/verify', {
+        initData,
+      });
+
+      // Save token
+      this.setToken(response.data.access_token);
+
+      return response.data;
+    } catch (error) {
+      console.log('⚠️ Failed to authenticate via backend, using local fallback');
+      // Return mock auth response for local gameplay
+      const mockUser: BackendUser = {
+        id: 'local_user',
+        telegram_id: '123456789',
+        username: 'Local User',
+        wallet_address: null,
+        is_wallet_connected: false,
+        total_points: 0,
+        current_rank: 'Shrimp',
+        referral_code: 'local_ref',
+        referrer_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Set local token
+      this.setToken('local_token');
+      
+      return {
+        access_token: 'local_token',
+        user: mockUser,
+      };
+    }
+  }
+
+  /**
+   * Get user profile
+   */
+  async getUserProfile(): Promise<BackendUser> {
+    try {
+      const response = await this.client.get<BackendUser>('/users/profile');
+      return response.data;
+    } catch (error) {
+      console.log('⚠️ Failed to get user profile from backend, using local fallback');
+      // Return mock user profile for local gameplay
+      return {
+        id: 'local_user',
+        telegram_id: '123456789',
+        username: 'Local User',
+        wallet_address: null,
+        is_wallet_connected: false,
+        total_points: 0,
+        current_rank: 'Shrimp',
+        referral_code: 'local_ref',
+        referrer_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
+  }
+
+  /**
+   * Health check
+   */
+  async healthCheck(): Promise<{ status: string; timestamp: string; uptime: number }> {
+    try {
+      const response = await this.client.get('/health');
+      return response.data;
+    } catch (error) {
+      throw new BackendAPIError(
+        'Backend not available',
+        500,
+        'HEALTH_CHECK_FAILED'
+      );
+    }
+  }
+
+  /**
+   * Add points to user (sync with backend)
+   */
+  async addPoints(points: number): Promise<BackendUser> {
+    try {
+      const response = await this.client.post<BackendUser>('/users/add-points', {
+        points,
+      });
+      console.log(`✅ Backend add-points response: ${response.data.total_points}`);
+      return response.data;
+    } catch (error) {
+      console.log('⚠️ Failed to add points to backend, using local fallback');
+      // Return a mock user response with the new total for local gameplay
+      return {
+        id: 'local_user',
+        telegram_id: '123456789',
+        username: 'Local User',
+        wallet_address: null,
+        is_wallet_connected: false,
+        total_points: points, // Just return the points added
+        current_rank: 'Shrimp',
+        referral_code: null,
+        referrer_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+    }
   }
 
   /**
@@ -436,6 +562,35 @@ export class BackendAPIService {
       },
       url,
     };
+  }
+
+  /**
+   * Convert backend user to frontend UserData format
+   */
+  backendUserToUserData(backendUser: BackendUser, telegramUser?: { username?: string; firstName?: string; photoUrl?: string }): UserData {
+    return {
+      id: String(backendUser.id),
+      telegramId: backendUser.telegram_id,
+      username: telegramUser?.username || telegramUser?.firstName || backendUser.username || 'Player',
+      avatarUrl: telegramUser?.photoUrl,
+      level: this.calculateLevel(Number(backendUser.total_points)),
+      currentXP: Number(backendUser.total_points) % 1000,
+      requiredXP: 1000,
+      tokenBalance: Number(backendUser.total_points),
+      walletBalance: 0, // Backend doesn't have wallet balance yet
+      gemBalance: 0, // Backend doesn't have gems yet
+      earningRate: 10,
+      walletAddress: backendUser.wallet_address || undefined,
+      createdAt: new Date(backendUser.created_at),
+      updatedAt: new Date(backendUser.updated_at),
+    };
+  }
+
+  /**
+   * Calculate level from total points
+   */
+  private calculateLevel(totalPoints: number): number {
+    return Math.floor(totalPoints / 1000) + 1;
   }
 }
 
