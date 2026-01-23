@@ -9,6 +9,88 @@ export class UserService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Safely convert userId to BigInt, handling both numeric and non-numeric strings
+   */
+  private safeToBigInt(userId: string): bigint {
+    // If userId starts with 'anon_' or contains non-numeric characters, 
+    // convert to a hash-based BigInt
+    if (!/^\d+$/.test(userId)) {
+      // Create a simple hash from the string
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      // Ensure positive BigInt and avoid conflicts with real telegram IDs
+      return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
+    }
+    return BigInt(userId);
+  }
+
+  /**
+   * Create new user
+   * @param userData User data to create
+   * @returns Created user info
+   */
+  async createUser(userData: {
+    telegram_id: string;
+    username?: string | null;
+    total_points?: number;
+    current_rank?: string;
+  }): Promise<UserInfo> {
+    try {
+      this.logger.log(`🆕 Creating new user: telegram_id=${userData.telegram_id}, username=${userData.username}`);
+      
+      // Generate temporary wallet address and public key for new users
+      const tempWalletAddress = `temp_${userData.telegram_id}_${Date.now()}`;
+      const tempPublicKey = `temp_pk_${userData.telegram_id}_${Date.now()}`;
+      
+      this.logger.log(`🔑 Generated temp wallet: ${tempWalletAddress}`);
+      
+      const user = await this.prisma.users.create({
+        data: {
+          telegram_id: this.safeToBigInt(userData.telegram_id),
+          wallet_address: tempWalletAddress,
+          public_key: tempPublicKey,
+          username: userData.username || null,
+          total_points: userData.total_points || 0,
+          current_rank: 'BRONZE', // Use valid enum value
+          level: 1,
+          current_xp: 0,
+          is_wallet_connected: false, // Mark as not connected since it's temporary
+        },
+        select: {
+          telegram_id: true,
+          wallet_address: true,
+          username: true,
+          total_points: true,
+          level: true,
+          current_xp: true,
+          current_rank: true,
+          created_at: true,
+        },
+      });
+
+      this.logger.log(`✅ User created successfully in database: ${user.telegram_id.toString()}`);
+
+      return {
+        telegram_id: user.telegram_id.toString(),
+        wallet_address: user.wallet_address,
+        username: user.username,
+        total_points: Number(user.total_points),
+        level: user.level,
+        current_xp: user.current_xp,
+        current_rank: user.current_rank,
+        created_at: user.created_at,
+      };
+    } catch (error) {
+      this.logger.error(`❌ Failed to create user: ${userData.telegram_id}`, error);
+      throw error;
+    }
+  }
+
+  /**
    * Find existing user by Telegram ID
    * @param telegramId Telegram user ID
    * @returns User record or null if not found
@@ -17,7 +99,7 @@ export class UserService {
     try {
       const user = await this.prisma.users.findUnique({
         where: {
-          telegram_id: BigInt(telegramId),
+          telegram_id: this.safeToBigInt(telegramId),
         },
         select: {
           telegram_id: true,
@@ -60,7 +142,7 @@ export class UserService {
     try {
       const user = await this.prisma.users.findUnique({
         where: {
-          telegram_id: BigInt(telegramId),
+          telegram_id: this.safeToBigInt(telegramId),
         },
         include: {
           pet: true,
@@ -106,6 +188,80 @@ export class UserService {
       return !!user;
     } catch (error) {
       this.logger.error(`Failed to check wallet address: ${walletAddress}`, error);
+      throw error;
+    }
+  }
+
+  /**
+   * Add points to user
+   * @param telegramId Telegram user ID
+   * @param points Points to add (can be negative for deduction)
+   * @returns Updated user info
+   */
+  async addPoints(telegramId: string, points: number): Promise<UserInfo> {
+    try {
+      this.logger.log(`💰 Adding ${points} points to user: ${telegramId}`);
+      
+      // First, try to find existing user
+      let user = await this.prisma.users.findUnique({
+        where: {
+          telegram_id: this.safeToBigInt(telegramId),
+        },
+      });
+
+      if (!user) {
+        // Create user if not exists
+        this.logger.log(`🆕 User not found, creating new user: ${telegramId}`);
+        const newUser = await this.createUser({
+          telegram_id: telegramId,
+          username: `user_${telegramId}`,
+          total_points: Math.max(0, points), // Don't allow negative starting balance
+        });
+        
+        return newUser;
+      }
+
+      // Update user points
+      const newTotalPoints = Math.max(0, Number(user.total_points) + points);
+      const newLifetimePoints = Math.max(Number(user.lifetime_points || 0), newTotalPoints);
+      
+      const updatedUser = await this.prisma.users.update({
+        where: {
+          telegram_id: this.safeToBigInt(telegramId),
+        },
+        data: {
+          total_points: newTotalPoints,
+          lifetime_points: newLifetimePoints,
+          updated_at: new Date(),
+        },
+        select: {
+          telegram_id: true,
+          wallet_address: true,
+          username: true,
+          total_points: true,
+          lifetime_points: true,
+          level: true,
+          current_xp: true,
+          current_rank: true,
+          created_at: true,
+          updated_at: true,
+        },
+      });
+
+      this.logger.log(`✅ Points updated: ${user.total_points} → ${updatedUser.total_points}`);
+
+      return {
+        telegram_id: updatedUser.telegram_id.toString(),
+        wallet_address: updatedUser.wallet_address,
+        username: updatedUser.username,
+        total_points: Number(updatedUser.total_points),
+        level: updatedUser.level,
+        current_xp: updatedUser.current_xp,
+        current_rank: updatedUser.current_rank,
+        created_at: updatedUser.created_at,
+      };
+    } catch (error) {
+      this.logger.error(`❌ Failed to add points to user: ${telegramId}`, error);
       throw error;
     }
   }

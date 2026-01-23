@@ -82,7 +82,7 @@ class OfflineQueueService {
   }
 
   /**
-   * Set up network event listeners for auto-sync
+   * Set up network event listeners for queue processing
    */
   private setupNetworkListeners(): void {
     if (typeof window === 'undefined') return;

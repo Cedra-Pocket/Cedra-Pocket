@@ -1,12 +1,12 @@
 import type { Metadata, Viewport } from "next";
-import { Bricolage_Grotesque } from "next/font/google";
+import { Fredoka } from "next/font/google";
 import "./globals.css";
 import { TelegramProvider, OfflineProvider, ErrorBoundaryProvider } from "../components/providers";
 
-const bricolage = Bricolage_Grotesque({
-  variable: "--font-bricolage",
+const fredoka = Fredoka({
+  variable: "--font-fredoka",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["300", "400", "500", "600", "700"],
 });
 
 export const viewport: Viewport = {
@@ -45,7 +45,7 @@ export default function RootLayout({
         <script src="https://telegram.org/js/telegram-web-app.js" />
       </head>
       <body
-        className={`${bricolage.variable} font-sans antialiased min-h-screen-safe flex justify-center`}
+        className={`${fredoka.variable} font-sans antialiased min-h-screen-safe flex justify-center`}
         style={{ backgroundColor: '#0a0a1a' }}
         suppressHydrationWarning
       >

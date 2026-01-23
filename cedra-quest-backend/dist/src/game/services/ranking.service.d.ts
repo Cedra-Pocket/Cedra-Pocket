@@ -4,6 +4,7 @@ export declare class RankingService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
+    private safeToBigInt;
     getUserRankInfo(userId: string): Promise<RankInfo>;
     getLeaderboard(limit?: number, offset?: number): Promise<{
         users: Array<{

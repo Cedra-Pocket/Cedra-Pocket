@@ -19,6 +19,66 @@ export class AuthService {
   ) {}
 
   /**
+   * Authenticate user with Telegram initData and auto-create if needed
+   * @param initData Telegram initData string
+   * @returns Authentication result with user info
+   */
+  async verifyAndCreateUser(initData: string): Promise<AuthenticationResult> {
+    try {
+      this.logger.log('🔍 Starting user verification and creation process');
+      
+      // Step 1: Validate Telegram initData
+      this.logger.log('📱 Validating Telegram initData...');
+      const telegramUser = await this.telegramAuthService.validateTelegramInitData(initData);
+      this.logger.log(`✅ Telegram user validated: ID=${telegramUser.id}, username=${telegramUser.username || telegramUser.first_name}`);
+      
+      // Step 2: Check if user exists
+      this.logger.log(`🔍 Checking if user exists in database: ${telegramUser.id}`);
+      let existingUser = await this.userService.findUserByTelegramId(telegramUser.id);
+      
+      if (existingUser) {
+        // Case A: Existing user - return user info
+        this.logger.log(`✅ Existing user found: ${telegramUser.id}`);
+        return {
+          success: true,
+          user: existingUser,
+        };
+      } else {
+        // Case B: New user - auto create
+        this.logger.log(`🆕 New user detected, creating account: ${telegramUser.id}`);
+        
+        try {
+          // Create user in database
+          const newUser = await this.userService.createUser({
+            telegram_id: String(telegramUser.id),
+            username: telegramUser.username || telegramUser.first_name || null,
+            total_points: 0,
+            current_rank: 'BRONZE',
+          });
+          
+          this.logger.log(`✅ New user created successfully: ${newUser.telegram_id}`);
+          return {
+            success: true,
+            user: newUser,
+          };
+        } catch (createError) {
+          this.logger.error('❌ Failed to auto-create user', createError);
+          return {
+            success: false,
+            error: 'Failed to create user account',
+          };
+        }
+      }
+    } catch (error) {
+      this.logger.error('❌ Authentication failed', error);
+      return {
+        success: false,
+        error: error.message || 'Authentication failed',
+      };
+    }
+  }
+
+  /**
    * Authenticate user with Telegram initData
    * @param initData Telegram initData string
    * @returns Authentication result with user info or suggested wallet name

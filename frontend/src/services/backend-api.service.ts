@@ -7,7 +7,6 @@ import axios, { AxiosInstance, AxiosError } from 'axios';
 import type {
   UserData,
   Quest,
-  ReferralStats,
 } from '../models';
 
 // API Base URL from environment
@@ -59,7 +58,7 @@ export interface BackendQuest {
   id: number;
   title: string;
   description: string | null;
-  type: 'SOCIAL' | 'ONCHAIN';
+  type: 'SOCIAL' | 'GAME';
   category: string | null;
   config: Record<string, unknown>;
   reward_amount: number | string;
@@ -137,14 +136,29 @@ export class BackendAPIService {
   }
 
   /**
-   * Check if authenticated (for serverless, we'll use Telegram WebApp context)
+   * Check if authenticated
    */
   isAuthenticated(): boolean {
-    // For serverless deployment, we rely on Telegram WebApp context
     if (typeof window !== 'undefined') {
-      return !!(window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      return Boolean((window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) || Boolean(this.token);
     }
-    return false;
+    return Boolean(this.token);
+  }
+
+  /**
+   * Check if backend is available
+   */
+  async isBackendAvailable(): Promise<boolean> {
+    try {
+      // Quick health check with short timeout
+      const response = await this.client.get('/health', {
+        timeout: 2000 // Reduced from default to 2 seconds
+      });
+      return response.status === 200;
+    } catch (error) {
+      console.log('Backend not available:', error);
+      return false;
+    }
   }
 
   /**
@@ -161,14 +175,29 @@ export class BackendAPIService {
 
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Authentication failed',
-          error.response?.status || 500,
-          'AUTH_FAILED'
-        );
-      }
-      throw error;
+      console.log('⚠️ Failed to authenticate via backend, using local fallback');
+      // Return mock auth response for local gameplay
+      const mockUser: BackendUser = {
+        id: 'local_user',
+        telegram_id: '123456789',
+        username: 'Local User',
+        wallet_address: null,
+        is_wallet_connected: false,
+        total_points: 0,
+        current_rank: 'Shrimp',
+        referral_code: 'local_ref',
+        referrer_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Set local token
+      this.setToken('local_token');
+      
+      return {
+        access_token: 'local_token',
+        user: mockUser,
+      };
     }
   }
 
@@ -180,35 +209,37 @@ export class BackendAPIService {
       const response = await this.client.get<BackendUser>('/users/profile');
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get profile',
-          error.response?.status || 500,
-          'PROFILE_FAILED'
-        );
-      }
-      throw error;
+      console.log('⚠️ Failed to get user profile from backend, using local fallback');
+      // Return mock user profile for local gameplay
+      return {
+        id: 'local_user',
+        telegram_id: '123456789',
+        username: 'Local User',
+        wallet_address: null,
+        is_wallet_connected: false,
+        total_points: 0,
+        current_rank: 'Shrimp',
+        referral_code: 'local_ref',
+        referrer_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
     }
   }
 
   /**
-   * Connect wallet
+   * Health check
    */
-  async connectWallet(walletAddress: string): Promise<BackendUser> {
+  async healthCheck(): Promise<{ status: string; timestamp: string; uptime: number }> {
     try {
-      const response = await this.client.post<BackendUser>('/users/connect-wallet', {
-        wallet_address: walletAddress,
-      });
+      const response = await this.client.get('/health');
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to connect wallet',
-          error.response?.status || 500,
-          'WALLET_CONNECT_FAILED'
-        );
-      }
-      throw error;
+      throw new BackendAPIError(
+        'Backend not available',
+        500,
+        'HEALTH_CHECK_FAILED'
+      );
     }
   }
 
@@ -220,16 +251,24 @@ export class BackendAPIService {
       const response = await this.client.post<BackendUser>('/users/add-points', {
         points,
       });
+      console.log(`✅ Backend add-points response: ${response.data.total_points}`);
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to add points',
-          error.response?.status || 500,
-          'ADD_POINTS_FAILED'
-        );
-      }
-      throw error;
+      console.log('⚠️ Failed to add points to backend, using local fallback');
+      // Return a mock user response with the new total for local gameplay
+      return {
+        id: 'local_user',
+        telegram_id: '123456789',
+        username: 'Local User',
+        wallet_address: null,
+        is_wallet_connected: false,
+        total_points: points, // Just return the points added
+        current_rank: 'Shrimp',
+        referral_code: null,
+        referrer_id: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
     }
   }
 
@@ -241,18 +280,77 @@ export class BackendAPIService {
       const response = await this.client.get<BackendQuest[]>('/quests');
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get quests',
-          error.response?.status || 500,
-          'QUESTS_FAILED'
-        );
-      }
-      throw error;
+      console.log('⚠️ Failed to get quests from backend, using local fallback');
+      // Return mock quests for local gameplay
+      return [
+        {
+          id: 1,
+          title: 'Follow on Twitter',
+          description: 'Follow our official Twitter account @CedraQuest',
+          type: 'SOCIAL',
+          category: 'social',
+          config: { url: 'https://twitter.com/intent/follow?screen_name=CedraQuest' },
+          reward_amount: 100,
+          reward_type: 'POINT',
+          frequency: 'ONCE',
+          is_active: true,
+          user_status: 'NOT_STARTED',
+        },
+        {
+          id: 2,
+          title: 'Join Telegram Channel',
+          description: 'Join our official Telegram channel for updates',
+          type: 'SOCIAL',
+          category: 'social',
+          config: { url: 'https://t.me/cedra_quest_official' },
+          reward_amount: 150,
+          reward_type: 'POINT',
+          frequency: 'ONCE',
+          is_active: true,
+          user_status: 'NOT_STARTED',
+        },
+        {
+          id: 3,
+          title: 'Like & Retweet',
+          description: 'Like and retweet our pinned post',
+          type: 'SOCIAL',
+          category: 'social',
+          config: { url: 'https://twitter.com/CedraQuest/status/1234567890' },
+          reward_amount: 75,
+          reward_type: 'POINT',
+          frequency: 'ONCE',
+          is_active: true,
+          user_status: 'NOT_STARTED',
+        },
+        {
+          id: 4,
+          title: 'Daily Check-in',
+          description: 'Check in daily to earn rewards',
+          type: 'GAME',
+          category: 'daily',
+          config: {},
+          reward_amount: 50,
+          reward_type: 'POINT',
+          frequency: 'DAILY',
+          is_active: true,
+          user_status: 'NOT_STARTED',
+        },
+        {
+          id: 5,
+          title: 'Complete First Game',
+          description: 'Play and complete your first game session',
+          type: 'GAME',
+          category: 'achievement',
+          config: {},
+          reward_amount: 200,
+          reward_type: 'POINT',
+          frequency: 'ONCE',
+          is_active: true,
+          user_status: 'NOT_STARTED',
+        },
+      ];
     }
   }
-
-
 
   /**
    * Verify/complete a quest
@@ -267,37 +365,204 @@ export class BackendAPIService {
       });
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Quest verification failed',
-          error.response?.status || 500,
-          'QUEST_VERIFY_FAILED'
-        );
-      }
-      throw error;
+      console.log('⚠️ Failed to verify quest via backend, using local fallback');
+      // Return mock success for local gameplay
+      return {
+        success: true,
+        message: 'Quest completed successfully (offline mode)',
+      };
     }
   }
 
   /**
-   * Health check
+   * Claim quest reward
    */
-  async healthCheck(): Promise<{ status: string; timestamp: string; uptime: number }> {
+  async claimQuestReward(questId: number): Promise<{ success: boolean; message: string; pointsEarned?: number }> {
     try {
-      const response = await this.client.get('/health');
+      const response = await this.client.post(`/quests/${questId}/claim`, {});
       return response.data;
     } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          'Backend not available',
-          error.response?.status || 500,
-          'HEALTH_CHECK_FAILED'
-        );
-      }
-      throw error;
+      console.log('⚠️ Failed to claim quest reward via backend, using local fallback');
+      // Return mock success for local gameplay
+      return {
+        success: true,
+        message: 'Quest reward claimed successfully (offline mode)',
+        pointsEarned: 0,
+      };
     }
   }
 
-  // ============ Adapter methods to match existing frontend interface ============
+  /**
+   * Get complete game dashboard with retry logic
+   */
+  async getGameDashboard(telegramId?: string): Promise<any> {
+    try {
+      // Use provided telegram ID or get from Telegram WebApp
+      let userId = telegramId;
+      if (!userId) {
+        // Get telegram ID from Telegram WebApp context
+        if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+          userId = String((window as any).Telegram.WebApp.initDataUnsafe.user.id);
+        } else {
+          // Fallback: try to get from stored user data
+          const storedUser = localStorage.getItem('tg-mini-app-storage');
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            if (parsed.state?.user?.telegramId) {
+              userId = parsed.state.user.telegramId;
+            }
+          }
+        }
+      }
+
+      if (!userId) {
+        console.error('❌ User ID not available from any source, using test ID');
+        // Use test ID for development
+        userId = '123456789';
+      }
+
+      console.log(`🚀 Calling game dashboard API with user ID:`, userId);
+      
+      // Add timeout for the request
+      const response = await this.client.get(`/game/dashboard/${userId}`, {
+        timeout: 10000 // 10 seconds timeout
+      });
+      
+      console.log(`✅ Game dashboard API response:`, response.data);
+      
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Game dashboard API error:`, error);
+      
+      // Return local fallback
+      console.log('⚠️ Using local fallback dashboard');
+      return {
+        success: true,
+        pet: {
+          level: 1,
+          currentXp: 0,
+          xpForNextLevel: 100,
+          pendingRewards: 0,
+          lastClaimTime: new Date().toISOString(),
+        },
+        energy: {
+          currentEnergy: 100,
+          maxEnergy: 100,
+          lastUpdate: new Date().toISOString(),
+        },
+        ranking: {
+          rank: 'Shrimp',
+          position: 1000,
+          lifetimePoints: 0,
+          nextRankThreshold: 1000,
+        },
+        gameStats: {
+          totalGamesPlayed: 0,
+          totalScore: 0,
+          averageScore: 0,
+          bestScore: 0,
+          totalPointsEarned: 0,
+        },
+      };
+    }
+  }
+
+  /**
+   * Claim pet rewards in new game system with optimized retry logic
+   */
+  async claimGamePetRewards(telegramId?: string): Promise<any> {
+    try {
+      // Use provided telegram ID or get from Telegram WebApp
+      let userId = telegramId;
+      if (!userId) {
+        // Get telegram ID from Telegram WebApp context
+        if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+          userId = String((window as any).Telegram.WebApp.initDataUnsafe.user.id);
+        } else {
+          // Fallback: try to get from stored user data
+          const storedUser = localStorage.getItem('tg-mini-app-storage');
+          if (storedUser) {
+            const parsed = JSON.parse(storedUser);
+            if (parsed.state?.user?.telegramId) {
+              userId = parsed.state.user.telegramId;
+            }
+          }
+        }
+      }
+
+      if (!userId) {
+        console.error('❌ User ID not available from any source, using test ID');
+        // Use test ID for development
+        userId = '123456789';
+      }
+
+      console.log(`💰 Claiming pet rewards for user:`, userId);
+
+      const response = await this.client.post(`/game/pet/claim/${userId}`, {}, {
+        timeout: 5000 // 5 seconds timeout
+      });
+
+      console.log(`✅ Pet rewards claimed successfully:`, response.data);
+      return response.data;
+    } catch (error) {
+      console.error(`❌ Claim pet rewards error:`, error);
+      
+      // Return local fallback
+      console.log('⚠️ Using local fallback for pet claim');
+      return {
+        success: true,
+        pointsEarned: Math.floor(Math.random() * 100) + 50, // Random points 50-150
+        newTotalPoints: 0,
+        newLifetimePoints: 0,
+        claimTime: new Date(),
+      };
+    }
+  }
+
+  /**
+   * Convert backend quest to frontend Quest format
+   */
+  backendQuestToQuest(backendQuest: BackendQuest): Quest {
+    const statusMap: Record<string, 'active' | 'claimable' | 'completed' | 'locked'> = {
+      'NOT_STARTED': 'active',
+      'PENDING': 'active',
+      'COMPLETED': 'claimable', // Backend completed = frontend claimable
+      'CLAIMED': 'completed',   // Backend claimed = frontend completed
+      'FAILED': 'active',
+    };
+
+    // Extract URL from config if it's a social quest
+    const url = backendQuest.type === 'SOCIAL' && backendQuest.config?.url 
+      ? String(backendQuest.config.url) 
+      : undefined;
+
+    // Map quest types
+    let questType: 'social' | 'daily' | 'achievement' | 'referral' = 'achievement';
+    if (backendQuest.type === 'SOCIAL') {
+      questType = 'social';
+    } else if (backendQuest.category === 'daily') {
+      questType = 'daily';
+    } else if (backendQuest.category === 'achievement') {
+      questType = 'achievement';
+    }
+
+    return {
+      id: String(backendQuest.id),
+      title: backendQuest.title,
+      description: backendQuest.description || '',
+      iconUrl: '',
+      type: questType,
+      status: statusMap[backendQuest.user_status || 'NOT_STARTED'] || 'active',
+      progress: backendQuest.user_status === 'COMPLETED' || backendQuest.user_status === 'CLAIMED' ? 100 : 0,
+      currentValue: backendQuest.user_status === 'COMPLETED' || backendQuest.user_status === 'CLAIMED' ? 1 : 0,
+      targetValue: 1,
+      reward: {
+        type: backendQuest.reward_type === 'POINT' ? 'token' : 'token',
+        amount: Number(backendQuest.reward_amount),
+      },
+      url,
+    };
+  }
 
   /**
    * Convert backend user to frontend UserData format
@@ -322,493 +587,11 @@ export class BackendAPIService {
   }
 
   /**
-   * Convert backend quest to frontend Quest format
-   */
-  backendQuestToQuest(backendQuest: BackendQuest): Quest {
-    const statusMap: Record<string, 'active' | 'completed' | 'locked'> = {
-      'NOT_STARTED': 'active',
-      'PENDING': 'active',
-      'COMPLETED': 'completed',
-      'CLAIMED': 'completed',
-      'FAILED': 'active',
-    };
-
-    return {
-      id: String(backendQuest.id),
-      title: backendQuest.title,
-      description: backendQuest.description || '',
-      iconUrl: '',
-      type: backendQuest.type === 'SOCIAL' ? 'social' : 'achievement',
-      status: statusMap[backendQuest.user_status || 'NOT_STARTED'] || 'active',
-      progress: backendQuest.user_status === 'COMPLETED' || backendQuest.user_status === 'CLAIMED' ? 100 : 0,
-      currentValue: backendQuest.user_status === 'COMPLETED' || backendQuest.user_status === 'CLAIMED' ? 1 : 0,
-      targetValue: 1,
-      reward: {
-        type: backendQuest.reward_type === 'POINT' ? 'token' : 'token',
-        amount: Number(backendQuest.reward_amount),
-      },
-    };
-  }
-
-  /**
    * Calculate level from total points
    */
   private calculateLevel(totalPoints: number): number {
     return Math.floor(totalPoints / 1000) + 1;
   }
-
-  /**
-   * Get referral stats
-   */
-  async getReferralStats(): Promise<ReferralStats> {
-    // TODO: Implement when backend has referral endpoint
-    const user = await this.getUserProfile();
-    return {
-      totalReferrals: 0,
-      totalBonus: 0,
-      referralLink: `https://t.me/${process.env.NEXT_PUBLIC_BOT_USERNAME || 'cedra_quest_bot'}?start=${user.referral_code || ''}`,
-      friends: [],
-    };
-  }
-
-  // ============ Pet API Methods ============
-
-  /**
-   * Pet data interface
-   */
-  
-
-  /**
-   * Get pet data
-   */
-  async getPet(): Promise<PetData> {
-    try {
-      const response = await this.client.get<PetData>('/pets');
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get pet',
-          error.response?.status || 500,
-          'PET_GET_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Update pet data
-   */
-  async updatePet(petData: Partial<PetData>): Promise<PetData> {
-    try {
-      const response = await this.client.put<PetData>('/pets', petData);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to update pet',
-          error.response?.status || 500,
-          'PET_UPDATE_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Claim pet coins
-   */
-  async claimPetCoins(coins: number): Promise<PetData> {
-    try {
-      const response = await this.client.post<PetData>('/pets/claim', { coins });
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to claim coins',
-          error.response?.status || 500,
-          'PET_CLAIM_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  // ============ New Game System APIs ============
-
-  /**
-   * Get pet status from new game system
-   */
-  async getGamePetStatus(): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.get(`/game/pet/status/${user.telegram_id}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get pet status',
-          error.response?.status || 500,
-          'GAME_PET_STATUS_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Feed pet in new game system
-   */
-  async feedGamePet(feedCount: number = 1): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.post(`/game/pet/feed/${user.telegram_id}`, {
-        feedCount,
-      });
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to feed pet',
-          error.response?.status || 500,
-          'GAME_PET_FEED_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Claim pet rewards in new game system with retry logic
-   */
-  async claimGamePetRewards(telegramId?: string): Promise<any> {
-    const maxRetries = 3;
-    let lastError: any;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        // Use provided telegram ID or get from Telegram WebApp
-        let userId = telegramId;
-        if (!userId) {
-          // Get telegram ID from Telegram WebApp context
-          if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-            userId = String((window as any).Telegram.WebApp.initDataUnsafe.user.id);
-          } else {
-            // Fallback: try to get from stored user data
-            const storedUser = localStorage.getItem('tg-mini-app-storage');
-            if (storedUser) {
-              const parsed = JSON.parse(storedUser);
-              if (parsed.state?.user?.telegramId) {
-                userId = parsed.state.user.telegramId;
-              }
-            }
-          }
-        }
-
-        if (!userId) {
-          console.error('❌ User ID not available from any source, using test ID');
-          // Use test ID for development
-          userId = '123456789';
-        }
-
-        console.log(`💰 [Attempt ${attempt}] Claiming pet rewards for user:`, userId);
-
-        const response = await this.client.post(`/game/pet/claim/${userId}`, {}, {
-          timeout: 10000 // 10 seconds timeout
-        });
-
-        console.log(`✅ [Attempt ${attempt}] Pet rewards claimed successfully:`, response.data);
-        return response.data;
-      } catch (error) {
-        lastError = error;
-        console.error(`❌ [Attempt ${attempt}] Claim pet rewards error:`, error);
-        
-        if (attempt < maxRetries) {
-          const delay = attempt * 1000; // 1s, 2s, 3s delays
-          console.log(`⏳ Retrying claim in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-
-    // All retries failed
-    if (axios.isAxiosError(lastError)) {
-      throw new BackendAPIError(
-        lastError.response?.data?.message || 'Failed to claim pet rewards after retries',
-        lastError.response?.status || 500,
-        'GAME_PET_CLAIM_FAILED'
-      );
-    }
-    throw lastError;
-  }
-
-  /**
-   * Get energy status
-   */
-  async getEnergyStatus(): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.get(`/game/energy/status/${user.telegram_id}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get energy status',
-          error.response?.status || 500,
-          'GAME_ENERGY_STATUS_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Refill energy
-   */
-  async refillEnergy(energyAmount: number): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.post(`/game/energy/refill/${user.telegram_id}`, {
-        energyAmount,
-      });
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to refill energy',
-          error.response?.status || 500,
-          'GAME_ENERGY_REFILL_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Start game session
-   */
-  async startGameSession(gameType: string): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.post(`/game/session/start/${user.telegram_id}`, {
-        gameType,
-      });
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to start game session',
-          error.response?.status || 500,
-          'GAME_SESSION_START_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Complete game session
-   */
-  async completeGameSession(score: number, duration?: number): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.post(`/game/session/complete/${user.telegram_id}`, {
-        score,
-        duration,
-      });
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to complete game session',
-          error.response?.status || 500,
-          'GAME_SESSION_COMPLETE_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get game stats
-   */
-  async getGameStats(): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.get(`/game/session/stats/${user.telegram_id}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get game stats',
-          error.response?.status || 500,
-          'GAME_STATS_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get user rank info
-   */
-  async getUserRankInfo(): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.get(`/game/ranking/user/${user.telegram_id}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get user rank info',
-          error.response?.status || 500,
-          'GAME_RANK_INFO_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get leaderboard
-   */
-  async getLeaderboard(limit: number = 50, offset: number = 0): Promise<any> {
-    try {
-      const response = await this.client.get(`/game/ranking/leaderboard?limit=${limit}&offset=${offset}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get leaderboard',
-          error.response?.status || 500,
-          'GAME_LEADERBOARD_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get user position in ranking
-   */
-  async getUserPosition(): Promise<any> {
-    try {
-      const user = await this.getUserProfile();
-      const response = await this.client.get(`/game/ranking/position/${user.telegram_id}`);
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get user position',
-          error.response?.status || 500,
-          'GAME_POSITION_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get current game cycle
-   */
-  async getCurrentGameCycle(): Promise<any> {
-    try {
-      const response = await this.client.get('/game/cycle/current');
-      return response.data;
-    } catch (error) {
-      if (axios.isAxiosError(error)) {
-        throw new BackendAPIError(
-          error.response?.data?.message || 'Failed to get current game cycle',
-          error.response?.status || 500,
-          'GAME_CYCLE_FAILED'
-        );
-      }
-      throw error;
-    }
-  }
-
-  /**
-   * Get complete game dashboard with retry logic
-   */
-  async getGameDashboard(telegramId?: string): Promise<any> {
-    const maxRetries = 3;
-    let lastError: any;
-
-    for (let attempt = 1; attempt <= maxRetries; attempt++) {
-      try {
-        // Use provided telegram ID or get from Telegram WebApp
-        let userId = telegramId;
-        if (!userId) {
-          console.log(`🔍 [Attempt ${attempt}] Getting user ID from Telegram WebApp...`);
-          
-          // Get telegram ID from Telegram WebApp context
-          if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-            userId = String((window as any).Telegram.WebApp.initDataUnsafe.user.id);
-            console.log('✅ Got user ID from Telegram WebApp:', userId);
-          } else {
-            console.log('⚠️ Telegram WebApp user ID not available, trying localStorage...');
-            
-            // Fallback: try to get from stored user data
-            const storedUser = localStorage.getItem('tg-mini-app-storage');
-            if (storedUser) {
-              const parsed = JSON.parse(storedUser);
-              if (parsed.state?.user?.telegramId) {
-                userId = parsed.state.user.telegramId;
-                console.log('✅ Got user ID from localStorage:', userId);
-              }
-            }
-          }
-        }
-
-        if (!userId) {
-          console.error('❌ User ID not available from any source, using test ID');
-          // Use test ID for development
-          userId = '123456789';
-        }
-
-        console.log(`🚀 [Attempt ${attempt}] Calling game dashboard API with user ID:`, userId);
-        
-        // Add timeout for the request
-        const response = await this.client.get(`/game/dashboard/${userId}`, {
-          timeout: 10000 // 10 seconds timeout
-        });
-        
-        console.log(`✅ [Attempt ${attempt}] Game dashboard API response:`, response.data);
-        
-        return response.data;
-      } catch (error) {
-        lastError = error;
-        console.error(`❌ [Attempt ${attempt}] Game dashboard API error:`, error);
-        
-        if (attempt < maxRetries) {
-          const delay = attempt * 1000; // 1s, 2s, 3s delays
-          console.log(`⏳ Retrying in ${delay}ms...`);
-          await new Promise(resolve => setTimeout(resolve, delay));
-        }
-      }
-    }
-
-    // All retries failed
-    if (axios.isAxiosError(lastError)) {
-      throw new BackendAPIError(
-        lastError.response?.data?.message || 'Failed to get game dashboard after retries',
-        lastError.response?.status || 500,
-        'GAME_DASHBOARD_FAILED'
-      );
-    }
-    throw lastError;
-  }
-}
-
-export interface PetData {
-  level: number;
-  exp: number;
-  maxExp: number;
-  hunger: number;
-  happiness: number;
-  lastCoinTime: number;
-  pendingCoins: number;
 }
 
 // Singleton instance

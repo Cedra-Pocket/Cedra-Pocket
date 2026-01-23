@@ -8,7 +8,9 @@ export declare class PetService {
     private blockchainService;
     private readonly logger;
     constructor(prisma: PrismaService, gameCycleService: GameCycleService, blockchainService: BlockchainService);
+    private safeToBigInt;
     getPetStatus(userId: string): Promise<PetStatus>;
+    private updatePendingCoins;
     feedPet(userId: string, request: FeedPetRequest): Promise<FeedPetResult>;
     claimRewards(userId: string): Promise<ClaimRewardsResult>;
     private calculatePendingRewards;

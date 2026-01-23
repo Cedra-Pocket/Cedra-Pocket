@@ -10,19 +10,39 @@ export class EnergyService {
   constructor(private prisma: PrismaService) {}
 
   /**
+   * Safely convert userId to BigInt, handling both numeric and non-numeric strings
+   */
+  private safeToBigInt(userId: string): bigint {
+    // If userId starts with 'anon_' or contains non-numeric characters, 
+    // convert to a hash-based BigInt
+    if (!/^\d+$/.test(userId)) {
+      // Create a simple hash from the string
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      // Ensure positive BigInt and avoid conflicts with real telegram IDs
+      return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
+    }
+    return BigInt(userId);
+  }
+
+  /**
    * Get user's energy status
    */
   async getEnergyStatus(userId: string): Promise<EnergyStatus> {
     try {
       let userEnergy = await this.prisma.user_energy.findUnique({
-        where: { user_id: BigInt(userId) },
+        where: { user_id: this.safeToBigInt(userId) },
       });
 
       // Create energy record if doesn't exist
       if (!userEnergy) {
         userEnergy = await this.prisma.user_energy.create({
           data: {
-            user_id: BigInt(userId),
+            user_id: this.safeToBigInt(userId),
             current_energy: ENERGY_CONSTANTS.MAX_ENERGY,
             max_energy: ENERGY_CONSTANTS.MAX_ENERGY,
             last_update: new Date(),
@@ -48,7 +68,7 @@ export class EnergyService {
           // Update database if energy changed
           if (energyToAdd > 0) {
             await this.prisma.user_energy.update({
-              where: { user_id: BigInt(userId) },
+              where: { user_id: this.safeToBigInt(userId) },
               data: {
                 current_energy: currentEnergy,
                 last_update: now,
@@ -108,7 +128,7 @@ export class EnergyService {
         // Update energy
         const newEnergy = energyStatus.currentEnergy - amount;
         await tx.user_energy.update({
-          where: { user_id: BigInt(userId) },
+          where: { user_id: this.safeToBigInt(userId) },
           data: {
             current_energy: newEnergy,
             last_update: new Date(),
@@ -137,7 +157,7 @@ export class EnergyService {
       return await this.prisma.$transaction(async (tx) => {
         // Get user data
         const user = await tx.users.findUnique({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           select: { total_points: true },
         });
 
@@ -169,7 +189,7 @@ export class EnergyService {
 
         // Update user points
         await tx.users.update({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           data: {
             total_points: { decrement: pointsCost },
             updated_at: new Date(),
@@ -179,7 +199,7 @@ export class EnergyService {
         // Update energy
         const newEnergy = energyStatus.currentEnergy + energyAmount;
         await tx.user_energy.update({
-          where: { user_id: BigInt(userId) },
+          where: { user_id: this.safeToBigInt(userId) },
           data: {
             current_energy: newEnergy,
             last_update: new Date(),

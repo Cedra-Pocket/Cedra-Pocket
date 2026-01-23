@@ -259,7 +259,7 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     };
 
     initialize();
-  }, [setUser, authenticateWithBackend]);
+  }, []); // Empty dependency array - only run once on mount
 
   // Set up back button handler
   // Requirements: 8.3 - Handle navigation using Telegram's back button API
@@ -284,7 +284,7 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
     return () => {
       telegramService.hideBackButton();
     };
-  }, [isInitialized, setActiveTab]);
+  }, [isInitialized]); // Removed setActiveTab dependency
 
   // Memoized context value
   const contextValue: TelegramContextValue = {

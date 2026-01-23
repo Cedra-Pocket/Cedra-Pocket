@@ -18,6 +18,18 @@ let WalletService = WalletService_1 = class WalletService {
         this.prisma = prisma;
         this.logger = new common_1.Logger(WalletService_1.name);
     }
+    safeToBigInt(userId) {
+        if (!/^\d+$/.test(userId)) {
+            let hash = 0;
+            for (let i = 0; i < userId.length; i++) {
+                const char = userId.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash;
+            }
+            return BigInt(Math.abs(hash) + 1000000000);
+        }
+        return BigInt(userId);
+    }
     async createUserWallet(walletData) {
         try {
             const existingWallet = await this.prisma.users.findUnique({
@@ -33,7 +45,7 @@ let WalletService = WalletService_1 = class WalletService {
             }
             const existingUser = await this.prisma.users.findUnique({
                 where: {
-                    telegram_id: BigInt(walletData.telegram_id),
+                    telegram_id: this.safeToBigInt(walletData.telegram_id),
                 },
             });
             if (existingUser) {
@@ -44,7 +56,7 @@ let WalletService = WalletService_1 = class WalletService {
             }
             const newUser = await this.prisma.users.create({
                 data: {
-                    telegram_id: BigInt(walletData.telegram_id),
+                    telegram_id: this.safeToBigInt(walletData.telegram_id),
                     wallet_address: walletData.requested_address,
                     public_key: walletData.public_key,
                     is_wallet_connected: true,
@@ -68,7 +80,7 @@ let WalletService = WalletService_1 = class WalletService {
         try {
             await this.prisma.users.upsert({
                 where: {
-                    telegram_id: BigInt(mapping.telegram_id),
+                    telegram_id: this.safeToBigInt(mapping.telegram_id),
                 },
                 update: {
                     wallet_address: mapping.wallet_address,
@@ -76,7 +88,7 @@ let WalletService = WalletService_1 = class WalletService {
                     updated_at: new Date(),
                 },
                 create: {
-                    telegram_id: BigInt(mapping.telegram_id),
+                    telegram_id: this.safeToBigInt(mapping.telegram_id),
                     wallet_address: mapping.wallet_address,
                     public_key: mapping.public_key,
                     is_wallet_connected: true,

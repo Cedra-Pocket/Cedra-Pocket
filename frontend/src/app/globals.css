@@ -26,14 +26,14 @@
   /* Background */
   --foreground: #000000;
 
-  /* Typography - Unified Font Sizes (Compact) */
-  --fs-xs: clamp(9px, 2.2vw, 10px);       /* Extra small - badges, hints */
-  --fs-sm: clamp(10px, 2.5vw, 12px);      /* Small - descriptions, labels */
-  --fs-base: clamp(12px, 3vw, 14px);      /* Base - body text, buttons */
-  --fs-md: clamp(14px, 3.5vw, 16px);      /* Medium - card titles */
-  --fs-lg: clamp(16px, 4vw, 18px);        /* Large - section headers */
-  --fs-xl: clamp(18px, 4.5vw, 22px);      /* Extra large - page titles */
-  --fs-2xl: clamp(22px, 5.5vw, 28px);     /* 2X large - hero numbers */
+  /* Typography - Unified Font Sizes (Larger like Apps page) */
+  --fs-xs: clamp(12px, 3vw, 16px);        /* Extra small - badges, hints */
+  --fs-sm: clamp(14px, 3.5vw, 18px);      /* Small - descriptions, labels */
+  --fs-base: clamp(16px, 4vw, 20px);      /* Base - body text, buttons */
+  --fs-md: clamp(18px, 4.5vw, 22px);      /* Medium - card titles */
+  --fs-lg: clamp(20px, 5vw, 28px);        /* Large - section headers */
+  --fs-xl: clamp(22px, 5.5vw, 32px);      /* Extra large - page titles */
+  --fs-2xl: clamp(28px, 7vw, 40px);       /* 2X large - hero numbers */
   
   /* Icon Sizes */
   --icon-xs: clamp(12px, 3vw, 14px);
@@ -55,7 +55,7 @@
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-text-muted: var(--text-muted);
-  --font-sans: var(--font-bricolage);
+  --font-sans: var(--font-fredoka);
 }
 
 * {
@@ -90,7 +90,7 @@ html {
 
 body {
   color: var(--foreground);
-  font-family: 'Bricolage Grotesque', var(--font-bricolage), system-ui, sans-serif;
+  font-family: 'Fredoka', var(--font-fredoka), system-ui, sans-serif;
   min-height: 100vh;
   min-height: 100dvh;
   font-size: 1rem;
@@ -447,11 +447,30 @@ body {
   display: none;
 }
 
+/* Ẩn scroll bar cho trang Apps */
+.app-screen-container {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.app-screen-container::-webkit-scrollbar {
+  display: none;
+}
+
+/* Ẩn scroll bar cho main container */
+main {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+main::-webkit-scrollbar {
+  display: none;
+}
+
 /* Mobile phone container for desktop viewing */
 @media (min-width: 500px) {
   html {
     background: #000000;
-    overflow: hidden;
     font-size: 16px;
   }
 

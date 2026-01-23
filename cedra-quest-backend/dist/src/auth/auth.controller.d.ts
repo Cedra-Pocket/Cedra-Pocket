@@ -4,6 +4,10 @@ export declare class AuthController {
     private authService;
     private readonly logger;
     constructor(authService: AuthService);
+    verify(authDto: TelegramAuthDto): Promise<import("../common/interfaces/auth.interface").AuthenticationResult | {
+        access_token: string;
+        user: import("../common/interfaces/auth.interface").UserInfo;
+    }>;
     login(authDto: TelegramAuthDto): Promise<import("../common/interfaces/auth.interface").AuthenticationResult>;
     createWallet(walletDto: WalletCreationDto): Promise<import("../common/interfaces/wallet.interface").WalletCreationResult>;
     recoverWallet(recoveryDto: WalletRecoveryDto): Promise<import("../common/interfaces/auth.interface").AuthenticationResult>;

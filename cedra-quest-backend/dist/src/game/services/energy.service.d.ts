@@ -4,6 +4,7 @@ export declare class EnergyService {
     private prisma;
     private readonly logger;
     constructor(prisma: PrismaService);
+    private safeToBigInt;
     getEnergyStatus(userId: string): Promise<EnergyStatus>;
     consumeEnergy(userId: string, amount?: number): Promise<EnergyStatus>;
     refillEnergy(userId: string, energyAmount: number): Promise<{

@@ -43,7 +43,7 @@ async function main() {
         data: {
             title: 'Hold 1000 CEDRA Tokens',
             description: 'Hold at least 1000 CEDRA tokens in your wallet',
-            type: 'ONCHAIN',
+            type: 'GAME',
             category: 'holding',
             config: {
                 chain_id: 1,

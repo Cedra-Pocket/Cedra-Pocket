@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useUser, usePet, useEnergy, useGameSystemActions, useAppStore } from '../../store/useAppStore';
-import { backendAPI } from '../../services/backend-api.service';
+// import { backendAPI } from '../../services/backend-api.service';
 
 const getCoinsPerMinute = (level: number) => {
   return 100 + (level - 1) * 50;
@@ -71,14 +71,14 @@ export function PetScreen() {
   const user = useUser();
   const pet = usePet();
   const energy = useEnergy();
-  const { updateBalance, setPet, claimPetCoins } = useAppStore();
+  const { updateBalance, setPet } = useAppStore();
   const { 
     feedGamePet, 
-    claimGamePetRewards, 
     loadGameDashboard,
     regenerateEnergy 
   } = useGameSystemActions();
   const hasFetchedRef = useRef(false);
+  const hasLoadedFromBackend = useRef(false);
   
   // Lấy con giáp từ năm sinh
   const zodiac = pet.birthYear ? getZodiacFromYear(pet.birthYear) : null;
@@ -87,7 +87,6 @@ export function PetScreen() {
   const [isFeeding, setIsFeeding] = useState(false);
   const [showCoinAnimation, setShowCoinAnimation] = useState(false);
   const [claimedCoins, setClaimedCoins] = useState(0);
-  const [isSyncing, setIsSyncing] = useState(false);
   const [showBoostModal, setShowBoostModal] = useState(false);
   const [showFriendsModal, setShowFriendsModal] = useState(false);
   const [showRecoverInviter, setShowRecoverInviter] = useState(false);
@@ -98,6 +97,8 @@ export function PetScreen() {
   const [isHatching, setIsHatching] = useState(false);
   const [showBirthYearInput, setShowBirthYearInput] = useState(false);
   const [completedTasks, setCompletedTasks] = useState<string[]>([]);
+  const [debugData] = useState<any>(null);
+  const [showDebugInfo, setShowDebugInfo] = useState(false);
   
   // Hatch tasks
   const hatchTasks = [
@@ -130,6 +131,17 @@ export function PetScreen() {
         
         // Load complete game dashboard (pet, energy, ranking, stats)
         await loadGameDashboard();
+        hasLoadedFromBackend.current = true; // Mark that we've loaded from backend
+        
+        // Also try to get pet status directly for debugging
+        try {
+          // const petStatus = await backendAPI.getGamePetStatus();
+          // setDebugData({ type: 'Pet Status', data: petStatus });
+          // console.log('🐾 Direct pet status:', petStatus);
+          console.log('🐾 Pet status debug disabled');
+        } catch (debugError) {
+          console.log('⚠️ Failed to get direct pet status:', debugError);
+        }
         
         // Regenerate energy based on time elapsed
         regenerateEnergy();
@@ -139,8 +151,9 @@ export function PetScreen() {
         console.error('❌ Failed to load game data:', error);
         // Fallback to old pet API if new system fails
         try {
-          const petData = await backendAPI.getPet();
-          setPet(petData);
+          // const petData = await backendAPI.getPet();
+          // setPet(petData);
+          console.log('🐾 Old pet API disabled');
         } catch (fallbackError) {
           console.error('❌ Fallback pet loading also failed:', fallbackError);
         }
@@ -148,19 +161,7 @@ export function PetScreen() {
     };
     
     loadGameData();
-  }, [loadGameDashboard, regenerateEnergy, setPet]);
-
-  const syncToBackend = useCallback(async (petData: Partial<typeof pet>) => {
-    if (!backendAPI.isAuthenticated() || isSyncing) return;
-    try {
-      setIsSyncing(true);
-      await backendAPI.updatePet(petData);
-    } catch (error) {
-      console.error('Failed to sync pet to backend:', error);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [isSyncing]);
+  }, []); // Empty dependency array - only run once
 
   // Energy regeneration timer
   useEffect(() => {
@@ -169,41 +170,54 @@ export function PetScreen() {
     }, 60000); // Check every minute
 
     return () => clearInterval(interval);
-  }, [regenerateEnergy]);
+  }, []); // Empty dependency array - regenerateEnergy is stable
 
   // Timer logic - chỉ chạy khi pet đã nở
   useEffect(() => {
     if (!pet.hatched) return;
-    if (pet.pendingCoins > 0) { 
-      setCoinTimer(0); 
-      return; 
+    
+    // CRITICAL: Don't generate coins immediately after loading from backend
+    if (hasLoadedFromBackend.current && pet.pendingCoins > 0) {
+      console.log(`🚫 Skipping coin generation - just loaded from backend with ${pet.pendingCoins} coins`);
+      setCoinTimer(0);
+      hasLoadedFromBackend.current = false; // Reset flag
+      return;
     }
     
     const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
     const remaining = COIN_INTERVAL_SECONDS - elapsed;
     
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`⏰ Timer useEffect: elapsed=${elapsed}s, remaining=${remaining}s, pendingCoins=${pet.pendingCoins}, level=${pet.level}`);
+    }
+    
+    // CRITICAL: If there are already pending coins, just show timer as 0 and DON'T generate more
+    if (pet.pendingCoins > 0) { 
+      setCoinTimer(0); 
+      console.log(`🚫 Skipping coin generation - already have ${pet.pendingCoins} pending coins`);
+      return; 
+    }
+    
+    // If enough time has passed, generate coins immediately (only once)
     if (remaining <= 0) {
-      // Dùng setTimeout để tránh setState trong render
-      setTimeout(() => {
-        const coins = getCoinsPerMinute(pet.level);
-        setPet({ pendingCoins: coins });
-        syncToBackend({ pendingCoins: coins });
-      }, 0);
+      const coins = getCoinsPerMinute(pet.level);
+      console.log(`💰 Generating ${coins} coins for level ${pet.level} (elapsed: ${elapsed}s)`);
+      // DON'T update lastCoinTime here - it should only be updated when user claims
+      setPet({ pendingCoins: coins });
       setCoinTimer(0);
       return;
     }
     
+    // Set initial timer
     setCoinTimer(remaining);
+    console.log(`⏰ Setting timer to ${remaining}s`);
     
+    // Start countdown timer - SIMPLIFIED: Only count down, don't generate coins here
     const interval = setInterval(() => {
       setCoinTimer(prev => {
         if (prev <= 1) {
-          // Dùng setTimeout để tránh setState trong render
-          setTimeout(() => {
-            const coins = getCoinsPerMinute(pet.level);
-            setPet({ pendingCoins: coins });
-            syncToBackend({ pendingCoins: coins });
-          }, 0);
+          // Timer reached 0 - trigger useEffect to check for coin generation
           return 0;
         }
         return prev - 1;
@@ -211,34 +225,94 @@ export function PetScreen() {
     }, 1000);
     
     return () => clearInterval(interval);
-  }, [pet.level, pet.pendingCoins, pet.lastCoinTime, pet.hatched, setPet, syncToBackend]);
+  }, [pet.hatched, pet.lastCoinTime, pet.pendingCoins, pet.level]); // Include level to recalculate when pet levels up
+
+  // Separate effect to handle coin generation when timer reaches exactly 0
+  useEffect(() => {
+    // Don't generate coins if we just loaded from backend
+    if (hasLoadedFromBackend.current) return;
+    
+    // Only run when timer is exactly 0 and conditions are met
+    if (coinTimer !== 0 || !pet.hatched || pet.pendingCoins > 0) return;
+    
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    
+    // Double-check: only generate if enough time has passed
+    if (elapsed >= COIN_INTERVAL_SECONDS) {
+      const coins = getCoinsPerMinute(pet.level);
+      console.log(`💰 Timer-triggered coin generation: ${coins} coins for level ${pet.level} (${elapsed}s elapsed)`);
+      setPet({ pendingCoins: coins });
+    }
+  }, [coinTimer]); // Only trigger when coinTimer changes to 0
+
+  const [isClaimingCoins, setIsClaimingCoins] = useState(false);
+
+  // Helper function to check if claiming is allowed
+  const canClaim = useCallback(() => {
+    if (pet.pendingCoins <= 0) return false;
+    
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    const timeRemaining = COIN_INTERVAL_SECONDS - elapsed;
+    
+    // Debug logging
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🔍 canClaim check: pendingCoins=${pet.pendingCoins}, elapsed=${elapsed}s, remaining=${timeRemaining}s`);
+    }
+    
+    // Can claim if there are pending coins AND enough time has passed
+    return pet.pendingCoins > 0 && timeRemaining <= 0;
+  }, [pet.pendingCoins, pet.lastCoinTime]);
 
   const collectCoins = useCallback(async () => {
-    if (pet.pendingCoins > 0) {
+    // Check if enough time has passed since last claim
+    const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
+    const timeRemaining = COIN_INTERVAL_SECONDS - elapsed;
+    
+    // Prevent claims if not enough time has passed AND no pending coins
+    if (timeRemaining > 0 && pet.pendingCoins <= 0) {
+      console.log(`⚠️ Claim blocked: Need to wait ${timeRemaining} more seconds`);
+      return;
+    }
+    
+    // Prevent multiple simultaneous claims
+    if (isClaimingCoins || pet.pendingCoins <= 0) {
+      console.log('⚠️ Claim blocked: already claiming or no coins available');
+      return;
+    }
+
+    setIsClaimingCoins(true);
+    
+    try {
       const coinsToCollect = pet.pendingCoins;
+      
+      // Immediately update UI for instant feedback
       setClaimedCoins(coinsToCollect);
       setShowCoinAnimation(true);
       setTimeout(() => setShowCoinAnimation(false), 1000);
       
-      try {
-        // Use new game system API to claim pet rewards
-        await claimGamePetRewards();
-        console.log('✅ Pet rewards claimed via new game system');
-      } catch (error) {
-        console.error('❌ Failed to claim via new game system, using fallback:', error);
-        // Fallback to old system
-        claimPetCoins();
-        setCoinTimer(COIN_INTERVAL_SECONDS);
-        if (backendAPI.isAuthenticated()) {
-          try { 
-            await backendAPI.claimPetCoins(coinsToCollect); 
-          } catch (e) { 
-            console.error('❌ Fallback claim also failed:', e); 
-          }
-        }
-      }
+      // Reset pet pending coins immediately and set new claim time
+      setPet({ 
+        pendingCoins: 0, 
+        lastCoinTime: Date.now() 
+      });
+      setCoinTimer(COIN_INTERVAL_SECONDS);
+      
+      console.log(`💰 Claiming ${coinsToCollect} coins...`);
+      
+      // SIMPLIFIED: Only call updateBalance once - no complex sync logic
+      await updateBalance(coinsToCollect, 'token');
+      console.log(`✅ Successfully claimed ${coinsToCollect} coins`);
+    } catch (error) {
+      console.error('❌ Failed to claim coins:', error);
+      // Revert pet state if failed
+      setPet({ 
+        pendingCoins: pet.pendingCoins, 
+        lastCoinTime: Date.now() - COIN_INTERVAL_SECONDS * 1000 
+      });
+    } finally {
+      setIsClaimingCoins(false);
     }
-  }, [pet.pendingCoins, claimGamePetRewards, claimPetCoins]);
+  }, [pet.pendingCoins, pet.lastCoinTime, setPet, updateBalance, isClaimingCoins]);
 
   const handleFeed = async () => {
     if ((user?.tokenBalance || 0) >= 20 && pet.hunger < 100) { // New system uses 20 points per feed
@@ -265,7 +339,6 @@ export function PetScreen() {
           newPetData = { hunger: newHunger, exp: newExp };
         }
         setPet(newPetData);
-        syncToBackend(newPetData);
       }
       
       setTimeout(() => setIsFeeding(false), 1000);
@@ -279,7 +352,7 @@ export function PetScreen() {
       updateBalance(-boost.cost, 'token');
       const newPetData = { level: pet.level + 1, exp: 0, maxExp: Math.floor(pet.maxExp * 1.5) };
       setPet(newPetData);
-      syncToBackend(newPetData);
+      // Note: syncToBackend removed - data will sync automatically through updateBalance
     }
   };
 
@@ -298,7 +371,7 @@ export function PetScreen() {
       // Complete hatch - reset pendingCoins = 0
       setTimeout(() => {
         setPet({ hatched: true, pendingCoins: 0, lastCoinTime: Date.now() });
-        syncToBackend({ hatched: true, pendingCoins: 0 });
+        // Note: syncToBackend removed - data will sync automatically
         setIsHatching(false);
         setHatchStage(0);
       }, 3000);
@@ -319,7 +392,7 @@ export function PetScreen() {
       // Update progress
       const newProgress = Math.min(100, (pet.hatchProgress || 0) + 25);
       setPet({ hatchProgress: newProgress });
-      syncToBackend({ hatchProgress: newProgress });
+      // Note: syncToBackend removed - data will sync automatically
     }
   };
   
@@ -334,7 +407,7 @@ export function PetScreen() {
       // Update progress
       const newProgress = Math.min(100, (pet.hatchProgress || 0) + 25);
       setPet({ hatchProgress: newProgress, birthYear: year });
-      syncToBackend({ hatchProgress: newProgress, birthYear: year });
+      // Note: syncToBackend removed - data will sync automatically
     }
   };
 
@@ -417,7 +490,7 @@ export function PetScreen() {
       <div className="flex flex-col items-center justify-center relative" style={{ backgroundColor: 'transparent', minHeight: 'calc(100vh - 80px)', padding: '20px' }}>
         {/* Egg Display */}
         <div className="flex flex-col items-center">
-          <div style={{ fontSize: '14px', color: 'rgba(255,255,255,0.6)', marginBottom: '16px' }}>
+          <div style={{ fontSize: 'var(--fs-base)', color: 'rgba(255,255,255,0.6)', marginBottom: 'clamp(12px, 3vw, 20px)' }}>
             Your egg is waiting to hatch!
           </div>
           
@@ -491,13 +564,13 @@ export function PetScreen() {
           </div>
 
           {/* Progress Bar */}
-          <div style={{ width: '200px', marginTop: '24px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>Hatch Progress</span>
-              <span style={{ color: '#ffd700', fontSize: '12px', fontWeight: '600' }}>{pet.hatchProgress || 0}%</span>
+          <div style={{ width: 'clamp(160px, 50vw, 280px)', marginTop: 'clamp(16px, 4vw, 32px)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'clamp(4px, 1vw, 8px)' }}>
+              <span style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'var(--fs-sm)' }}>Hatch Progress</span>
+              <span style={{ color: '#ffd700', fontSize: 'var(--fs-sm)', fontWeight: '600' }}>{pet.hatchProgress || 0}%</span>
             </div>
-            <div style={{ height: '8px', background: 'rgba(255,255,255,0.2)', borderRadius: '4px', overflow: 'hidden' }}>
-              <div style={{ width: `${pet.hatchProgress || 0}%`, height: '100%', background: 'linear-gradient(90deg, #ffd700, #f5a623)', borderRadius: '4px', transition: 'width 0.5s' }} />
+            <div style={{ height: 'clamp(6px, 1.5vw, 10px)', background: 'rgba(255,255,255,0.2)', borderRadius: 'clamp(3px, 0.8vw, 5px)', overflow: 'hidden' }}>
+              <div style={{ width: `${pet.hatchProgress || 0}%`, height: '100%', background: 'linear-gradient(90deg, #ffd700, #f5a623)', borderRadius: 'clamp(3px, 0.8vw, 5px)', transition: 'width 0.5s' }} />
             </div>
           </div>
 
@@ -506,13 +579,13 @@ export function PetScreen() {
             onClick={() => setShowHatchModal(true)}
             className="transition-all hover:scale-105 active:scale-95"
             style={{
-              marginTop: '24px',
-              padding: '14px 40px',
-              borderRadius: '16px',
+              marginTop: 'clamp(16px, 4vw, 32px)',
+              padding: 'clamp(12px, 3vw, 18px) clamp(32px, 8vw, 48px)',
+              borderRadius: 'clamp(12px, 3vw, 20px)',
               background: 'linear-gradient(135deg, #ffd700, #f5a623)',
               border: 'none',
               color: '#1a1a2e',
-              fontSize: '16px',
+              fontSize: 'var(--fs-md)',
               fontWeight: '700',
               cursor: 'pointer',
             }}
@@ -529,14 +602,36 @@ export function PetScreen() {
         {/* Hatch Modal - Task List */}
         {showHatchModal && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
-            <div style={{ background: 'rgba(255, 255, 255, 0.95)', borderRadius: '20px', padding: '16px', maxWidth: '300px', width: '100%', maxHeight: '70vh', overflowY: 'auto', backdropFilter: 'blur(20px)' }}>
+            <div style={{ 
+              background: 'rgba(255, 255, 255, 0.95)', 
+              borderRadius: 'clamp(16px, 4vw, 24px)', 
+              padding: 'clamp(12px, 3vw, 20px)', 
+              maxWidth: 'clamp(280px, 85vw, 360px)', 
+              width: '100%', 
+              maxHeight: '70vh', 
+              overflowY: 'auto', 
+              backdropFilter: 'blur(20px)' 
+            }}>
               {showBirthYearInput ? (
                 <>
                   {/* Birth Year Input */}
-                  <button onClick={() => setShowBirthYearInput(false)} className="absolute top-3 right-3" style={{ background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%', width: '26px', height: '26px', color: '#333', cursor: 'pointer', fontSize: '12px' }}>✕</button>
+                  <button 
+                    onClick={() => setShowBirthYearInput(false)} 
+                    className="absolute top-3 right-3" 
+                    style={{ 
+                      background: 'rgba(0,0,0,0.1)', 
+                      border: 'none', 
+                      borderRadius: '50%', 
+                      width: 'clamp(22px, 5vw, 30px)', 
+                      height: 'clamp(22px, 5vw, 30px)', 
+                      color: '#333', 
+                      cursor: 'pointer', 
+                      fontSize: 'var(--fs-sm)' 
+                    }}
+                  >✕</button>
                   <div className="text-center mb-3">
-                    <span style={{ fontSize: '40px' }}>🎂</span>
-                    <h3 style={{ color: '#1a1a2e', fontSize: '16px', fontWeight: '700', marginTop: '6px' }}>Enter Your Birth Year</h3>
+                    <span style={{ fontSize: 'clamp(32px, 8vw, 48px)' }}>🎂</span>
+                    <h3 style={{ color: '#1a1a2e', fontSize: 'var(--fs-md)', fontWeight: '700', marginTop: 'clamp(4px, 1vw, 8px)' }}>Enter Your Birth Year</h3>
                   </div>
                   
                   <input
@@ -551,7 +646,7 @@ export function PetScreen() {
                       border: '2px solid rgba(0,0,0,0.1)',
                       background: 'rgba(0,0,0,0.05)',
                       color: '#1a1a2e',
-                      fontSize: '16px',
+                      fontSize: 'var(--fs-md)',
                       textAlign: 'center',
                       outline: 'none',
                     }}
@@ -606,7 +701,7 @@ export function PetScreen() {
                         margin: '0 auto',
                       }}
                     />
-                    <h3 style={{ color: '#1a1a2e', fontSize: '16px', fontWeight: '700', marginTop: '6px' }}>Hatch Your Pet!</h3>
+                    <h3 style={{ color: '#1a1a2e', fontSize: 'var(--fs-md)', fontWeight: '700', marginTop: '6px' }}>Hatch Your Pet!</h3>
                     <p style={{ color: 'rgba(0,0,0,0.5)', fontSize: '12px', marginTop: '2px' }}>Complete all tasks to hatch your egg</p>
                   </div>
 
@@ -736,43 +831,53 @@ export function PetScreen() {
 
   // Pet đã nở - hiển thị giao diện chính
   return (
-    <div className="flex flex-col relative" style={{ backgroundColor: 'transparent', height: 'calc(100vh - 160px)', overflow: 'visible' }}>
+    <div className="flex flex-col relative" style={{ backgroundColor: 'transparent', height: 'calc(100vh - 160px)', overflow: 'visible', paddingBottom: '80px' }}>
       {/* Pet Info - Top Left */}
       <div className="flex items-center justify-between" style={{ marginTop: '16px', marginBottom: '8px', marginLeft: '20px', marginRight: '20px' }}>
         <div className="flex items-center">
           <div 
             className="relative flex items-center justify-center mr-3" 
-            style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'linear-gradient(135deg, #4facfe, #00f2fe)' }}
+            style={{ 
+              width: 'clamp(32px, 8vw, 48px)', 
+              height: 'clamp(32px, 8vw, 48px)', 
+              borderRadius: '50%', 
+              background: 'linear-gradient(135deg, #4facfe, #00f2fe)' 
+            }}
           >
             <svg className="absolute" viewBox="0 0 40 40" style={{ width: '100%', height: '100%', transform: 'rotate(-90deg)' }}>
               <circle cx="20" cy="20" r="16" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="3" />
               <circle cx="20" cy="20" r="16" fill="none" stroke="#fff" strokeWidth="3" strokeDasharray={`${(pet.exp / pet.maxExp) * 100} 100`} strokeLinecap="round" />
             </svg>
-            <span style={{ fontSize: '14px', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
+            <span style={{ fontSize: 'var(--fs-base)', fontWeight: '700', color: '#fff' }}>{pet.level}</span>
           </div>
           <div>
-            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '16px', fontWeight: '600' }}>{petName}</div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}>EXP: {pet.exp}/{pet.maxExp}</div>
+            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 'var(--fs-md)', fontWeight: '600' }}>{petName}</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'var(--fs-sm)' }}>EXP: {pet.exp}/{pet.maxExp}</div>
           </div>
         </div>
 
         {/* Energy Display - Top Right */}
         <div className="flex items-center gap-2">
-          <span style={{ fontSize: '16px' }}>⚡</span>
+          <span style={{ fontSize: 'var(--fs-md)' }}>⚡</span>
           <div>
-            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: '14px', fontWeight: '600' }}>
+            <div style={{ color: 'rgba(255,255,255,0.9)', fontSize: 'var(--fs-md)', fontWeight: '600' }}>
               {energy.currentEnergy}/{energy.maxEnergy}
             </div>
-            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: '10px' }}>Energy</div>
+            <div style={{ color: 'rgba(255,255,255,0.6)', fontSize: 'var(--fs-xs)' }}>Energy</div>
           </div>
         </div>
       </div>
 
       {/* Storage Display - Above Pet */}
-      <div className="flex flex-col items-center" style={{ marginTop: '10px', marginBottom: '15px' }}>
-        <div className="flex items-center gap-3">
-          <span style={{ fontSize: '28px' }}>🪙</span>
-          <span style={{ fontSize: '42px', fontWeight: '700', color: '#ffd700' }}>{pet.pendingCoins}</span>
+      <div className="flex flex-col items-center" style={{ marginTop: '20px', marginBottom: '25px' }}>
+        <div className="flex items-center gap-4">
+          <span style={{ fontSize: 'clamp(32px, 8vw, 48px)' }}>🪙</span>
+          <span style={{ 
+            fontSize: 'clamp(36px, 10vw, 56px)', 
+            fontWeight: '700', 
+            color: '#ffd700',
+            textShadow: '0 2px 8px rgba(255, 215, 0, 0.3)'
+          }}>{pet.pendingCoins}</span>
         </div>
       </div>
 
@@ -782,7 +887,7 @@ export function PetScreen() {
           <div style={{ 
             position: 'absolute', 
             top: '10%', 
-            fontSize: '28px', 
+            fontSize: 'var(--fs-xl)', 
             fontWeight: '700',
             color: '#ffd700',
             textShadow: '0 0 20px rgba(255,215,0,0.8), 0 2px 4px rgba(0,0,0,0.3)',
@@ -820,63 +925,65 @@ export function PetScreen() {
       {/* Spacer to push content up and make room for fixed elements */}
       <div style={{ flex: 1, minHeight: '30px' }} />
 
-      {/* Claim Button - Separate from care bar */}
+      {/* Claim Button - Centered and separate */}
       <div 
         className="absolute left-1/2 transform -translate-x-1/2"
         style={{ 
-          bottom: '50px',
+          bottom: '20px', // Adjusted to be above the care bar
           zIndex: 10
         }}
       >
         <button 
           onClick={collectCoins} 
-          disabled={pet.pendingCoins <= 0} 
+          disabled={!canClaim() || isClaimingCoins} 
           className="transition-all hover:scale-105 active:scale-95"
           style={{ 
-            padding: '10px 28px', 
-            borderRadius: '14px', 
-            background: pet.pendingCoins > 0 ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(100,100,100,0.3)', 
+            padding: '8px 20px', // Reduced from 10px 24px to 8px 20px
+            borderRadius: '12px', // Slightly smaller border radius
+            background: canClaim() && !isClaimingCoins ? 'linear-gradient(135deg, #ffd700, #f5a623)' : 'rgba(100,100,100,0.3)', 
             border: 'none', 
-            color: pet.pendingCoins > 0 ? '#1a1a1f' : 'rgba(0,0,0,0.4)', 
-            fontSize: '14px', 
+            color: canClaim() && !isClaimingCoins ? '#1a1a1f' : 'rgba(0,0,0,0.4)', 
+            fontSize: 'var(--fs-md)', // Back to medium font size
             fontWeight: '700', 
-            cursor: pet.pendingCoins > 0 ? 'pointer' : 'not-allowed',
-            boxShadow: pet.pendingCoins > 0 ? '0 4px 20px rgba(255,215,0,0.4)' : 'none'
+            cursor: canClaim() && !isClaimingCoins ? 'pointer' : 'not-allowed',
+            boxShadow: canClaim() && !isClaimingCoins ? '0 3px 12px rgba(255,215,0,0.4)' : 'none', // Smaller shadow
+            transform: showCoinAnimation ? 'scale(0.95)' : 'scale(1)',
+            opacity: showCoinAnimation ? 0.8 : 1,
           }}
         >
-          {pet.pendingCoins > 0 ? 'Claim' : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
+          {isClaimingCoins ? 'Claiming...' : canClaim() ? (showCoinAnimation ? 'Claimed!' : 'Claim') : `Next in ${Math.floor(coinTimer / 60)}:${(coinTimer % 60).toString().padStart(2, '0')}`}
         </button>
       </div>
 
-      {/* Care Actions Bar - Separate */}
+      {/* Care Actions Bar - Bottom with full rounded rectangle */}
       <div 
-        className="absolute bottom-0 left-1/2 transform -translate-x-1/2"
+        className="absolute left-1/2 transform -translate-x-1/2"
         style={{ 
+          bottom: '-70px', // Moved up from bottom edge
           background: 'rgba(255, 255, 255, 0.95)', 
-          borderRadius: '18px', 
+          borderRadius: '16px', // Slightly smaller rounded corners
           border: '1px solid rgba(255, 255, 255, 0.4)', 
           backdropFilter: 'blur(20px)',
-          width: '240px',
-          marginBottom: '-30px',
+          width: '240px', // Reduced from 240px to 200px
           zIndex: 5,
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-          padding: '8px 12px 12px 12px'
+          boxShadow: '0 4px 20px rgba(0, 0, 0, 0.1)', // Shadow going down
+          padding: '6px 10px' // Slightly reduced vertical padding but not too much
         }}
       >
         <div className="flex justify-around items-center">
-          <button onClick={handleFeed} className="flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95" style={{ background: 'transparent', border: 'none', padding: '6px 10px', cursor: 'pointer' }}>
-            <img src="/icons/mission.png" alt="Missions" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
-            <span style={{ color: '#1a1a2e', fontSize: '11px', fontWeight: '600' }}>Missions</span>
+          <button onClick={handleFeed} className="flex flex-col items-center gap-0 transition-all hover:scale-105 active:scale-95" style={{ background: 'transparent', border: 'none', padding: '3px 6px', cursor: 'pointer' }}>
+            <img src="/icons/mission.png" alt="Missions" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            <span style={{ color: '#1a1a2e', fontSize: 'var(--fs-xs)', fontWeight: '600' }}>Missions</span>
           </button>
-          <div style={{ width: '1px', height: '32px', background: 'rgba(0,0,0,0.1)' }} />
-          <button onClick={handleBoost} className="flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95" style={{ background: 'transparent', border: 'none', padding: '6px 10px', cursor: 'pointer' }}>
-            <img src="/icons/care.png" alt="Care" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
-            <span style={{ color: '#1a1a2e', fontSize: '11px', fontWeight: '600' }}>Care</span>
+          <div style={{ width: '1px', height: '24px', background: 'rgba(0,0,0,0.1)' }} />
+          <button onClick={handleBoost} className="flex flex-col items-center gap-0 transition-all hover:scale-105 active:scale-95" style={{ background: 'transparent', border: 'none', padding: '3px 6px', cursor: 'pointer' }}>
+            <img src="/icons/care.png" alt="Care" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            <span style={{ color: '#1a1a2e', fontSize: 'var(--fs-xs)', fontWeight: '600' }}>Care</span>
           </button>
-          <div style={{ width: '1px', height: '32px', background: 'rgba(0,0,0,0.1)' }} />
-          <button onClick={() => setShowFriendsModal(true)} className="flex flex-col items-center gap-1 transition-all hover:scale-105 active:scale-95" style={{ padding: '6px 10px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
-            <img src="/icons/friend.png" alt="Friends" style={{ width: '24px', height: '24px', objectFit: 'contain' }} />
-            <span style={{ color: '#1a1a2e', fontSize: '11px', fontWeight: '600' }}>Friends</span>
+          <div style={{ width: '1px', height: '24px', background: 'rgba(0,0,0,0.1)' }} />
+          <button onClick={() => setShowFriendsModal(true)} className="flex flex-col items-center gap-0 transition-all hover:scale-105 active:scale-95" style={{ padding: '3px 6px', background: 'transparent', border: 'none', cursor: 'pointer' }}>
+            <img src="/icons/friend.png" alt="Friends" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            <span style={{ color: '#1a1a2e', fontSize: 'var(--fs-xs)', fontWeight: '600' }}>Friends</span>
           </button>
         </div>
       </div>
@@ -901,21 +1008,21 @@ export function PetScreen() {
             <div className="text-center mb-3">
               <div className="flex items-center justify-center gap-1 mb-1">
                 <span style={{ fontSize: '14px' }}>🪙</span>
-                <span style={{ fontSize: '18px', fontWeight: '700', color: '#f5a623' }}>{(user?.tokenBalance || 0).toLocaleString()}</span>
+                <span style={{ fontSize: 'var(--fs-md)', fontWeight: '700', color: '#f5a623' }}>{(user?.tokenBalance || 0).toLocaleString()}</span>
               </div>
-              <h2 style={{ fontSize: '16px', fontWeight: '700', color: '#1a1a2e' }}>Care for your pet!</h2>
+              <h2 style={{ fontSize: 'var(--fs-md)', fontWeight: '700', color: '#1a1a2e' }}>Care for your pet!</h2>
             </div>
             <div className="overflow-y-auto" style={{ maxHeight: 'calc(70vh - 100px)', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
               {petBoosts.map((boost) => (
                 <button key={boost.id} onClick={() => handleBuyBoost(boost)} disabled={(user?.tokenBalance || 0) < boost.cost} className="w-full mb-2 transition-all hover:scale-[1.02] active:scale-[0.98]" style={{ background: 'rgba(0,0,0,0.05)', borderRadius: '12px', padding: '10px', border: '1px solid rgba(0,0,0,0.08)', display: 'flex', alignItems: 'center', gap: '8px', opacity: (user?.tokenBalance || 0) < boost.cost ? 0.5 : 1, cursor: (user?.tokenBalance || 0) < boost.cost ? 'not-allowed' : 'pointer' }}>
                   <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, #fff8e1, #ffe082)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px', flexShrink: 0 }}>{boost.icon}</div>
                   <div className="flex-1 text-left">
-                    <div style={{ color: '#1a1a2e', fontSize: '13px', fontWeight: '600' }}>{boost.name}</div>
-                    <div style={{ color: 'rgba(0,0,0,0.5)', fontSize: '10px' }}>{boost.desc}</div>
+                    <div style={{ color: '#1a1a2e', fontSize: 'var(--fs-sm)', fontWeight: '600' }}>{boost.name}</div>
+                    <div style={{ color: 'rgba(0,0,0,0.5)', fontSize: 'var(--fs-xs)' }}>{boost.desc}</div>
                     <div className="flex items-center gap-1" style={{ marginTop: '2px' }}>
                       <span style={{ fontSize: '10px' }}>🪙</span>
-                      <span style={{ color: '#f5a623', fontWeight: '600', fontSize: '11px' }}>{boost.cost}</span>
-                      <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: '10px' }}>• L{boost.level}</span>
+                      <span style={{ color: '#f5a623', fontWeight: '600', fontSize: 'var(--fs-xs)' }}>{boost.cost}</span>
+                      <span style={{ color: 'rgba(0,0,0,0.4)', fontSize: 'var(--fs-xs)' }}>• L{boost.level}</span>
                     </div>
                   </div>
                   <span style={{ color: 'rgba(0,0,0,0.3)', fontSize: '14px' }}>›</span>
@@ -936,9 +1043,9 @@ export function PetScreen() {
               <>
                 {/* Recover Inviter View */}
                 <div>
-                  <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#1a1a2e' }}>Recover inviter</h2>
+                  <h2 style={{ fontSize: 'var(--fs-lg)', fontWeight: '700', color: '#1a1a2e' }}>Recover inviter</h2>
                   
-                  <p style={{ fontSize: '14px', color: 'rgba(0,0,0,0.6)', marginTop: '12px', lineHeight: 1.5 }}>
+                  <p style={{ fontSize: 'var(--fs-md)', color: 'rgba(0,0,0,0.6)', marginTop: '12px', lineHeight: 1.5 }}>
                     You can link the account that invited you if this did not happen automatically.
                   </p>
                   
@@ -956,7 +1063,7 @@ export function PetScreen() {
                       border: '1px solid rgba(0,0,0,0.15)',
                       background: 'rgba(0,0,0,0.03)',
                       color: '#1a1a2e',
-                      fontSize: '14px',
+                      fontSize: 'var(--fs-md)',
                       outline: 'none',
                     }}
                   />
@@ -1132,6 +1239,43 @@ export function PetScreen() {
               Get referral link
             </button>
           </div>
+        </div>
+      )}
+
+      {/* Debug Info - Only show in development */}
+      {process.env.NODE_ENV === 'development' && (
+        <div className="fixed top-4 right-4 z-50">
+          <button
+            onClick={() => setShowDebugInfo(!showDebugInfo)}
+            className="px-3 py-1 bg-red-500 text-white text-xs rounded"
+          >
+            Debug
+          </button>
+          {showDebugInfo && (
+            <div className="absolute top-8 right-0 w-80 max-h-96 overflow-auto bg-white border rounded shadow-lg p-2 text-xs">
+              <h3 className="font-bold mb-2">Pet Debug Info</h3>
+              <div className="mb-2">
+                <strong>Pet State:</strong>
+                <pre className="bg-gray-100 p-1 rounded text-xs overflow-auto">
+                  {JSON.stringify(pet, null, 2)}
+                </pre>
+              </div>
+              {debugData && (
+                <div className="mb-2">
+                  <strong>{debugData.type}:</strong>
+                  <pre className="bg-gray-100 p-1 rounded text-xs overflow-auto">
+                    {JSON.stringify(debugData.data, null, 2)}
+                  </pre>
+                </div>
+              )}
+              <div className="mb-2">
+                <strong>User:</strong>
+                <pre className="bg-gray-100 p-1 rounded text-xs overflow-auto">
+                  {JSON.stringify(user, null, 2)}
+                </pre>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

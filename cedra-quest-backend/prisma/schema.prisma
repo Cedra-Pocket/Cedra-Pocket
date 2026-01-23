@@ -9,57 +9,60 @@ datasource db {
 }
 
 model quests {
-  id              Int             @id @default(autoincrement())
-  title           String          @db.VarChar(255)
+  id              Int              @id @default(autoincrement())
+  title           String           @db.VarChar(255)
   description     String?
   type            quest_type
-  category        String?         @db.VarChar(50)
-  config          Json            @default("{}")
-  reward_amount   Int             @default(0)
-  frequency       quest_frequency @default(ONCE)
-  is_active       Boolean         @default(true)
-  created_at      DateTime        @default(now()) @db.Timestamptz(6)
-  end_date        DateTime?       @db.Timestamptz(6)
-  icon_url        String?         @db.VarChar(500)
+  category        String?          @db.VarChar(50)
+  config          Json?            @default("{}") @db.Json
+  reward_amount   Int?             @default(0)
+  frequency       quest_frequency? @default(ONCE)
+  is_active       Boolean?         @default(true)
+  created_at      DateTime?        @default(now()) @db.Timestamptz(6)
+  end_date        DateTime?        @db.Timestamptz(6)
+  icon_url        String?          @db.VarChar(500)
   max_completions Int?
-  start_date      DateTime?       @db.Timestamptz(6)
-  updated_at      DateTime        @default(now()) @db.Timestamptz(6)
-  xp_reward       Int             @default(0)
-  reward_type     reward_type     @default(POINT)
+  start_date      DateTime?        @db.Timestamptz(6)
+  updated_at      DateTime?        @default(now()) @db.Timestamptz(6)
+  xp_reward       Int?             @default(0)
+  reward_type     reward_type?     @default(POINT)
+  user_quests     user_quests[]
 
-  @@index([category])
-  @@index([is_active])
-  @@index([type])
+  @@index([category], map: "idx_quests_category")
+  @@index([is_active], map: "idx_quests_is_active")
+  @@index([type], map: "idx_quests_type")
 }
 
 model referral_logs {
-  id                BigInt   @id @default(autoincrement())
+  id                BigInt    @id @default(autoincrement())
   referrer_id       BigInt
   referee_id        BigInt
-  commission_amount Int      @default(0)
-  created_at        DateTime @default(now()) @db.Timestamptz(6)
-  bonus_type        String?  @db.VarChar(50)
+  commission_amount Int?      @default(0)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  bonus_type        String?   @db.VarChar(50)
 
-  @@index([created_at])
-  @@index([referee_id])
-  @@index([referrer_id])
+  @@index([created_at], map: "idx_referral_logs_created_at")
+  @@index([referee_id], map: "idx_referral_logs_referee_id")
+  @@index([referrer_id], map: "idx_referral_logs_referrer_id")
 }
 
 model user_quests {
-  id           BigInt       @id @default(autoincrement())
+  id           BigInt        @id @default(autoincrement())
   user_id      BigInt
   quest_id     Int
-  status       quest_status @default(PENDING)
-  proof_data   Json?
-  completed_at DateTime?    @db.Timestamptz(6)
-  claimed_at   DateTime?    @db.Timestamptz(6)
-  created_at   DateTime     @default(now()) @db.Timestamptz(6)
-  progress     Int          @default(0)
+  status       quest_status? @default(PENDING)
+  proof_data   Json?         @db.Json
+  completed_at DateTime?     @db.Timestamptz(6)
+  claimed_at   DateTime?     @db.Timestamptz(6)
+  created_at   DateTime?     @default(now()) @db.Timestamptz(6)
+  progress     Int?          @default(0)
+  quests       quests        @relation(fields: [quest_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users        users         @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@unique([user_id, quest_id], map: "unique_user_quest")
-  @@index([quest_id])
-  @@index([status])
-  @@index([user_id])
+  @@unique([user_id, quest_id])
+  @@index([quest_id], map: "idx_user_quests_quest_id")
+  @@index([status], map: "idx_user_quests_status")
+  @@index([user_id], map: "idx_user_quests_user_id")
 }
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
@@ -69,72 +72,73 @@ model users {
   public_key           String             @db.VarChar(255)
   username_at_creation String?            @db.VarChar(255)
   username             String?            @db.VarChar(255)
-  is_wallet_connected  Boolean            @default(true)
-  total_points         BigInt             @default(0)
+  is_wallet_connected  Boolean?           @default(true)
+  total_points         BigInt?            @default(0)
   referral_code        String?            @unique @db.VarChar(20)
   referrer_id          BigInt?
-  created_at           DateTime           @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime           @default(now()) @db.Timestamptz(6)
+  created_at           DateTime?          @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime?          @default(now()) @db.Timestamptz(6)
   avatar_url           String?            @db.VarChar(500)
-  current_xp           Int                @default(0)
-  daily_streak         Int                @default(0)
+  current_xp           Int?               @default(0)
+  daily_streak         Int?               @default(0)
   last_daily_claim     DateTime?          @db.Timestamptz(6)
   last_spin_reset      DateTime?          @db.Timestamptz(6)
-  level                Int                @default(1)
-  role                 user_role          @default(USER)
-  spins_left           Int                @default(3)
-  status               user_status        @default(ACTIVE)
-  current_rank         user_rank          @default(BRONZE)
-  lifetime_points      BigInt             @default(0)
-  pet_current_xp       Int                @default(0)
-  pet_last_claim_time  DateTime           @default(now()) @db.Timestamptz(6)
-  pet_level            Int                @default(1)
+  level                Int?               @default(1)
+  role                 user_role?         @default(USER)
+  spins_left           Int?               @default(3)
+  status               user_status?       @default(ACTIVE)
+  current_rank         user_rank?         @default(BRONZE)
+  lifetime_points      BigInt?            @default(0)
+  pet_current_xp       Int?               @default(0)
+  pet_last_claim_time  DateTime?          @default(now()) @db.Timestamptz(6)
+  pet_level            Int?               @default(1)
   game_sessions        game_sessions[]
   feeding_logs         pet_feeding_logs[]
   pet                  pets?
   energy               user_energy?
-  referrer             users?             @relation("usersTousers", fields: [referrer_id], references: [telegram_id], map: "fk_referrer")
+  user_quests          user_quests[]
+  referrer             users?             @relation("usersTousers", fields: [referrer_id], references: [telegram_id], onDelete: NoAction, onUpdate: NoAction, map: "fk_referrer")
   referees             users[]            @relation("usersTousers")
 
   @@index([referral_code], map: "idx_users_referral_code")
-  @@index([total_points(sort: Desc)])
-  @@index([lifetime_points(sort: Desc)])
   @@index([wallet_address], map: "idx_wallet_address")
+  @@index([lifetime_points(sort: Desc)], map: "idx_users_lifetime_points")
+  @@index([total_points(sort: Desc)], map: "idx_users_total_points")
 }
 
 model pets {
   id                 BigInt    @id @default(autoincrement())
   user_id            BigInt    @unique
-  level              Int       @default(1)
-  exp                Int       @default(0)
-  max_exp            Int       @default(100)
-  hunger             Int       @default(100)
-  happiness          Int       @default(100)
-  last_coin_time     DateTime  @default(now()) @db.Timestamptz(6)
-  pending_coins      Int       @default(0)
-  total_coins_earned BigInt    @default(0)
-  coin_rate          Decimal   @default(1.0) @db.Decimal(10, 2)
+  level              Int?      @default(1)
+  exp                Int?      @default(0)
+  max_exp            Int?      @default(100)
+  hunger             Int?      @default(100)
+  happiness          Int?      @default(100)
+  last_coin_time     DateTime? @default(now()) @db.Timestamptz(6)
+  pending_coins      Int?      @default(0)
+  total_coins_earned BigInt?   @default(0)
+  coin_rate          Decimal?  @default(1.0) @db.Decimal(10, 2)
   last_feed_time     DateTime? @db.Timestamptz(6)
   last_play_time     DateTime? @db.Timestamptz(6)
-  tier               pet_tier  @default(BRONZE)
-  created_at         DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at         DateTime  @default(now()) @db.Timestamptz(6)
-  user               users     @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+  tier               pet_tier? @default(BRONZE)
+  created_at         DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at         DateTime? @default(now()) @db.Timestamptz(6)
+  user               users     @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([user_id])
-  @@index([last_coin_time])
+  @@index([last_coin_time], map: "idx_pets_last_coin_time")
+  @@index([user_id], map: "idx_pets_user_id")
 }
 
 model daily_rewards {
-  id            BigInt      @id @default(autoincrement())
+  id            BigInt       @id @default(autoincrement())
   user_id       BigInt
   day_number    Int
   reward_amount Int
-  reward_type   reward_type @default(POINT)
-  claimed_at    DateTime    @default(now()) @db.Timestamptz(6)
+  reward_type   reward_type? @default(POINT)
+  claimed_at    DateTime?    @default(now()) @db.Timestamptz(6)
 
-  @@index([claimed_at])
-  @@index([user_id])
+  @@index([claimed_at], map: "idx_daily_rewards_claimed_at")
+  @@index([user_id], map: "idx_daily_rewards_user_id")
 }
 
 model point_transactions {
@@ -144,82 +148,82 @@ model point_transactions {
   type         transaction_type
   description  String?          @db.VarChar(255)
   reference_id String?          @db.VarChar(100)
-  created_at   DateTime         @default(now()) @db.Timestamptz(6)
+  created_at   DateTime?        @default(now()) @db.Timestamptz(6)
 
-  @@index([created_at])
-  @@index([type])
-  @@index([user_id])
+  @@index([created_at], map: "idx_point_transactions_created_at")
+  @@index([type], map: "idx_point_transactions_type")
+  @@index([user_id], map: "idx_point_transactions_user_id")
 }
 
 model spin_history {
-  id            BigInt      @id @default(autoincrement())
+  id            BigInt       @id @default(autoincrement())
   user_id       BigInt
   reward_amount Int
-  reward_type   reward_type @default(POINT)
-  created_at    DateTime    @default(now()) @db.Timestamptz(6)
+  reward_type   reward_type? @default(POINT)
+  created_at    DateTime?    @default(now()) @db.Timestamptz(6)
 
-  @@index([created_at])
-  @@index([user_id])
+  @@index([created_at], map: "idx_spin_history_created_at")
+  @@index([user_id], map: "idx_spin_history_user_id")
 }
 
 model game_cycles {
-  id            Int      @id @default(autoincrement())
-  cycle_number  Int      @unique
-  growth_rate   Decimal  @db.Decimal(10, 4)
-  max_speed_cap Decimal  @db.Decimal(10, 4)
-  start_date    DateTime @db.Timestamptz(6)
-  end_date      DateTime @db.Timestamptz(6)
-  is_active     Boolean  @default(false)
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  updated_at    DateTime @default(now()) @db.Timestamptz(6)
+  id            Int       @id @default(autoincrement())
+  cycle_number  Int       @unique
+  growth_rate   Decimal   @db.Decimal(10, 4)
+  max_speed_cap Decimal   @db.Decimal(10, 4)
+  start_date    DateTime  @db.Timestamptz(6)
+  end_date      DateTime  @db.Timestamptz(6)
+  is_active     Boolean?  @default(false)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at    DateTime? @default(now()) @db.Timestamptz(6)
 
-  @@index([is_active])
-  @@index([cycle_number])
+  @@index([cycle_number], map: "idx_game_cycles_cycle_number")
+  @@index([is_active], map: "idx_game_cycles_is_active")
 }
 
 model user_energy {
-  id             Int      @id @default(autoincrement())
-  user_id        BigInt   @unique
-  current_energy Int      @default(10)
-  max_energy     Int      @default(10)
-  last_update    DateTime @default(now()) @db.Timestamptz(6)
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime @default(now()) @db.Timestamptz(6)
-  user           users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+  id             Int       @id @default(autoincrement())
+  user_id        BigInt    @unique
+  current_energy Int?      @default(10)
+  max_energy     Int?      @default(10)
+  last_update    DateTime? @default(now()) @db.Timestamptz(6)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+  user           users     @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([user_id])
-  @@index([last_update])
+  @@index([last_update], map: "idx_user_energy_last_update")
+  @@index([user_id], map: "idx_user_energy_user_id")
 }
 
 model pet_feeding_logs {
-  id                Int      @id @default(autoincrement())
+  id                Int       @id @default(autoincrement())
   user_id           BigInt
   points_spent      Int
   xp_gained         Int
-  feed_date         String   @db.VarChar(10)
+  feed_date         String    @db.VarChar(10)
   total_daily_spent Int
-  created_at        DateTime @default(now()) @db.Timestamptz(6)
-  user              users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  user              users     @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([user_id, feed_date])
-  @@index([user_id])
-  @@index([feed_date])
+  @@index([feed_date], map: "idx_pet_feeding_logs_feed_date")
+  @@index([user_id], map: "idx_pet_feeding_logs_user_id")
 }
 
 model game_sessions {
-  id            Int      @id @default(autoincrement())
+  id            Int       @id @default(autoincrement())
   user_id       BigInt
-  game_type     String   @db.VarChar(50)
+  game_type     String    @db.VarChar(50)
   score         Int
   points_earned Int
-  energy_used   Int      @default(1)
+  energy_used   Int?      @default(1)
   duration      Int?
-  created_at    DateTime @default(now()) @db.Timestamptz(6)
-  user          users    @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade)
+  created_at    DateTime? @default(now()) @db.Timestamptz(6)
+  user          users     @relation(fields: [user_id], references: [telegram_id], onDelete: Cascade, onUpdate: NoAction)
 
-  @@index([user_id])
-  @@index([game_type])
-  @@index([created_at])
+  @@index([created_at], map: "idx_game_sessions_created_at")
+  @@index([game_type], map: "idx_game_sessions_game_type")
+  @@index([user_id], map: "idx_game_sessions_user_id")
 }
 
 enum pet_tier {

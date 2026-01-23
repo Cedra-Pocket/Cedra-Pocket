@@ -121,59 +121,65 @@ export function GameScreen() {
   };
 
   return (
-    <div className="flex flex-col" style={{ paddingTop: 'clamp(12px, 3vw, 18px)', backgroundColor: 'transparent', height: '100%', overflow: 'hidden' }}>
+    <div 
+      className="flex flex-col text-white game-screen-container"
+      style={{ 
+        backgroundColor: 'transparent',
+        padding: 'clamp(16px, 4vw, 24px) clamp(20px, 5vw, 32px) clamp(200px, 50vw, 250px) clamp(20px, 5vw, 32px)',
+        // Enable full page scrolling
+      }}
+    >
       {/* Categories Filter */}
-      <div 
-        ref={categoryRef}
-        onWheel={handleCategoryWheel}
-        onMouseDown={handleCategoryMouseDown}
-        onMouseMove={handleCategoryMouseMove}
-        onMouseUp={handleCategoryMouseUp}
-        onMouseLeave={handleCategoryMouseLeave}
-        className="flex hide-scrollbar"
-        style={{ 
-          overflowX: 'auto', 
-          paddingLeft: 'clamp(8px, 2vw, 12px)', 
-          paddingRight: 'clamp(8px, 2vw, 12px)',
-          paddingBottom: 'clamp(8px, 2vw, 12px)',
-          marginBottom: 'clamp(10px, 2.5vw, 14px)',
-          WebkitOverflowScrolling: 'touch',
-          cursor: isCategoryDragging ? 'grabbing' : 'grab',
-          userSelect: 'none',
-          gap: 'clamp(6px, 1.5vw, 10px)',
-        }}
-      >
-        {CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            onClick={() => setSelectedCategory(cat.id)}
-            className="flex items-center whitespace-nowrap transition-all"
-            style={{
-              background: selectedCategory === cat.id 
-                ? 'linear-gradient(135deg, #ffffff, #e8dcc8)' 
-                : 'linear-gradient(135deg, rgba(255,255,255,0.8), rgba(232,220,200,0.6))',
-              border: '1px solid rgba(255,255,255,0.5)',
-              color: '#1a1a2e',
-              fontSize: 'var(--fs-sm)',
-              fontWeight: selectedCategory === cat.id ? '600' : '400',
-              padding: 'clamp(5px, 1.2vw, 7px) clamp(10px, 2.5vw, 14px)',
-              borderRadius: 'clamp(6px, 1.5vw, 8px)',
-              gap: 'clamp(4px, 1vw, 6px)',
-            }}
-          >
-            <span style={{ fontSize: 'var(--fs-sm)' }}>{cat.icon}</span>
-            <span>{cat.name}</span>
-          </button>
-        ))}
+      <div style={{ marginBottom: 'clamp(16px, 4vw, 24px)' }}>
+        <div 
+          ref={categoryRef}
+          onWheel={handleCategoryWheel}
+          onMouseDown={handleCategoryMouseDown}
+          onMouseMove={handleCategoryMouseMove}
+          onMouseUp={handleCategoryMouseUp}
+          onMouseLeave={handleCategoryMouseLeave}
+          className="flex hide-scrollbar"
+          style={{ 
+            overflowX: 'auto', 
+            paddingBottom: 'clamp(8px, 2vw, 12px)',
+            WebkitOverflowScrolling: 'touch',
+            cursor: isCategoryDragging ? 'grabbing' : 'grab',
+            userSelect: 'none',
+            gap: 'clamp(6px, 1.5vw, 10px)',
+          }}
+        >
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setSelectedCategory(cat.id)}
+              className="flex items-center whitespace-nowrap transition-all"
+              style={{
+                background: selectedCategory === cat.id 
+                  ? 'linear-gradient(135deg, #ffffff, #e8dcc8)' 
+                  : 'linear-gradient(135deg, rgba(255,255,255,0.8), rgba(232,220,200,0.6))',
+                border: '1px solid rgba(255,255,255,0.5)',
+                color: '#1a1a2e',
+                fontSize: 'var(--fs-sm)',
+                fontWeight: selectedCategory === cat.id ? '600' : '400',
+                padding: 'clamp(5px, 1.2vw, 7px) clamp(10px, 2.5vw, 14px)',
+                borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                gap: 'clamp(4px, 1vw, 6px)',
+              }}
+            >
+              <span style={{ fontSize: 'var(--fs-sm)' }}>{cat.icon}</span>
+              <span>{cat.name}</span>
+            </button>
+          ))}
+        </div>
       </div>
 
-      {/* Trending Games Section - Above Featured */}
-      <div style={{ paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(10px, 2.5vw, 14px)' }}>
-        <h2 className="font-bold" style={{ fontSize: 'var(--fs-base)', color: '#1a1a2e', marginBottom: 'clamp(6px, 1.5vw, 10px)' }}>Trending games</h2>
-      </div>
-
-      {/* Featured Games Carousel */}
-      <div style={{ paddingLeft: 'clamp(8px, 2vw, 12px)', paddingRight: 'clamp(8px, 2vw, 12px)', marginBottom: 'clamp(12px, 3vw, 16px)' }}>
+      {/* Featured Games Section */}
+      <div style={{ marginBottom: 'clamp(24px, 6vw, 32px)' }}>
+        <h2 className="font-bold" style={{ fontSize: 'var(--fs-lg)', color: '#fff', marginBottom: 'clamp(12px, 3vw, 16px)' }}>
+          Featured Games
+        </h2>
+        
+        {/* Featured Games Carousel */}
         <div 
           ref={carouselRef}
           onWheel={handleWheel}
@@ -187,25 +193,27 @@ export function GameScreen() {
             WebkitOverflowScrolling: 'touch',
             cursor: isDragging ? 'grabbing' : 'grab',
             userSelect: 'none',
-            gap: 'clamp(10px, 2.5vw, 16px)',
+            gap: 'clamp(12px, 3vw, 20px)',
           }}
-        >  {FEATURED_GAMES.map((game) => (
+        >
+          {FEATURED_GAMES.map((game) => (
             <div
               key={game.id}
-              className="flex-shrink-0 relative overflow-hidden"
+              className="flex-shrink-0 relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
               style={{
-                width: 'clamp(150px, 42vw, 200px)',
-                height: 'clamp(85px, 24vw, 115px)',
-                borderRadius: 'clamp(10px, 2.5vw, 14px)',
-                background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-                border: '1px solid rgba(255,255,255,0.5)',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                width: 'clamp(200px, 55vw, 280px)',
+                height: 'clamp(120px, 32vw, 160px)',
+                borderRadius: 'clamp(12px, 3vw, 18px)',
+                background: 'rgba(255, 255, 255, 0.95)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                backdropFilter: 'blur(20px)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
               }}
             >
               {/* Game Image/Icon */}
               <div 
                 className="absolute inset-0 flex items-center justify-center"
-                style={{ fontSize: 'clamp(32px, 10vw, 48px)', opacity: 0.4 }}
+                style={{ fontSize: 'clamp(40px, 12vw, 60px)', opacity: 0.4 }}
               >
                 {game.image}
               </div>
@@ -215,24 +223,24 @@ export function GameScreen() {
                 className="absolute bottom-0 left-0 right-0 flex items-center justify-between"
                 style={{
                   background: 'linear-gradient(transparent, rgba(0,0,0,0.5))',
-                  borderRadius: '0 0 clamp(8px, 2vw, 12px) clamp(8px, 2vw, 12px)',
-                  padding: 'clamp(6px, 1.5vw, 10px)',
+                  borderRadius: `0 0 clamp(12px, 3vw, 18px) clamp(12px, 3vw, 18px)`,
+                  padding: 'clamp(8px, 2vw, 12px)',
                 }}
               >
-                <div className="flex items-center" style={{ gap: 'clamp(4px, 1vw, 8px)' }}>
+                <div className="flex items-center" style={{ gap: 'clamp(6px, 1.5vw, 10px)' }}>
                   <div 
                     className="flex items-center justify-center"
                     style={{
-                      width: 'clamp(20px, 6vw, 28px)',
-                      height: 'clamp(20px, 6vw, 28px)',
-                      borderRadius: 'clamp(5px, 1.2vw, 8px)',
+                      width: 'clamp(24px, 6vw, 32px)',
+                      height: 'clamp(24px, 6vw, 32px)',
+                      borderRadius: 'clamp(6px, 1.5vw, 10px)',
                       background: 'rgba(255,255,255,0.25)',
-                      fontSize: 'var(--fs-base)',
+                      fontSize: 'clamp(16px, 4vw, 20px)',
                     }}
                   >
                     {game.image}
                   </div>
-                  <span className="font-bold" style={{ fontSize: 'var(--fs-sm)', color: '#1a1a2e' }}>{game.name}</span>
+                  <span className="font-bold" style={{ fontSize: 'var(--fs-md)', color: '#fff' }}>{game.name}</span>
                 </div>
                 <button
                   onClick={() => handlePlayGame(game.name)}
@@ -242,8 +250,10 @@ export function GameScreen() {
                     color: '#1a1a2e',
                     fontSize: 'var(--fs-sm)',
                     boxShadow: '0 4px 15px rgba(255,200,0,0.3)',
-                    padding: 'clamp(4px, 1vw, 6px) clamp(10px, 2.5vw, 14px)',
-                    borderRadius: 'clamp(4px, 1vw, 6px)',
+                    padding: 'clamp(6px, 1.5vw, 8px) clamp(12px, 3vw, 16px)',
+                    borderRadius: 'clamp(6px, 1.5vw, 8px)',
+                    border: 'none',
+                    cursor: 'pointer',
                   }}
                 >
                   PLAY
@@ -255,82 +265,89 @@ export function GameScreen() {
       </div>
 
       {/* All Games Section */}
-      <div 
-        className="hide-scrollbar"
-        style={{ 
-          paddingLeft: 'clamp(8px, 2vw, 12px)', 
-          paddingRight: 'clamp(8px, 2vw, 12px)',
-          overflowY: 'auto',
-          flex: 1,
-          minHeight: 0,
-          maxHeight: 'calc(100vh - clamp(220px, 55vw, 300px))',
-          paddingBottom: 'clamp(60px, 16vw, 80px)',
-        }}
-      >
-        <h2 className="font-bold" style={{ fontSize: 'var(--fs-base)', color: '#1a1a2e', marginBottom: 'clamp(6px, 1.5vw, 10px)' }}>All games</h2>
+      <div>
+        <h2 className="font-bold" style={{ fontSize: 'var(--fs-lg)', color: '#fff', marginBottom: 'clamp(12px, 3vw, 16px)' }}>
+          {selectedCategory === 'all' ? 'All Games' : `${CATEGORIES.find(c => c.id === selectedCategory)?.name} Games`}
+        </h2>
 
-        {/* Games List */}
-        <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 10px)' }}>
-          {filteredGames.map((game) => (
-            <div
-              key={game.id}
-              className="flex items-center rounded-xl transition-all hover:scale-[1.01]"
-              style={{
-                background: 'linear-gradient(135deg, #ffffff, #e8dcc8)',
-                border: '1px solid rgba(255,255,255,0.5)',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.05)',
-                padding: 'clamp(8px, 2vw, 12px) clamp(10px, 2.5vw, 14px) clamp(8px, 2vw, 12px) clamp(8px, 2vw, 12px)',
-                gap: 'clamp(8px, 2vw, 12px)',
-              }}
-            >
-              {/* Game Icon */}
-              <div 
-                className="flex items-center justify-center flex-shrink-0"
+        {/* Games List Container */}
+        <div style={{ paddingBottom: 'clamp(16px, 4vw, 24px)' }}>
+          <div className="grid grid-cols-1 gap-4">
+            {filteredGames.map((game) => (
+              <div
+                key={game.id}
+                className="flex items-center cursor-pointer transition-all hover:scale-[1.01]"
                 style={{
-                  width: 'clamp(32px, 9vw, 42px)',
-                  height: 'clamp(32px, 9vw, 42px)',
-                  borderRadius: 'clamp(6px, 1.5vw, 10px)',
-                  background: 'linear-gradient(135deg, rgba(255,255,255,0.8), rgba(232,220,200,0.5))',
-                  fontSize: 'var(--fs-lg)',
-                  boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3)',
+                  background: 'rgba(255, 255, 255, 0.95)',
+                  borderRadius: 'clamp(12px, 3vw, 18px)',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  backdropFilter: 'blur(20px)',
+                  boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+                  padding: 'clamp(12px, 3vw, 16px)',
+                  gap: 'clamp(10px, 2.5vw, 14px)',
+                  minHeight: 'clamp(70px, 18vw, 90px)',
                 }}
               >
-                {game.icon}
-              </div>
-
-              {/* Game Info */}
-              <div className="flex-1 min-w-0">
-                <h3 className="font-bold" style={{ fontSize: 'var(--fs-base)', marginBottom: 'clamp(1px, 0.3vw, 2px)', color: '#1a1a2e' }}>
-                  {game.name}
-                </h3>
-                <p 
-                  className="truncate"
-                  style={{ fontSize: 'var(--fs-sm)', color: 'rgba(0,0,0,0.6)' }}
+                {/* Game Icon */}
+                <div 
+                  className="flex items-center justify-center flex-shrink-0"
+                  style={{
+                    width: 'clamp(40px, 10vw, 56px)',
+                    height: 'clamp(40px, 10vw, 56px)',
+                    borderRadius: 'clamp(10px, 2.5vw, 14px)',
+                    background: 'linear-gradient(135deg, rgba(255,255,255,0.8), rgba(232,220,200,0.5))',
+                    fontSize: 'clamp(20px, 5vw, 28px)',
+                    boxShadow: 'inset 0 2px 4px rgba(255,255,255,0.3)',
+                  }}
                 >
-                  {game.description}
-                </p>
-              </div>
+                  {game.icon}
+                </div>
 
-              {/* Play Button */}
-              <button
-                onClick={() => handlePlayGame(game.name)}
-                className="font-bold transition-all hover:scale-105 flex-shrink-0"
-                style={{
-                  background: 'linear-gradient(135deg, #FFD700, #FFA500)',
-                  color: '#1a1a2e',
-                  fontSize: 'var(--fs-sm)',
-                  boxShadow: '0 4px 15px rgba(255,200,0,0.3)',
-                  padding: 'clamp(5px, 1.2vw, 7px) clamp(10px, 2.5vw, 14px)',
-                  borderRadius: 'clamp(4px, 1vw, 6px)',
-                  marginRight: 'clamp(2px, 0.5vw, 4px)',
-                }}
-              >
-                PLAY
-              </button>
-            </div>
-          ))}
+                {/* Game Info */}
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold" style={{ fontSize: 'var(--fs-md)', marginBottom: 'clamp(2px, 0.5vw, 4px)', color: '#1a1a2e' }}>
+                    {game.name}
+                  </h3>
+                  <p 
+                    className="truncate"
+                    style={{ fontSize: 'var(--fs-sm)', color: 'rgba(26,26,46,0.6)' }}
+                  >
+                    {game.description}
+                  </p>
+                </div>
+
+                {/* Play Button */}
+                <button
+                  onClick={() => handlePlayGame(game.name)}
+                  className="font-bold transition-all hover:scale-105 flex-shrink-0"
+                  style={{
+                    background: 'linear-gradient(135deg, #FFD700, #FFA500)',
+                    color: '#1a1a2e',
+                    fontSize: 'var(--fs-sm)',
+                    boxShadow: '0 4px 15px rgba(255,200,0,0.3)',
+                    padding: 'clamp(8px, 2vw, 12px) clamp(16px, 4vw, 20px)',
+                    borderRadius: 'clamp(8px, 2vw, 12px)',
+                    border: 'none',
+                    cursor: 'pointer',
+                  }}
+                >
+                  PLAY
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      <style jsx>{`
+        .hide-scrollbar {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </div>
   );
 }

@@ -11,8 +11,15 @@ export function AppScreen() {
   // Handle mouse wheel scroll for horizontal carousel (like GameScreen)
   const handleWheel = (e: React.WheelEvent<HTMLDivElement>) => {
     if (scrollContainerRef.current) {
-      e.preventDefault();
-      scrollContainerRef.current.scrollLeft += e.deltaY;
+      // Only prevent default and handle horizontal scroll if we're over the carousel
+      // and there's content to scroll horizontally
+      const container = scrollContainerRef.current;
+      const canScrollHorizontally = container.scrollWidth > container.clientWidth;
+      
+      if (canScrollHorizontally) {
+        e.preventDefault();
+        container.scrollLeft += e.deltaY;
+      }
     }
   };
 
@@ -41,51 +48,16 @@ export function AppScreen() {
   };
   return (
     <div 
-      className="flex flex-col text-white"
+      className="flex flex-col text-white app-screen-container"
       style={{ 
         backgroundColor: 'transparent',
-        padding: '20px 24px 20px'
+        padding: 'clamp(16px, 4vw, 24px) clamp(20px, 5vw, 32px) clamp(200px, 50vw, 250px) clamp(20px, 5vw, 32px)',
+        // Bỏ minHeight để cho phép scroll tự nhiên
       }}
     >
-      {/* Last Used App - Empty for now */}
-      <div 
-        className="flex items-center justify-between p-4 mb-6 cursor-pointer transition-all hover:scale-[1.02]"
-        style={{
-          background: 'rgba(255, 255, 255, 0.95)',
-          borderRadius: '16px',
-          border: '1px solid rgba(255,255,255,0.3)',
-          backdropFilter: 'blur(20px)',
-          minHeight: '80px'
-        }}
-      >
-        <div className="flex items-center gap-3">
-          <div 
-            className="flex items-center justify-center"
-            style={{
-              width: '48px',
-              height: '48px',
-              borderRadius: '12px',
-              background: 'rgba(26,26,46,0.1)',
-              fontSize: '24px'
-            }}
-          >
-            📱
-          </div>
-          <div>
-            <div style={{ fontSize: '16px', fontWeight: '600', color: '#1a1a2e' }}>
-              Last Used App
-            </div>
-            <div style={{ fontSize: '14px', color: 'rgba(26,26,46,0.6)' }}>
-              Coming soon...
-            </div>
-          </div>
-        </div>
-        <div style={{ fontSize: '20px', color: 'rgba(26,26,46,0.6)' }}>→</div>
-      </div>
-
       {/* Suggested for you */}
-      <div style={{ marginBottom: '32px' }}>
-        <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff', marginBottom: '16px' }}>
+      <div style={{ marginBottom: 'clamp(24px, 6vw, 40px)' }}>
+        <h2 style={{ fontSize: 'var(--fs-lg)', fontWeight: '700', color: '#fff', marginBottom: 'clamp(12px, 3vw, 20px)' }}>
           Suggested for you
         </h2>
         
@@ -103,7 +75,7 @@ export function AppScreen() {
             WebkitOverflowScrolling: 'touch',
             cursor: isDragging ? 'grabbing' : 'grab',
             userSelect: 'none',
-            gap: '16px',
+            gap: 'clamp(12px, 3vw, 20px)',
             width: '100%',
             maxWidth: '100vw'
           }}
@@ -114,22 +86,22 @@ export function AppScreen() {
               className="relative cursor-pointer transition-all hover:scale-[1.02]"
               style={{
                 background: 'rgba(255, 255, 255, 0.95)',
-                borderRadius: '20px',
-                padding: '24px',
+                borderRadius: 'clamp(16px, 4vw, 24px)',
+                padding: 'clamp(18px, 4.5vw, 28px)',
                 border: '1px solid rgba(255,255,255,0.3)',
                 backdropFilter: 'blur(20px)',
                 overflow: 'hidden',
-                minHeight: '160px',
-                width: '280px',
-                minWidth: '280px',
+                minHeight: 'clamp(140px, 35vw, 180px)',
+                width: 'clamp(240px, 65vw, 320px)',
+                minWidth: 'clamp(240px, 65vw, 320px)',
                 flexShrink: 0
               }}
             >
               <div style={{ position: 'relative', zIndex: 1 }}>
-                <h3 style={{ fontSize: '28px', fontWeight: '700', color: 'rgba(26,26,46,0.3)', marginBottom: '4px' }}>
+                <h3 style={{ fontSize: 'var(--fs-xl)', fontWeight: '700', color: 'rgba(26,26,46,0.3)', marginBottom: 'clamp(2px, 0.5vw, 6px)' }}>
                   App {index}
                 </h3>
-                <p style={{ fontSize: '16px', color: 'rgba(26,26,46,0.5)', marginBottom: '20px' }}>
+                <p style={{ fontSize: 'var(--fs-md)', color: 'rgba(26,26,46,0.5)', marginBottom: 'clamp(16px, 4vw, 24px)' }}>
                   Coming soon...
                 </p>
               </div>
@@ -142,20 +114,20 @@ export function AppScreen() {
                 <div 
                   className="flex items-center justify-center"
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
+                    width: 'clamp(40px, 10vw, 56px)',
+                    height: 'clamp(40px, 10vw, 56px)',
+                    borderRadius: 'clamp(10px, 2.5vw, 16px)',
                     background: 'rgba(26,26,46,0.1)',
-                    fontSize: '24px'
+                    fontSize: 'clamp(20px, 5vw, 28px)'
                   }}
                 >
                   🚀
                 </div>
                 <div>
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: 'rgba(26,26,46,0.4)' }}>App Name {index}</div>
-                  <div style={{ fontSize: '14px', color: 'rgba(26,26,46,0.3)' }}>Description</div>
+                  <div style={{ fontSize: 'var(--fs-md)', fontWeight: '600', color: 'rgba(26,26,46,0.4)' }}>App Name {index}</div>
+                  <div style={{ fontSize: 'var(--fs-sm)', color: 'rgba(26,26,46,0.3)' }}>Description</div>
                 </div>
-                <div style={{ marginLeft: 'auto', fontSize: '20px', color: 'rgba(26,26,46,0.6)' }}>›</div>
+                <div style={{ marginLeft: 'auto', fontSize: 'clamp(24px, 6vw, 32px)', color: 'rgba(26,26,46,0.6)' }}>›</div>
               </div>
             </div>
           ))}
@@ -165,54 +137,52 @@ export function AppScreen() {
       {/* Recent */}
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 style={{ fontSize: '24px', fontWeight: '700', color: '#fff' }}>
+          <h2 style={{ fontSize: 'var(--fs-lg)', fontWeight: '700', color: '#fff' }}>
             Recent
           </h2>
         </div>
 
-        {/* Scrollable Recent Apps Container */}
+        {/* Recent Apps Container */}
         <div 
-          className="hide-scrollbar"
           style={{
-            overflowY: 'auto',
-            maxHeight: 'calc(100vh - 480px)',
-            paddingBottom: '100px'
+            paddingBottom: 'clamp(16px, 4vw, 24px)'
           }}
         >
           <div className="grid grid-cols-1 gap-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8].map((index) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15].map((index) => (
               <div 
                 key={index}
                 className="flex items-center gap-3 p-4 cursor-pointer transition-all hover:scale-[1.01]"
                 style={{
                   background: 'rgba(255, 255, 255, 0.95)',
-                  borderRadius: '16px',
+                  borderRadius: 'clamp(12px, 3vw, 20px)',
                   border: '1px solid rgba(255,255,255,0.3)',
                   backdropFilter: 'blur(20px)',
-                  minHeight: '80px'
+                  minHeight: 'clamp(70px, 18vw, 90px)',
+                  padding: 'clamp(12px, 3vw, 18px)'
                 }}
               >
                 <div 
                   className="flex items-center justify-center"
                   style={{
-                    width: '48px',
-                    height: '48px',
-                    borderRadius: '12px',
+                    width: 'clamp(40px, 10vw, 56px)',
+                    height: 'clamp(40px, 10vw, 56px)',
+                    borderRadius: 'clamp(10px, 2.5vw, 16px)',
                     background: 'rgba(26,26,46,0.1)',
-                    fontSize: '24px'
+                    fontSize: 'clamp(20px, 5vw, 28px)'
                   }}
                 >
                   🔧
                 </div>
                 <div className="flex-1">
-                  <div style={{ fontSize: '16px', fontWeight: '600', color: 'rgba(26,26,46,0.4)', marginBottom: '2px' }}>
+                  <div style={{ fontSize: 'var(--fs-md)', fontWeight: '600', color: 'rgba(26,26,46,0.4)', marginBottom: '2px' }}>
                     Recent App {index}
                   </div>
-                  <div style={{ fontSize: '14px', color: 'rgba(26,26,46,0.3)' }}>
+                  <div style={{ fontSize: 'var(--fs-sm)', color: 'rgba(26,26,46,0.3)' }}>
                     Coming soon...
                   </div>
                 </div>
-                <div style={{ fontSize: '20px', color: 'rgba(26,26,46,0.4)' }}>›</div>
+                <div style={{ fontSize: 'clamp(24px, 6vw, 32px)', color: 'rgba(26,26,46,0.4)' }}>›</div>
               </div>
             ))}
           </div>
@@ -226,6 +196,18 @@ export function AppScreen() {
         }
         .hide-scrollbar::-webkit-scrollbar {
           display: none;
+        }
+        
+        /* Ẩn scroll bar cho toàn bộ container nhưng vẫn cho phép scroll */
+        .app-screen-container::-webkit-scrollbar {
+          display: none;
+        }
+        
+        .app-screen-container {
+          scrollbar-width: none;
+          -ms-overflow-style: none;
+          /* Đảm bảo có thể scroll */
+          overflow-y: visible;
         }
       `}</style>
     </div>

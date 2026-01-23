@@ -24,6 +24,53 @@ let AuthService = AuthService_1 = class AuthService {
         this.walletService = walletService;
         this.logger = new common_1.Logger(AuthService_1.name);
     }
+    async verifyAndCreateUser(initData) {
+        try {
+            this.logger.log('🔍 Starting user verification and creation process');
+            this.logger.log('📱 Validating Telegram initData...');
+            const telegramUser = await this.telegramAuthService.validateTelegramInitData(initData);
+            this.logger.log(`✅ Telegram user validated: ID=${telegramUser.id}, username=${telegramUser.username || telegramUser.first_name}`);
+            this.logger.log(`🔍 Checking if user exists in database: ${telegramUser.id}`);
+            let existingUser = await this.userService.findUserByTelegramId(telegramUser.id);
+            if (existingUser) {
+                this.logger.log(`✅ Existing user found: ${telegramUser.id}`);
+                return {
+                    success: true,
+                    user: existingUser,
+                };
+            }
+            else {
+                this.logger.log(`🆕 New user detected, creating account: ${telegramUser.id}`);
+                try {
+                    const newUser = await this.userService.createUser({
+                        telegram_id: String(telegramUser.id),
+                        username: telegramUser.username || telegramUser.first_name || null,
+                        total_points: 0,
+                        current_rank: 'BRONZE',
+                    });
+                    this.logger.log(`✅ New user created successfully: ${newUser.telegram_id}`);
+                    return {
+                        success: true,
+                        user: newUser,
+                    };
+                }
+                catch (createError) {
+                    this.logger.error('❌ Failed to auto-create user', createError);
+                    return {
+                        success: false,
+                        error: 'Failed to create user account',
+                    };
+                }
+            }
+        }
+        catch (error) {
+            this.logger.error('❌ Authentication failed', error);
+            return {
+                success: false,
+                error: error.message || 'Authentication failed',
+            };
+        }
+    }
     async authenticateUser(initData) {
         try {
             const telegramUser = await this.telegramAuthService.validateTelegramInitData(initData);

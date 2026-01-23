@@ -16,12 +16,32 @@ export class PetService {
   ) {}
 
   /**
+   * Safely convert userId to BigInt, handling both numeric and non-numeric strings
+   */
+  private safeToBigInt(userId: string): bigint {
+    // If userId starts with 'anon_' or contains non-numeric characters, 
+    // convert to a hash-based BigInt
+    if (!/^\d+$/.test(userId)) {
+      // Create a simple hash from the string
+      let hash = 0;
+      for (let i = 0; i < userId.length; i++) {
+        const char = userId.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash; // Convert to 32-bit integer
+      }
+      // Ensure positive BigInt and avoid conflicts with real telegram IDs
+      return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
+    }
+    return BigInt(userId);
+  }
+
+  /**
    * Get pet status for a user
    */
   async getPetStatus(userId: string): Promise<PetStatus> {
     try {
-      const user = await this.prisma.users.findUnique({
-        where: { telegram_id: BigInt(userId) },
+      let user = await this.prisma.users.findUnique({
+        where: { telegram_id: this.safeToBigInt(userId) },
         select: {
           pet_level: true,
           pet_current_xp: true,
@@ -30,15 +50,102 @@ export class PetService {
       });
 
       if (!user) {
-        throw new BadRequestException('User not found');
+        // Create user with default pet data if not exists
+        this.logger.log(`Creating new user with pet data for userId: ${userId}`);
+        
+        // Use transaction to create both user and pet record
+        await this.prisma.$transaction(async (tx) => {
+          // Create user
+          await tx.users.create({
+            data: {
+              telegram_id: this.safeToBigInt(userId),
+              username: `user_${userId}`,
+              wallet_address: `temp_wallet_${userId}`,
+              public_key: `temp_key_${userId}`,
+              pet_level: 1,
+              pet_current_xp: 0,
+              pet_last_claim_time: new Date(),
+            },
+          });
+
+          // Create pet record in pets table
+          await tx.pets.create({
+            data: {
+              user_id: this.safeToBigInt(userId),
+              level: 1,
+              exp: 0,
+              max_exp: 100,
+              hunger: 100,
+              happiness: 100,
+              last_coin_time: new Date(),
+              pending_coins: 0,
+              total_coins_earned: 0,
+              coin_rate: 1.0,
+            },
+          });
+        });
+
+        // Fetch the newly created user
+        user = await this.prisma.users.findUnique({
+          where: { telegram_id: this.safeToBigInt(userId) },
+          select: {
+            pet_level: true,
+            pet_current_xp: true,
+            pet_last_claim_time: true,
+          },
+        });
+
+        if (!user) {
+          throw new BadRequestException('Failed to create user');
+        }
       }
+
+      // Get or create pet record
+      let pet = await this.prisma.pets.findUnique({
+        where: { user_id: this.safeToBigInt(userId) },
+      });
+
+      if (!pet) {
+        // Create pet record if it doesn't exist
+        pet = await this.prisma.pets.create({
+          data: {
+            user_id: this.safeToBigInt(userId),
+            level: user.pet_level || 1,
+            exp: user.pet_current_xp || 0,
+            max_exp: 100,
+            hunger: 100,
+            happiness: 100,
+            last_coin_time: user.pet_last_claim_time || new Date(),
+            pending_coins: 0,
+            total_coins_earned: 0,
+            coin_rate: 1.0,
+          },
+        });
+      }
+
+      // Update pending coins based on time elapsed (only if no pending coins)
+      if (pet?.pending_coins <= 0) {
+        await this.updatePendingCoins(userId);
+      } else {
+        this.logger.log(`User ${userId} already has ${pet.pending_coins} pending coins, skipping update`);
+      }
+
+      // Refresh pet data after update
+      pet = await this.prisma.pets.findUnique({
+        where: { user_id: this.safeToBigInt(userId) },
+      });
+
+      // Ensure pet data has default values
+      const petLevel = user.pet_level || 1;
+      const petCurrentXp = user.pet_current_xp || 0;
+      const petLastClaimTime = user.pet_last_claim_time || new Date();
 
       // Get daily feeding spent
       const today = new Date().toISOString().split('T')[0];
       const feedingLog = await this.prisma.pet_feeding_logs.findUnique({
         where: {
           user_id_feed_date: {
-            user_id: BigInt(userId),
+            user_id: this.safeToBigInt(userId),
             feed_date: today,
           },
         },
@@ -46,22 +153,16 @@ export class PetService {
 
       const dailyFeedSpent = feedingLog?.total_daily_spent || 0;
 
-      // Calculate pending rewards
-      const pendingRewards = await this.calculatePendingRewards(
-        user.pet_level,
-        user.pet_last_claim_time,
-      );
-
       // Check if can level up
-      const canLevelUp = user.pet_current_xp >= PET_CONSTANTS.XP_FOR_LEVEL_UP && 
-                        user.pet_level < PET_CONSTANTS.MAX_LEVEL;
+      const canLevelUp = petCurrentXp >= PET_CONSTANTS.XP_FOR_LEVEL_UP && 
+                        petLevel < PET_CONSTANTS.MAX_LEVEL;
 
       return {
-        level: user.pet_level,
-        currentXp: user.pet_current_xp,
+        level: petLevel,
+        currentXp: petCurrentXp,
         xpForNextLevel: PET_CONSTANTS.XP_FOR_LEVEL_UP,
-        lastClaimTime: user.pet_last_claim_time,
-        pendingRewards,
+        lastClaimTime: petLastClaimTime,
+        pendingRewards: pet?.pending_coins || 0,
         canLevelUp,
         dailyFeedSpent,
         dailyFeedLimit: PET_CONSTANTS.MAX_DAILY_SPEND,
@@ -70,6 +171,55 @@ export class PetService {
     } catch (error) {
       this.logger.error(`Failed to get pet status for user ${userId}`, error);
       throw error;
+    }
+  }
+
+  /**
+   * Update pending coins based on time elapsed
+   */
+  private async updatePendingCoins(userId: string): Promise<void> {
+    try {
+      const pet = await this.prisma.pets.findUnique({
+        where: { user_id: this.safeToBigInt(userId) },
+      });
+
+      if (!pet) return;
+
+      const now = new Date();
+      const lastCoinTime = pet.last_coin_time || now;
+      const elapsedMs = now.getTime() - lastCoinTime.getTime();
+      
+      // Generate coins every minute (60000ms)
+      const COIN_INTERVAL_MS = 60 * 1000;
+      const intervalsElapsed = Math.floor(elapsedMs / COIN_INTERVAL_MS);
+      
+      // FIXED: Only generate coins for 1 interval maximum (same as frontend logic)
+      if (intervalsElapsed > 0 && pet.pending_coins <= 0) {
+        // Calculate coins per interval based on pet level
+        const coinsPerInterval = 100 + (pet.level - 1) * 50; // Same as frontend logic
+        
+        // Only generate coins for 1 interval, not all elapsed intervals
+        const newCoins = coinsPerInterval;
+        
+        this.logger.log(`Generating ${newCoins} coins for user ${userId} (level ${pet.level}, ${intervalsElapsed} intervals elapsed)`);
+        
+        await this.prisma.pets.update({
+          where: { user_id: this.safeToBigInt(userId) },
+          data: {
+            pending_coins: newCoins, // Set to exact amount, don't increment
+            // Don't update last_coin_time here - only update when user claims
+            updated_at: new Date(),
+          },
+        });
+        
+        this.logger.log(`✅ Generated pending coins for user ${userId}: ${newCoins} coins (level ${pet.level})`);
+      } else if (pet.pending_coins > 0) {
+        this.logger.log(`⚠️ User ${userId} already has ${pet.pending_coins} pending coins, skipping generation`);
+      } else {
+        this.logger.log(`⏰ User ${userId} needs to wait ${Math.ceil((COIN_INTERVAL_MS - elapsedMs) / 1000)}s more for coins`);
+      }
+    } catch (error) {
+      this.logger.error(`Failed to update pending coins for user ${userId}`, error);
     }
   }
 
@@ -90,7 +240,7 @@ export class PetService {
       return await this.prisma.$transaction(async (tx) => {
         // Get user data
         const user = await tx.users.findUnique({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           select: {
             total_points: true,
             pet_level: true,
@@ -120,7 +270,7 @@ export class PetService {
         const feedingLog = await tx.pet_feeding_logs.findUnique({
           where: {
             user_id_feed_date: {
-              user_id: BigInt(userId),
+              user_id: this.safeToBigInt(userId),
               feed_date: today,
             },
           },
@@ -162,7 +312,7 @@ export class PetService {
         const finalXp = newLevel > user.pet_level ? newXp - PET_CONSTANTS.XP_FOR_LEVEL_UP : newXp;
 
         await tx.users.update({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           data: {
             total_points: { decrement: totalCost },
             pet_current_xp: finalXp,
@@ -175,7 +325,7 @@ export class PetService {
         await tx.pet_feeding_logs.upsert({
           where: {
             user_id_feed_date: {
-              user_id: BigInt(userId),
+              user_id: this.safeToBigInt(userId),
               feed_date: today,
             },
           },
@@ -185,7 +335,7 @@ export class PetService {
             total_daily_spent: newDailySpent,
           },
           create: {
-            user_id: BigInt(userId),
+            user_id: this.safeToBigInt(userId),
             points_spent: totalCost,
             xp_gained: totalXp,
             feed_date: today,
@@ -219,13 +369,12 @@ export class PetService {
   async claimRewards(userId: string): Promise<ClaimRewardsResult> {
     try {
       return await this.prisma.$transaction(async (tx) => {
+        // Get user data
         const user = await tx.users.findUnique({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           select: {
             total_points: true,
             lifetime_points: true,
-            pet_level: true,
-            pet_last_claim_time: true,
             wallet_address: true,
           },
         });
@@ -234,11 +383,43 @@ export class PetService {
           throw new BadRequestException('User not found');
         }
 
-        // Calculate rewards
-        const rewards = await this.calculatePendingRewards(
-          user.pet_level,
-          user.pet_last_claim_time,
-        );
+        // Get pet data from pets table
+        let pet = await tx.pets.findUnique({
+          where: { user_id: this.safeToBigInt(userId) },
+          select: {
+            pending_coins: true,
+            last_coin_time: true,
+            level: true,
+            total_coins_earned: true,
+          },
+        });
+
+        // If pet doesn't exist, create it
+        if (!pet) {
+          this.logger.log(`Creating pet record for user ${userId}`);
+          pet = await tx.pets.create({
+            data: {
+              user_id: this.safeToBigInt(userId),
+              level: 1,
+              exp: 0,
+              max_exp: 100,
+              hunger: 100,
+              happiness: 100,
+              last_coin_time: new Date(),
+              pending_coins: 0,
+              total_coins_earned: 0,
+              coin_rate: 1.0,
+            },
+            select: {
+              pending_coins: true,
+              last_coin_time: true,
+              level: true,
+              total_coins_earned: true,
+            },
+          });
+        }
+
+        const rewards = pet.pending_coins || 0;
 
         if (rewards <= 0) {
           return {
@@ -256,11 +437,21 @@ export class PetService {
         const newLifetimePoints = Number(user.lifetime_points) + rewards;
 
         await tx.users.update({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: this.safeToBigInt(userId) },
           data: {
             total_points: newTotalPoints,
             lifetime_points: newLifetimePoints,
-            pet_last_claim_time: new Date(),
+            updated_at: new Date(),
+          },
+        });
+
+        // Reset pet pending coins and update last claim time
+        await tx.pets.update({
+          where: { user_id: this.safeToBigInt(userId) },
+          data: {
+            pending_coins: 0,
+            last_coin_time: new Date(), // Update last_coin_time when user claims
+            total_coins_earned: { increment: rewards },
             updated_at: new Date(),
           },
         });
