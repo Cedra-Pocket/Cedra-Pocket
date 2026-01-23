@@ -496,7 +496,7 @@ export function PocketFlyGame({ onGameEnd, onBackToMenu }: PocketFlyGameProps) {
       {onBackToMenu && (
         <button
           onClick={onBackToMenu}
-          className="absolute top-8 left-8 z-50 transition-all hover:scale-105 active:scale-95"
+          className="absolute top-4 left-4 z-50 transition-all hover:scale-105 active:scale-95"
           style={{
             background: 'rgba(0, 0, 0, 0.3)',
             backdropFilter: 'blur(20px)',

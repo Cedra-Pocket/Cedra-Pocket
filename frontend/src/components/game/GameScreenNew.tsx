@@ -146,18 +146,18 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
     <div 
       className="flex flex-col hide-scrollbar"
       style={{ 
-        paddingTop: 'clamp(16px, 4vw, 24px)', 
-        paddingLeft: 'clamp(16px, 4vw, 24px)',
-        paddingRight: 'clamp(16px, 4vw, 24px)',
+        paddingTop: 'clamp(12px, 3vw, 16px)', 
+        paddingLeft: 'clamp(12px, 3vw, 16px)',
+        paddingRight: 'clamp(12px, 3vw, 16px)',
         backgroundColor: 'transparent',
         height: 'calc(100vh - clamp(56px, 14vw, 72px))',
         overflowY: 'auto',
-        paddingBottom: 'clamp(80px, 20vw, 120px)'
+        paddingBottom: 'clamp(60px, 15vw, 80px)'
       }}
     >
 
       {/* Categories Filter */}
-      <section style={{ marginBottom: 'clamp(20px, 5vw, 28px)' }} className="flex-shrink-0">
+      <section style={{ marginBottom: 'clamp(12px, 3vw, 16px)' }} className="flex-shrink-0">
         <div 
           className="flex hide-scrollbar"
           style={{ 
@@ -195,8 +195,8 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
       </section>
 
       {/* Featured Games Section */}
-      <section style={{ marginBottom: 'clamp(24px, 6vw, 32px)' }} className="flex-shrink-0">
-        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(12px, 3vw, 16px)', fontSize: 'var(--fs-lg)', margin: '0 0 clamp(12px, 3vw, 16px) 0' }} className="font-bold">
+      <section style={{ marginBottom: 'clamp(12px, 3vw, 16px)' }} className="flex-shrink-0">
+        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(8px, 2vw, 12px)', fontSize: 'var(--fs-lg)', margin: '0 0 clamp(8px, 2vw, 12px) 0' }} className="font-bold">
           Featured Games
         </h2>
         
@@ -257,8 +257,8 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
                 borderRadius: 'clamp(16px, 4vw, 20px)',
                 border: '1px solid rgba(255, 255, 255, 0.3)',
                 boxShadow: '0 8px 32px rgba(0, 0, 0, 0.15)',
-                width: 'clamp(280px, 70vw, 350px)',
-                height: 'clamp(160px, 40vw, 200px)',
+                width: 'clamp(220px, 60vw, 280px)',
+                height: 'clamp(120px, 30vw, 150px)',
                 position: 'relative',
               }}
             >
@@ -280,17 +280,17 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
               <div 
                 className="absolute"
                 style={{
-                  bottom: 'clamp(16px, 4vw, 20px)',
-                  left: 'clamp(16px, 4vw, 20px)',
-                  width: 'clamp(40px, 10vw, 50px)',
-                  height: 'clamp(40px, 10vw, 50px)',
-                  borderRadius: 'clamp(8px, 2vw, 12px)',
+                  bottom: 'clamp(12px, 3vw, 16px)',
+                  left: 'clamp(12px, 3vw, 16px)',
+                  width: 'clamp(32px, 8vw, 40px)',
+                  height: 'clamp(32px, 8vw, 40px)',
+                  borderRadius: 'clamp(6px, 1.5vw, 10px)',
                   background: 'rgba(255, 255, 255, 0.9)',
                   backdropFilter: 'blur(10px)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  fontSize: 'clamp(20px, 5vw, 28px)',
+                  fontSize: 'clamp(16px, 4vw, 20px)',
                   boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
                   border: '1px solid rgba(255, 255, 255, 0.5)',
                 }}
@@ -313,7 +313,7 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
                 <h3 
                   className="font-bold"
                   style={{ 
-                    fontSize: 'clamp(24px, 6vw, 32px)', 
+                    fontSize: 'clamp(18px, 4.5vw, 24px)', 
                     lineHeight: '1.2',
                   }}
                 >
@@ -329,19 +329,19 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
                 }}
                 className="absolute font-bold transition-all hover:scale-105 active:scale-95"
                 style={{
-                  bottom: 'clamp(16px, 4vw, 20px)',
-                  right: 'clamp(16px, 4vw, 20px)',
+                  bottom: 'clamp(12px, 3vw, 16px)',
+                  right: 'clamp(12px, 3vw, 16px)',
                   background: game.component 
                     ? 'linear-gradient(135deg, #FFD700, #FFA500)'
                     : 'rgba(156, 163, 175, 0.8)',
                   backdropFilter: 'blur(10px)',
                   color: game.component ? '#1a1a2e' : 'rgba(26, 26, 46, 0.6)',
-                  fontSize: 'clamp(14px, 3.5vw, 18px)',
+                  fontSize: 'clamp(12px, 3vw, 14px)',
                   boxShadow: game.component 
                     ? '0 4px 16px rgba(255, 200, 0, 0.4)'
                     : '0 2px 8px rgba(0, 0, 0, 0.1)',
-                  padding: 'clamp(10px, 2.5vw, 14px) clamp(20px, 5vw, 28px)',
-                  borderRadius: 'clamp(12px, 3vw, 16px)',
+                  padding: 'clamp(8px, 2vw, 10px) clamp(16px, 4vw, 20px)',
+                  borderRadius: 'clamp(10px, 2.5vw, 12px)',
                   border: '1px solid rgba(255, 255, 255, 0.3)',
                   cursor: 'pointer',
                   fontWeight: '700',
@@ -356,13 +356,13 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
 
       {/* Games Section */}
       <section className="flex-shrink-0">
-        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(16px, 4vw, 20px)', fontSize: 'var(--fs-lg)', margin: '0 0 clamp(16px, 4vw, 20px) 0' }} className="font-bold">
+        <h2 style={{ color: '#1a1a2e', marginBottom: 'clamp(12px, 3vw, 16px)', fontSize: 'var(--fs-lg)', margin: '0 0 clamp(12px, 3vw, 16px) 0' }} className="font-bold">
           {selectedCategory === 'all' ? 'All Games' : `${CATEGORIES.find(c => c.id === selectedCategory)?.name} Games`}
         </h2>
 
         {/* Games List Container */}
         <div>
-          <div className="flex flex-col" style={{ gap: 'clamp(12px, 3vw, 16px)' }}>
+          <div className="flex flex-col" style={{ gap: 'clamp(8px, 2vw, 12px)' }}>
             {filteredGames.map((game) => (
               <div
                 key={game.id}
@@ -370,25 +370,25 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
                 style={{
                   background: 'rgba(255, 255, 255, 0.8)',
                   backdropFilter: 'blur(20px)',
-                  borderRadius: 'clamp(20px, 5vw, 28px)',
+                  borderRadius: 'clamp(16px, 4vw, 20px)',
                   border: '1px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 8px 32px rgba(0, 0, 0, 0.1)',
-                  padding: 'clamp(16px, 4vw, 20px)',
-                  gap: 'clamp(12px, 3vw, 16px)',
-                  minHeight: 'clamp(80px, 20vw, 100px)',
+                  boxShadow: '0 6px 24px rgba(0, 0, 0, 0.08)',
+                  padding: 'clamp(12px, 3vw, 16px)',
+                  gap: 'clamp(10px, 2.5vw, 12px)',
+                  minHeight: 'clamp(64px, 16vw, 80px)',
                 }}
               >
                 {/* Game Icon */}
                 <div 
                   className="flex items-center justify-center flex-shrink-0"
                   style={{
-                    width: 'clamp(48px, 12vw, 64px)',
-                    height: 'clamp(48px, 12vw, 64px)',
-                    borderRadius: 'clamp(16px, 4vw, 20px)',
+                    width: 'clamp(40px, 10vw, 48px)',
+                    height: 'clamp(40px, 10vw, 48px)',
+                    borderRadius: 'clamp(12px, 3vw, 16px)',
                     background: 'rgba(255, 255, 255, 0.9)',
                     backdropFilter: 'blur(10px)',
-                    fontSize: 'clamp(24px, 6vw, 32px)',
-                    boxShadow: '0 4px 16px rgba(0, 0, 0, 0.1)',
+                    fontSize: 'clamp(20px, 5vw, 24px)',
+                    boxShadow: '0 3px 12px rgba(0, 0, 0, 0.08)',
                     border: '1px solid rgba(255, 255, 255, 0.5)',
                   }}
                 >
@@ -396,13 +396,13 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
                 </div>
 
                 {/* Game Info */}
-                <div className="flex-1 min-w-0" style={{ paddingRight: 'clamp(8px, 2vw, 12px)' }}>
-                  <h3 className="font-bold" style={{ fontSize: 'var(--fs-md)', marginBottom: 'clamp(4px, 1vw, 6px)', color: '#1a1a2e', lineHeight: '1.2' }}>
+                <div className="flex-1 min-w-0" style={{ paddingRight: 'clamp(6px, 1.5vw, 8px)' }}>
+                  <h3 className="font-bold" style={{ fontSize: 'clamp(14px, 3.5vw, 16px)', marginBottom: 'clamp(2px, 0.5vw, 4px)', color: '#1a1a2e', lineHeight: '1.2' }}>
                     {game.name}
                   </h3>
                   <p 
                     className="truncate"
-                    style={{ fontSize: 'var(--fs-sm)', color: 'rgba(26, 26, 46, 0.7)', lineHeight: '1.3' }}
+                    style={{ fontSize: 'clamp(12px, 3vw, 14px)', color: 'rgba(26, 26, 46, 0.7)', lineHeight: '1.3' }}
                   >
                     {game.description}
                   </p>
@@ -421,12 +421,12 @@ function GameScreenNew({ onGameStateChange }: GameScreenProps) {
                       : 'rgba(156, 163, 175, 0.8)',
                     backdropFilter: 'blur(10px)',
                     color: game.component ? '#1a1a2e' : 'rgba(26, 26, 46, 0.6)',
-                    fontSize: 'var(--fs-sm)',
+                    fontSize: 'clamp(11px, 2.8vw, 13px)',
                     boxShadow: game.component 
-                      ? '0 6px 20px rgba(255, 200, 0, 0.3)'
-                      : '0 4px 16px rgba(0, 0, 0, 0.1)',
-                    padding: 'clamp(10px, 2.5vw, 14px) clamp(18px, 4.5vw, 24px)',
-                    borderRadius: 'clamp(16px, 4vw, 20px)',
+                      ? '0 4px 16px rgba(255, 200, 0, 0.25)'
+                      : '0 3px 12px rgba(0, 0, 0, 0.08)',
+                    padding: 'clamp(8px, 2vw, 10px) clamp(14px, 3.5vw, 18px)',
+                    borderRadius: 'clamp(12px, 3vw, 16px)',
                     border: '1px solid rgba(255, 255, 255, 0.3)',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',
