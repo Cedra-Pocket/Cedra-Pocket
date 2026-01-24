@@ -2,6 +2,7 @@
 
 import { useRef, useEffect, useCallback, useState } from 'react';
 import { useAppStore, useEnergy } from '../../src/store/useAppStore';
+import { backendAPI } from '../../src/services/backend-api.service';
 
 // Game constants - Adjusted for easier gameplay
 const GAME_CONFIG = {
@@ -94,10 +95,29 @@ export function PocketFlyGame({ onGameEnd, onBackToMenu }: PocketFlyGameProps) {
 
   // Regenerate energy on component mount and periodically
   useEffect(() => {
-    regenerateEnergy(); // Check on mount
+    const syncEnergyWithBackend = async () => {
+      try {
+        const energyStatus = await backendAPI.getEnergyStatus();
+        if (energyStatus && energyStatus.currentEnergy !== undefined) {
+          console.log('🔄 Syncing energy with backend:', energyStatus);
+          const { setEnergy } = useAppStore.getState();
+          setEnergy({
+            currentEnergy: energyStatus.currentEnergy,
+            maxEnergy: energyStatus.maxEnergy,
+            lastUpdate: Date.now(),
+          });
+        }
+      } catch (error) {
+        console.error('❌ Failed to sync energy with backend:', error);
+        // Fallback to local regeneration
+        regenerateEnergy();
+      }
+    };
+
+    syncEnergyWithBackend(); // Sync on mount
     
     const interval = setInterval(() => {
-      regenerateEnergy(); // Check every minute
+      syncEnergyWithBackend(); // Sync every minute
     }, 60000);
 
     return () => clearInterval(interval);
@@ -387,6 +407,20 @@ export function PocketFlyGame({ onGameEnd, onBackToMenu }: PocketFlyGameProps) {
       setLastPoints(points);
       setTotalPoints(prev => prev + points);
       
+      // Complete game session via backend
+      (async () => {
+        try {
+          const result = await backendAPI.completeGameSession('arcade', gameState.score, points);
+          if (result.success) {
+            console.log('✅ Game session completed via backend:', result);
+          } else {
+            console.log('⚠️ Backend game completion failed:', result.error);
+          }
+        } catch (error) {
+          console.error('❌ Failed to complete game session via backend:', error);
+        }
+      })();
+      
       // Call parent callback
       onGameEnd?.(gameState.score, points);
       
@@ -422,16 +456,34 @@ export function PocketFlyGame({ onGameEnd, onBackToMenu }: PocketFlyGameProps) {
   }, []);
 
   // Start game
-  const startGame = useCallback(() => {
+  const startGame = useCallback(async () => {
     if (energy <= 0) {
       alert('Not enough energy! Need at least 1 energy to play.');
       return;
     }
     
-    const success = consumeEnergy(1); // Consume 1 energy via store
-    if (!success) {
-      alert('Failed to consume energy!');
-      return;
+    // Try to start game session via backend first
+    try {
+      const result = await backendAPI.startGameSession('arcade');
+      if (result.success) {
+        console.log('✅ Game session started via backend, energy consumed:', result.energyUsed);
+      } else {
+        console.log('⚠️ Backend game start failed:', result.error);
+        // Still allow local gameplay but consume energy locally
+        const success = consumeEnergy(1);
+        if (!success) {
+          alert('Failed to consume energy!');
+          return;
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to start game session via backend:', error);
+      // Fallback to local energy consumption
+      const success = consumeEnergy(1);
+      if (!success) {
+        alert('Failed to consume energy!');
+        return;
+      }
     }
     
     initGame();

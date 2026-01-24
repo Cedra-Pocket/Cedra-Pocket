@@ -5,6 +5,7 @@ import { useAppStore, useQuests, useQuestsLoading } from '../../store/useAppStor
 import { QuestCard } from './QuestCard';
 import { BirthYearModal } from './BirthYearModal';
 import { backendAPI } from '../../services/backend-api.service';
+import type { BackendQuest } from '../../services/backend-api.service';
 import { telegramService } from '../../services/telegram.service';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
@@ -258,6 +259,45 @@ export function QuestScreen() {
             currentValue: quest.targetValue 
           });
           
+          // Refetch quests to ensure consistency with backend
+          setTimeout(async () => {
+            setQuestsLoading(true);
+            try {
+              let backendQuests: BackendQuest[];
+
+              try {
+                backendQuests = await backendAPI.getQuests();
+              } catch (questError) {
+                console.warn('Backend quests not available, using empty list:', questError);
+                backendQuests = [];
+              }
+
+              const frontendQuests = backendQuests.map((q) => ({
+                id: String(q.id),
+                title: q.title,
+                description: q.description || '',
+                iconUrl: '',
+                type: q.type === 'SOCIAL' ? 'social' as const : 
+                      q.category === 'daily' ? 'daily' as const : 'achievement' as const,
+                status: q.user_status === 'COMPLETED' ? 'claimable' as const :
+                        q.user_status === 'CLAIMED' ? 'completed' as const : 'active' as const,
+                progress: q.user_status === 'COMPLETED' || q.user_status === 'CLAIMED' ? 100 : 0,
+                currentValue: q.user_status === 'COMPLETED' || q.user_status === 'CLAIMED' ? 1 : 0,
+                targetValue: 1,
+                reward: {
+                  type: 'token' as const,
+                  amount: Number(q.reward_amount),
+                },
+                url: q.type === 'SOCIAL' && q.config?.url ? String(q.config.url) : undefined,
+              }));
+              setQuests(frontendQuests);
+            } catch (error) {
+              console.error('Failed to refetch quests:', error);
+            } finally {
+              setQuestsLoading(false);
+            }
+          }, 500);
+          
           telegramService.triggerHapticFeedback('medium');
           console.log('✅ Quest reward claimed from backend!');
           return;
@@ -283,6 +323,45 @@ export function QuestScreen() {
         progress: 100,
         currentValue: quest.targetValue 
       });
+      
+      // Refetch quests to ensure consistency
+      setTimeout(async () => {
+        setQuestsLoading(true);
+        try {
+          let backendQuests: BackendQuest[];
+
+          try {
+            backendQuests = await backendAPI.getQuests();
+          } catch (questError) {
+            console.warn('Backend quests not available, using empty list:', questError);
+            backendQuests = [];
+          }
+
+          const frontendQuests = backendQuests.map((q) => ({
+            id: String(q.id),
+            title: q.title,
+            description: q.description || '',
+            iconUrl: '',
+            type: q.type === 'SOCIAL' ? 'social' as const : 
+                  q.category === 'daily' ? 'daily' as const : 'achievement' as const,
+            status: q.user_status === 'COMPLETED' ? 'claimable' as const :
+                    q.user_status === 'CLAIMED' ? 'completed' as const : 'active' as const,
+            progress: q.user_status === 'COMPLETED' || q.user_status === 'CLAIMED' ? 100 : 0,
+            currentValue: q.user_status === 'COMPLETED' || q.user_status === 'CLAIMED' ? 1 : 0,
+            targetValue: 1,
+            reward: {
+              type: 'token' as const,
+              amount: Number(q.reward_amount),
+            },
+            url: q.type === 'SOCIAL' && q.config?.url ? String(q.config.url) : undefined,
+          }));
+          setQuests(frontendQuests);
+        } catch (error) {
+          console.error('Failed to refetch quests:', error);
+        } finally {
+          setQuestsLoading(false);
+        }
+      }, 500);
       
       telegramService.triggerHapticFeedback('medium');
       console.log('✅ Quest reward claimed locally!');

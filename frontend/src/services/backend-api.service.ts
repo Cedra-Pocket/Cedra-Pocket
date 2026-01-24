@@ -738,6 +738,31 @@ export class BackendAPIService {
   }
 
   /**
+   * Start game session (consume energy)
+   */
+  async startGameSession(gameType: string, telegramId?: string): Promise<any> {
+    try {
+      let userId = telegramId || this.getCurrentUserId();
+      
+      console.log(`🎮 Starting game session for user: ${userId}, type: ${gameType}`);
+      const response = await this.client.post(`/game/session/start/${userId}`, {
+        gameType: gameType,
+      });
+      
+      console.log('✅ Game session started:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to start game session:', error);
+      
+      return {
+        success: false,
+        energyUsed: 0,
+        error: 'Failed to start game session (offline mode)',
+      };
+    }
+  }
+
+  /**
    * Complete game session
    */
   async completeGameSession(gameType: string, score: number, pointsEarned: number, telegramId?: string): Promise<any> {

@@ -14,6 +14,7 @@ interface UseQuestsReturn {
   error: string | null;
   fetchQuests: () => Promise<void>;
   verifyQuest: (questId: string) => Promise<{ success: boolean; message: string }>;
+  claimQuest: (questId: string) => Promise<{ success: boolean; message: string; pointsEarned?: number }>;
   refetch: () => Promise<void>;
 }
 
@@ -81,9 +82,9 @@ export function useQuests(): UseQuestsReturn {
       const result = await backendAPI.verifyQuest(Number(questId));
 
       if (result.success) {
-        // Update quest status locally
+        // Update quest status locally to claimable
         updateQuest(questId, {
-          status: 'completed',
+          status: 'claimable',
           progress: 100,
           currentValue: 1,
         });
@@ -100,6 +101,39 @@ export function useQuests(): UseQuestsReturn {
       return { success: false, message: 'Verification failed' };
     }
   }, [updateQuest]);
+
+  /**
+   * Claim quest reward
+   */
+  const claimQuest = useCallback(async (questId: string): Promise<{ success: boolean; message: string; pointsEarned?: number }> => {
+    try {
+      const result = await backendAPI.claimQuestReward(Number(questId));
+
+      if (result.success) {
+        // Update quest status locally to completed
+        updateQuest(questId, {
+          status: 'completed',
+          progress: 100,
+          currentValue: 1,
+        });
+
+        // Refetch quests to ensure consistency with backend
+        setTimeout(() => {
+          fetchQuests();
+        }, 500);
+      }
+
+      return result;
+    } catch (err) {
+      console.error('Quest claim failed:', err);
+      
+      if (err instanceof BackendAPIError) {
+        return { success: false, message: err.message };
+      }
+      
+      return { success: false, message: 'Claim failed' };
+    }
+  }, [updateQuest, fetchQuests]);
 
   /**
    * Refetch quests
@@ -123,6 +157,7 @@ export function useQuests(): UseQuestsReturn {
     error,
     fetchQuests,
     verifyQuest,
+    claimQuest,
     refetch,
   };
 }
