@@ -106,6 +106,15 @@ let GameSessionService = GameSessionService_1 = class GameSessionService {
                         updated_at: new Date(),
                     },
                 });
+                await tx.point_transactions.create({
+                    data: {
+                        user_id: this.safeToBigInt(userId),
+                        amount: pointsEarned,
+                        type: 'ADMIN_ADJUSTMENT',
+                        description: `Game completion reward: ${gameType} (score: ${score})`,
+                        reference_id: `game_${gameType}_${Date.now()}`,
+                    },
+                });
                 await tx.game_sessions.create({
                     data: {
                         user_id: this.safeToBigInt(userId),

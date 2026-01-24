@@ -445,6 +445,17 @@ export class PetService {
           },
         });
 
+        // Create transaction log for pet claim
+        await tx.point_transactions.create({
+          data: {
+            user_id: this.safeToBigInt(userId),
+            amount: rewards,
+            type: 'PET_CLAIM',
+            description: `Pet mining rewards claimed`,
+            reference_id: `pet_claim_${Date.now()}`,
+          },
+        });
+
         // Reset pet pending coins and update last claim time
         await tx.pets.update({
           where: { user_id: this.safeToBigInt(userId) },

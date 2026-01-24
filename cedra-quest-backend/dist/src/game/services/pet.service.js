@@ -365,6 +365,15 @@ let PetService = PetService_1 = class PetService {
                         updated_at: new Date(),
                     },
                 });
+                await tx.point_transactions.create({
+                    data: {
+                        user_id: this.safeToBigInt(userId),
+                        amount: rewards,
+                        type: 'PET_CLAIM',
+                        description: `Pet mining rewards claimed`,
+                        reference_id: `pet_claim_${Date.now()}`,
+                    },
+                });
                 await tx.pets.update({
                     where: { user_id: this.safeToBigInt(userId) },
                     data: {

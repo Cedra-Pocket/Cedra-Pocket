@@ -134,6 +134,17 @@ export class GameSessionService {
           },
         });
 
+        // Create transaction log for game completion
+        await tx.point_transactions.create({
+          data: {
+            user_id: this.safeToBigInt(userId),
+            amount: pointsEarned,
+            type: 'ADMIN_ADJUSTMENT', // Using existing enum value for game rewards
+            description: `Game completion reward: ${gameType} (score: ${score})`,
+            reference_id: `game_${gameType}_${Date.now()}`,
+          },
+        });
+
         // Record game session
         await tx.game_sessions.create({
           data: {

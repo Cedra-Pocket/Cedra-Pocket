@@ -267,31 +267,50 @@ export class UserService {
         return newUser;
       }
 
-      // Update user points
+      // Calculate new points
       const newTotalPoints = Math.max(0, Number(user.total_points) + points);
       const newLifetimePoints = Math.max(Number(user.lifetime_points || 0), newTotalPoints);
       
-      const updatedUser = await this.prisma.users.update({
-        where: {
-          telegram_id: this.safeToBigInt(telegramId),
-        },
-        data: {
-          total_points: newTotalPoints,
-          lifetime_points: newLifetimePoints,
-          updated_at: new Date(),
-        },
-        select: {
-          telegram_id: true,
-          wallet_address: true,
-          username: true,
-          total_points: true,
-          lifetime_points: true,
-          level: true,
-          current_xp: true,
-          current_rank: true,
-          created_at: true,
-          updated_at: true,
-        },
+      // Update user points with transaction
+      const updatedUser = await this.prisma.$transaction(async (tx) => {
+        // Update user points
+        const user = await tx.users.update({
+          where: {
+            telegram_id: this.safeToBigInt(telegramId),
+          },
+          data: {
+            total_points: newTotalPoints,
+            lifetime_points: newLifetimePoints,
+            updated_at: new Date(),
+          },
+          select: {
+            telegram_id: true,
+            wallet_address: true,
+            username: true,
+            total_points: true,
+            lifetime_points: true,
+            level: true,
+            current_xp: true,
+            current_rank: true,
+            created_at: true,
+            updated_at: true,
+          },
+        });
+
+        // Create transaction log
+        if (points !== 0) {
+          await tx.point_transactions.create({
+            data: {
+              user_id: this.safeToBigInt(telegramId),
+              amount: points,
+              type: 'ADMIN_ADJUSTMENT',
+              description: `Points ${points > 0 ? 'added' : 'deducted'}: ${Math.abs(points)} points`,
+              reference_id: `manual_${Date.now()}`,
+            },
+          });
+        }
+
+        return user;
       });
 
       this.logger.log(`✅ Points updated: ${user.total_points} → ${updatedUser.total_points}`);
