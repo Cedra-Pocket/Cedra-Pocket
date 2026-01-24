@@ -337,7 +337,8 @@ export function PetScreen() {
         console.warn('⚠️ Backend claim failed, using local fallback:', backendError);
         
         // Only use fallback if it's not a timing error
-        if (!backendError.message?.includes('wait')) {
+        const errorMessage = backendError instanceof Error ? backendError.message : String(backendError);
+        if (!errorMessage.includes('wait')) {
           // Fallback to local update
           setPet({ 
             pendingCoins: 0, 
@@ -354,7 +355,8 @@ export function PetScreen() {
     } catch (error) {
       console.error('❌ Failed to claim coins:', error);
       // Don't revert pet state if it was a timing error
-      if (!error.message?.includes('wait')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (!errorMessage.includes('wait')) {
         // Revert pet state if failed for other reasons
         setPet({ 
           pendingCoins: pet.pendingCoins, 
@@ -391,7 +393,6 @@ export function PetScreen() {
     try {
       // Store current level to detect level up
       const currentLevel = pet.level;
-      const currentExp = pet.exp;
       
       // Use new game system API to feed pet
       await feedGamePet(1);
@@ -403,10 +404,10 @@ export function PetScreen() {
       
       // Check for level up after backend response
       setTimeout(() => {
-        const newPet = get().pet; // Get updated pet state
-        if (newPet.level > currentLevel) {
+        // Pet state should be updated by the feedGamePet call
+        if (pet.level > currentLevel) {
           setShowLevelUpAnimation(true);
-          console.log(`🎉 Level up detected: ${currentLevel} → ${newPet.level}`);
+          console.log(`🎉 Level up detected: ${currentLevel} → ${pet.level}`);
         }
       }, 300);
       
@@ -419,7 +420,7 @@ export function PetScreen() {
       console.error('❌ Failed to feed via backend, using local fallback:', error);
       
       // Fallback to local system with CORRECT logic
-      const newExp = currentExp + xpGain;
+      const newExp = pet.exp + xpGain;
       const newHunger = Math.min(100, pet.hunger + 20);
       
       let newPetData: Partial<typeof pet>;
@@ -475,7 +476,6 @@ export function PetScreen() {
   const handleBuyCareItem = (boost: typeof petBoosts[0]) => {
     if ((user?.tokenBalance || 0) >= boost.cost) {
       // Store current state for level up detection
-      const currentLevel = pet.level;
       const currentExp = pet.exp;
       
       // Update balance immediately
