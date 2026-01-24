@@ -162,6 +162,7 @@ export class BackendAPIService {
    */
   async authenticate(initData: string): Promise<AuthResponse> {
     try {
+      // Use /auth/verify endpoint as documented
       const response = await this.client.post<AuthResponse>('/auth/verify', {
         initData,
       });
@@ -180,7 +181,7 @@ export class BackendAPIService {
         wallet_address: null,
         is_wallet_connected: false,
         total_points: 0,
-        current_rank: 'Shrimp',
+        current_rank: 'BRONZE',
         referral_code: 'local_ref',
         referrer_id: null,
         created_at: new Date().toISOString(),
@@ -247,32 +248,15 @@ export class BackendAPIService {
       // Get current user ID from various sources
       const userId = this.getCurrentUserId();
       
+      // Use the main add-points endpoint with userId in body
       const response = await this.client.post<BackendUser>('/users/add-points', {
         points,
-        userId, // Include userId in request body for endpoints that don't use JWT
+        userId, // Include userId in request body
       });
       console.log(`✅ Backend add-points response: ${response.data.total_points}`);
       return response.data;
     } catch (error) {
       console.log('⚠️ Failed to add points to backend, using local fallback');
-      
-      // Try alternative endpoint without authentication
-      try {
-        const userId = this.getCurrentUserId();
-        console.log(`🔄 Trying alternative add-points for user: ${userId}`);
-        
-        // Use user service endpoint directly
-        const response = await this.client.post(`/users/${userId}/add-points`, {
-          points,
-        });
-        
-        if (response.data) {
-          console.log(`✅ Alternative add-points successful: ${response.data.total_points}`);
-          return response.data;
-        }
-      } catch (altError) {
-        console.log('⚠️ Alternative endpoint also failed:', altError);
-      }
       
       // Return a mock user response with the new total for local gameplay
       return {
