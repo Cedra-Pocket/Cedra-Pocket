@@ -313,6 +313,7 @@ export class PetService {
           : user.pet_level;
         const finalXp = newLevel > user.pet_level ? newXp - PET_CONSTANTS.XP_FOR_LEVEL_UP : newXp;
 
+        // FIXED: Update both users table and pets table for consistency
         await tx.users.update({
           where: { telegram_id: this.safeToBigInt(userId) },
           data: {
@@ -320,6 +321,29 @@ export class PetService {
             pet_current_xp: finalXp,
             pet_level: newLevel,
             updated_at: new Date(),
+          },
+        });
+
+        // CRITICAL: Also update pets table to keep data in sync
+        await tx.pets.upsert({
+          where: { user_id: this.safeToBigInt(userId) },
+          update: {
+            level: newLevel,
+            exp: finalXp,
+            max_exp: PET_CONSTANTS.XP_FOR_LEVEL_UP,
+            updated_at: new Date(),
+          },
+          create: {
+            user_id: this.safeToBigInt(userId),
+            level: newLevel,
+            exp: finalXp,
+            max_exp: PET_CONSTANTS.XP_FOR_LEVEL_UP,
+            hunger: 100,
+            happiness: 100,
+            last_coin_time: new Date(),
+            pending_coins: 0,
+            total_coins_earned: 0,
+            coin_rate: 1.0,
           },
         });
 
@@ -429,6 +453,7 @@ export class PetService {
 
         const rewards = pet.pending_coins || 0;
 
+        // FIXED: Strict validation to prevent multiple claims
         if (rewards <= 0) {
           return {
             success: false,
@@ -437,6 +462,24 @@ export class PetService {
             newLifetimePoints: Number(user.lifetime_points),
             claimTime: new Date(),
             error: 'No rewards to claim',
+          };
+        }
+
+        // CRITICAL: Check if enough time has passed since last claim (prevent rapid claims)
+        const now = new Date();
+        const lastClaimTime = pet.last_coin_time || now;
+        const timeSinceLastClaim = now.getTime() - lastClaimTime.getTime();
+        const MIN_CLAIM_INTERVAL = 55 * 1000; // 55 seconds minimum between claims
+
+        if (timeSinceLastClaim < MIN_CLAIM_INTERVAL) {
+          const remainingTime = Math.ceil((MIN_CLAIM_INTERVAL - timeSinceLastClaim) / 1000);
+          return {
+            success: false,
+            pointsEarned: 0,
+            newTotalPoints: Number(user.total_points),
+            newLifetimePoints: Number(user.lifetime_points),
+            claimTime: new Date(),
+            error: `Please wait ${remainingTime} more seconds before claiming`,
           };
         }
 

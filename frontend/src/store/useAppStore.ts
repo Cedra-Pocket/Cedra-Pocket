@@ -774,20 +774,33 @@ export const useAppStore = create<AppStore>()(
           if (result.success) {
             console.log('✅ Pet fed successfully:', result);
             
-            // FIXED: Update pet with correct data from backend
+            // FIXED: Update pet with backend's authoritative data
             const currentPet = get().pet;
             const petUpdates: Partial<typeof currentPet> = {
-              exp: result.newXp, // Use backend's authoritative XP value
+              exp: result.newXp, // Use backend's exact XP value
               maxExp: 1200, // Keep consistent with backend constants
             };
             
-            // Only update level if backend explicitly returns a new level
-            if (result.newLevel !== undefined && result.newLevel !== currentPet.level) {
+            // Update level if backend returns new level
+            if (result.newLevel !== undefined) {
               petUpdates.level = result.newLevel;
               console.log(`🎉 Pet leveled up! Level ${currentPet.level} → ${result.newLevel}`);
             }
             
             get().setPet(petUpdates);
+            
+            // CRITICAL: Save pet state to localStorage for persistence
+            try {
+              const updatedPet = { ...currentPet, ...petUpdates };
+              localStorage.setItem('pet_exp_backup', JSON.stringify({
+                level: updatedPet.level,
+                exp: updatedPet.exp,
+                timestamp: Date.now()
+              }));
+              console.log('💾 Pet EXP backed up to localStorage');
+            } catch (storageError) {
+              console.warn('⚠️ Failed to backup pet EXP:', storageError);
+            }
             
             // Update user points (subtract cost) - use backend's authoritative value
             if (result.pointsSpent > 0) {
@@ -816,13 +829,31 @@ export const useAppStore = create<AppStore>()(
       claimGamePetRewards: async () => {
         try {
           console.log('💰 Claiming pet rewards...');
+          
+          // CRITICAL: Check local state before making API call
+          const currentPet = get().pet;
+          if (currentPet.pendingCoins <= 0) {
+            console.log('⚠️ No pending coins to claim');
+            return;
+          }
+          
+          // Check if enough time has passed (prevent rapid claims)
+          const timeSinceLastClaim = Date.now() - currentPet.lastCoinTime;
+          const MIN_CLAIM_INTERVAL = 55 * 1000; // 55 seconds
+          
+          if (timeSinceLastClaim < MIN_CLAIM_INTERVAL) {
+            const remainingTime = Math.ceil((MIN_CLAIM_INTERVAL - timeSinceLastClaim) / 1000);
+            console.log(`⚠️ Must wait ${remainingTime} more seconds before claiming`);
+            throw new Error(`Please wait ${remainingTime} more seconds`);
+          }
+          
           const { backendAPI } = await import('../services/backend-api.service');
           const result = await backendAPI.claimPetRewards();
           
           if (result.success) {
             console.log('✅ Pet rewards claimed successfully:', result);
             
-            // Update pet state (reset pending coins)
+            // CRITICAL: Reset pending coins and update claim time immediately
             get().setPet({
               pendingCoins: 0,
               lastCoinTime: Date.now(),
@@ -929,32 +960,39 @@ export const useAppStore = create<AppStore>()(
           if (dashboard && dashboard.success) {
             console.log('✅ Dashboard loaded successfully, processing data...');
             
-            // Update pet state - FIXED: Don't overwrite local pet progress
+            // Update pet state - FIXED: Prevent pet level reset
             if (dashboard.pet) {
               console.log('🐾 Updating pet state:', dashboard.pet);
               const currentPet = get().pet;
               
-              // Only update if backend has higher/newer values to prevent reset
+              // CRITICAL: Only update coins and timing, never reset level/XP unless backend is definitively higher
               const petUpdates: Partial<typeof currentPet> = {
-                // Keep existing hatched status and birth year from localStorage
+                // Always preserve local hatching status and birth year
                 hatched: currentPet.hatched,
                 birthYear: currentPet.birthYear,
                 hatchProgress: currentPet.hatchProgress,
-                // Update coins and timing from backend
+                // Update coins and timing from backend (these are authoritative)
                 pendingCoins: dashboard.pet.pendingRewards || 0,
                 lastCoinTime: dashboard.pet.lastClaimTime ? new Date(dashboard.pet.lastClaimTime).getTime() : Date.now(),
-                // Use consistent maxExp
+                // Keep consistent maxExp
                 maxExp: 1200,
               };
               
-              // Only update level and XP if backend has valid data AND it's higher than current
-              if (dashboard.pet.level && dashboard.pet.level >= currentPet.level) {
-                petUpdates.level = dashboard.pet.level;
-                petUpdates.exp = dashboard.pet.currentXp || 0;
-                console.log(`🔄 Pet sync: Level ${currentPet.level} → ${dashboard.pet.level}, XP: ${dashboard.pet.currentXp || 0}/1200`);
+              // CRITICAL: Only update level/XP if backend has SIGNIFICANTLY higher values
+              // This prevents reset when backend hasn't caught up with recent local changes
+              const backendLevel = dashboard.pet.level || 1;
+              const backendXP = dashboard.pet.currentXp || 0;
+              
+              // Only sync if backend level is higher OR (same level but significantly higher XP)
+              const shouldSyncLevel = backendLevel > currentPet.level;
+              const shouldSyncXP = backendLevel === currentPet.level && backendXP > (currentPet.exp + 50); // 50 XP buffer
+              
+              if (shouldSyncLevel || shouldSyncXP) {
+                petUpdates.level = backendLevel;
+                petUpdates.exp = backendXP;
+                console.log(`🔄 Pet sync: Level ${currentPet.level} → ${backendLevel}, XP: ${backendXP}/1200`);
               } else {
-                // Keep current level and XP if backend data is lower (prevent reset)
-                console.log(`🚫 Keeping local pet data: Level ${currentPet.level}, XP: ${currentPet.exp}/1200 (backend had lower values)`);
+                console.log(`🛡️ Protecting local pet progress: Level ${currentPet.level}, XP: ${currentPet.exp}/1200 (backend: L${backendLevel}, ${backendXP} XP)`);
               }
               
               get().setPet(petUpdates);
@@ -1043,10 +1081,10 @@ export const useAppStore = create<AppStore>()(
               
               // Try to process the data even without success flag
               if (dashboard.pet) {
-                console.log('🐾 Processing pet data from response');
+                console.log('🐾 Processing pet data from response (fallback)');
                 const currentPet = get().pet;
                 
-                // Same logic as above - don't overwrite local progress
+                // Same protective logic as above
                 const petUpdates: Partial<typeof currentPet> = {
                   hatched: currentPet.hatched,
                   birthYear: currentPet.birthYear,
@@ -1056,12 +1094,18 @@ export const useAppStore = create<AppStore>()(
                   maxExp: 1200,
                 };
                 
-                // Only update level and XP if backend has valid data AND it's higher
-                if (dashboard.pet.level && dashboard.pet.level >= currentPet.level) {
-                  petUpdates.level = dashboard.pet.level;
-                  petUpdates.exp = dashboard.pet.currentXp || 0;
+                // Only update level/XP if backend has significantly higher values
+                const backendLevel = dashboard.pet.level || 1;
+                const backendXP = dashboard.pet.currentXp || 0;
+                const shouldSyncLevel = backendLevel > currentPet.level;
+                const shouldSyncXP = backendLevel === currentPet.level && backendXP > (currentPet.exp + 50);
+                
+                if (shouldSyncLevel || shouldSyncXP) {
+                  petUpdates.level = backendLevel;
+                  petUpdates.exp = backendXP;
+                  console.log(`🔄 Fallback pet sync: Level ${currentPet.level} → ${backendLevel}, XP: ${backendXP}/1200`);
                 } else {
-                  console.log(`🚫 Keeping local pet data in fallback processing`);
+                  console.log(`🛡️ Protecting local pet progress in fallback: Level ${currentPet.level}, XP: ${currentPet.exp}/1200`);
                 }
                 
                 get().setPet(petUpdates);
@@ -1165,6 +1209,24 @@ export const useAppStore = create<AppStore>()(
             const storedBirthYear = localStorage.getItem('user_birth_year');
             const storedHatched = localStorage.getItem('pet_hatched');
             const completedQuestIds = JSON.parse(localStorage.getItem('completed_pet_quests') || '[]');
+            
+            // CRITICAL: Restore pet EXP from backup if available
+            const petExpBackup = localStorage.getItem('pet_exp_backup');
+            if (petExpBackup) {
+              try {
+                const backup = JSON.parse(petExpBackup);
+                const backupAge = Date.now() - backup.timestamp;
+                
+                // Only use backup if it's less than 1 hour old and higher than current
+                if (backupAge < 60 * 60 * 1000 && backup.level >= state.pet.level) {
+                  console.log('🔄 Restoring pet EXP from backup:', backup);
+                  state.pet.level = backup.level;
+                  state.pet.exp = backup.exp;
+                }
+              } catch (backupError) {
+                console.warn('⚠️ Failed to parse pet EXP backup:', backupError);
+              }
+            }
             
             // Calculate hatch progress based on completed quests (25% per quest, 4 quests total)
             const hatchProgress = Math.min(100, completedQuestIds.length * 25);

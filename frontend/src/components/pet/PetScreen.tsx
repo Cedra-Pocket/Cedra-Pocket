@@ -296,19 +296,24 @@ export function PetScreen() {
   }, [pet.pendingCoins, pet.lastCoinTime]);
 
   const collectCoins = useCallback(async () => {
+    // CRITICAL: Prevent multiple simultaneous claims
+    if (isClaimingCoins) {
+      console.log('⚠️ Already claiming coins, please wait...');
+      return;
+    }
+    
+    // Check if there are coins to claim
+    if (pet.pendingCoins <= 0) {
+      console.log('⚠️ No coins to claim');
+      return;
+    }
+    
     // Check if enough time has passed since last claim
     const elapsed = Math.floor((Date.now() - pet.lastCoinTime) / 1000);
     const timeRemaining = COIN_INTERVAL_SECONDS - elapsed;
     
-    // Prevent claims if not enough time has passed AND no pending coins
-    if (timeRemaining > 0 && pet.pendingCoins <= 0) {
-      console.log(`⚠️ Claim blocked: Need to wait ${timeRemaining} more seconds`);
-      return;
-    }
-    
-    // Prevent multiple simultaneous claims
-    if (isClaimingCoins || pet.pendingCoins <= 0) {
-      console.log('⚠️ Claim blocked: already claiming or no coins available');
+    if (timeRemaining > 5) { // Allow 5 second buffer
+      console.log(`⚠️ Must wait ${timeRemaining} more seconds before claiming`);
       return;
     }
 
@@ -331,26 +336,35 @@ export function PetScreen() {
       } catch (backendError) {
         console.warn('⚠️ Backend claim failed, using local fallback:', backendError);
         
-        // Fallback to local update
-        setPet({ 
-          pendingCoins: 0, 
-          lastCoinTime: Date.now() 
-        });
-        setCoinTimer(COIN_INTERVAL_SECONDS);
-        await updateBalance(coinsToCollect, 'token');
-        console.log(`✅ Successfully claimed ${coinsToCollect} coins locally`);
+        // Only use fallback if it's not a timing error
+        if (!backendError.message?.includes('wait')) {
+          // Fallback to local update
+          setPet({ 
+            pendingCoins: 0, 
+            lastCoinTime: Date.now() 
+          });
+          setCoinTimer(COIN_INTERVAL_SECONDS);
+          await updateBalance(coinsToCollect, 'token');
+          console.log(`✅ Successfully claimed ${coinsToCollect} coins locally`);
+        } else {
+          // If it's a timing error, don't update anything
+          throw backendError;
+        }
       }
     } catch (error) {
       console.error('❌ Failed to claim coins:', error);
-      // Revert pet state if failed
-      setPet({ 
-        pendingCoins: pet.pendingCoins, 
-        lastCoinTime: Date.now() - COIN_INTERVAL_SECONDS * 1000 
-      });
+      // Don't revert pet state if it was a timing error
+      if (!error.message?.includes('wait')) {
+        // Revert pet state if failed for other reasons
+        setPet({ 
+          pendingCoins: pet.pendingCoins, 
+          lastCoinTime: Date.now() - COIN_INTERVAL_SECONDS * 1000 
+        });
+      }
     } finally {
       setIsClaimingCoins(false);
     }
-  }, [pet.pendingCoins, pet.lastCoinTime, setPet, updateBalance, isClaimingCoins]);
+  }, [pet.pendingCoins, pet.lastCoinTime, setPet, updateBalance, isClaimingCoins, claimGamePetRewards]);
 
   const handleFeed = async () => {
     // FIXED: Prevent multiple simultaneous feeds and check conditions properly
@@ -377,22 +391,24 @@ export function PetScreen() {
     try {
       // Store current level to detect level up
       const currentLevel = pet.level;
+      const currentExp = pet.exp;
       
       // Use new game system API to feed pet
       await feedGamePet(1);
       console.log('✅ Pet fed via backend system');
       
-      // FIXED: Show XP gain animation for backend success
+      // FIXED: Show XP gain animation immediately
       setShowXPAnimation(true);
-      setXPGained(20); // Standard XP gain
+      setXPGained(xpGain);
       
-      // Check for level up after a short delay (to let useAppStore update)
+      // Check for level up after backend response
       setTimeout(() => {
-        if (pet.level > currentLevel) {
+        const newPet = get().pet; // Get updated pet state
+        if (newPet.level > currentLevel) {
           setShowLevelUpAnimation(true);
-          console.log(`🎉 Level up detected: ${currentLevel} → ${pet.level}`);
+          console.log(`🎉 Level up detected: ${currentLevel} → ${newPet.level}`);
         }
-      }, 200);
+      }, 300);
       
       setTimeout(() => {
         setShowXPAnimation(false);
@@ -403,7 +419,6 @@ export function PetScreen() {
       console.error('❌ Failed to feed via backend, using local fallback:', error);
       
       // Fallback to local system with CORRECT logic
-      const currentExp = pet.exp;
       const newExp = currentExp + xpGain;
       const newHunger = Math.min(100, pet.hunger + 20);
       
@@ -440,7 +455,7 @@ export function PetScreen() {
       
       setPet(newPetData);
       
-      // FIXED: Show XP gain animation
+      // FIXED: Show XP gain animation for fallback
       setShowXPAnimation(true);
       setXPGained(xpGain);
       if (leveledUp) {
@@ -459,10 +474,14 @@ export function PetScreen() {
 
   const handleBuyCareItem = (boost: typeof petBoosts[0]) => {
     if ((user?.tokenBalance || 0) >= boost.cost) {
+      // Store current state for level up detection
+      const currentLevel = pet.level;
+      const currentExp = pet.exp;
+      
+      // Update balance immediately
       updateBalance(-boost.cost, 'token');
       
       // FIXED: Boosts now provide EXP instead of direct level up
-      const currentExp = pet.exp;
       const newExp = currentExp + boost.expGain;
       const newHunger = Math.min(100, pet.hunger + 10); // Small hunger boost
       
@@ -998,13 +1017,6 @@ export function PetScreen() {
               borderRadius: '2px',
               transition: 'width 0.5s ease'
             }} />
-          </div>
-          <div style={{ 
-            fontSize: '10px', 
-            color: 'rgba(26, 26, 46, 0.6)', 
-            marginTop: '2px' 
-          }}>
-            Care: 20 points → +20 XP
           </div>
         </div>
         
