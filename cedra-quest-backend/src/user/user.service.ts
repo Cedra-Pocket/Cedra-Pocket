@@ -25,7 +25,14 @@ export class UserService {
       // Ensure positive BigInt and avoid conflicts with real telegram IDs
       return BigInt(Math.abs(hash) + 1000000000); // Add offset to avoid conflicts
     }
-    return BigInt(userId);
+    
+    try {
+      return BigInt(userId);
+    } catch (error) {
+      this.logger.error(`Failed to convert userId to BigInt: ${userId}`, error);
+      // Fallback to a default test user ID
+      return BigInt('123456789');
+    }
   }
 
   /**

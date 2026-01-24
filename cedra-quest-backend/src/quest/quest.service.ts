@@ -30,6 +30,33 @@ export class QuestService {
     try {
       const userIdBigInt = BigInt(userId);
 
+      // Check if user exists, create if not
+      const existingUser = await this.prisma.users.findUnique({
+        where: { telegram_id: userIdBigInt },
+      });
+
+      if (!existingUser) {
+        this.logger.log(`User ${userId} not found, creating new user`);
+        // Create user with basic info
+        await this.prisma.users.create({
+          data: {
+            telegram_id: userIdBigInt,
+            wallet_address: `user_${userId}.hot.tg`,
+            public_key: `pk_${userId}_${Date.now()}`,
+            username: `User${userId}`,
+            total_points: 0,
+            lifetime_points: 0,
+            current_rank: 'BRONZE',
+            level: 1,
+            current_xp: 0,
+            is_wallet_connected: true,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        });
+        this.logger.log(`User ${userId} created successfully`);
+      }
+
       // Get all active quests with user progress
       const quests = await this.prisma.quests.findMany({
         where: {
@@ -80,6 +107,31 @@ export class QuestService {
   async verifyQuest(userId: string, questId: number, proofData?: any): Promise<{ success: boolean; message: string }> {
     try {
       const userIdBigInt = BigInt(userId);
+
+      // Check if user exists, create if not
+      const existingUser = await this.prisma.users.findUnique({
+        where: { telegram_id: userIdBigInt },
+      });
+
+      if (!existingUser) {
+        this.logger.log(`User ${userId} not found, creating new user for quest verification`);
+        await this.prisma.users.create({
+          data: {
+            telegram_id: userIdBigInt,
+            wallet_address: `user_${userId}.hot.tg`,
+            public_key: `pk_${userId}_${Date.now()}`,
+            username: `User${userId}`,
+            total_points: 0,
+            lifetime_points: 0,
+            current_rank: 'BRONZE',
+            level: 1,
+            current_xp: 0,
+            is_wallet_connected: true,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        });
+      }
 
       // Check if quest exists and is active
       const quest = await this.prisma.quests.findFirst({
@@ -169,15 +221,15 @@ export class QuestService {
 
           // Update user with birth year and mark quest as completed
           await this.prisma.$transaction(async (tx) => {
-            // Update user with birth year (commented out due to Prisma type issue)
-            // await tx.users.update({
-            //   where: {
-            //     telegram_id: userIdBigInt,
-            //   },
-            //   data: {
-            //     birth_year: birthYear,
-            //   },
-            // });
+            // Update user with birth year
+            await tx.users.update({
+              where: {
+                telegram_id: userIdBigInt,
+              },
+              data: {
+                birth_year: birthYear,
+              },
+            });
 
             // Create pet for user if not exists
             const existingPet = await tx.pets.findUnique({
@@ -282,6 +334,31 @@ export class QuestService {
   async claimQuestReward(userId: string, questId: number): Promise<{ success: boolean; message: string; pointsEarned?: number }> {
     try {
       const userIdBigInt = BigInt(userId);
+
+      // Check if user exists, create if not
+      const existingUser = await this.prisma.users.findUnique({
+        where: { telegram_id: userIdBigInt },
+      });
+
+      if (!existingUser) {
+        this.logger.log(`User ${userId} not found, creating new user for quest claim`);
+        await this.prisma.users.create({
+          data: {
+            telegram_id: userIdBigInt,
+            wallet_address: `user_${userId}.hot.tg`,
+            public_key: `pk_${userId}_${Date.now()}`,
+            username: `User${userId}`,
+            total_points: 0,
+            lifetime_points: 0,
+            current_rank: 'BRONZE',
+            level: 1,
+            current_xp: 0,
+            is_wallet_connected: true,
+            created_at: new Date(),
+            updated_at: new Date(),
+          },
+        });
+      }
 
       // Get user quest
       const userQuest = await this.prisma.user_quests.findUnique({
