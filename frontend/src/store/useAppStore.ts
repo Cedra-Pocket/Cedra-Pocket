@@ -936,13 +936,17 @@ export const useAppStore = create<AppStore>()(
 
             // Update user points if available in dashboard
             if (dashboard.user && dashboard.user.total_points !== undefined) {
-              console.log('💰 Updating user points:', dashboard.user.total_points);
+              console.log('💰 Updating user points from dashboard:', dashboard.user.total_points);
               set((state) => ({
                 user: state.user ? {
                   ...state.user,
                   tokenBalance: Number(dashboard.user.total_points),
                 } : state.user
               }));
+            } else if (dashboard.userExists === false) {
+              console.log('👤 User does not exist in database yet - keeping local balance');
+              // Don't update balance if user doesn't exist in DB
+              // The user will be created when they perform actions like claiming coins
             }
             
             console.log('✅ Game dashboard loaded successfully');

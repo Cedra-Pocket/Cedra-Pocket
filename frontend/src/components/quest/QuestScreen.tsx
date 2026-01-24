@@ -4,7 +4,7 @@ import { useEffect, useCallback, useState } from 'react';
 import { useAppStore, useQuests, useQuestsLoading } from '../../store/useAppStore';
 import { QuestCard } from './QuestCard';
 import { BirthYearModal } from './BirthYearModal';
-import { backendAPI, BackendAPIError } from '../../services/backend-api.service';
+import { backendAPI } from '../../services/backend-api.service';
 import { telegramService } from '../../services/telegram.service';
 import { LoadingSpinner } from '../shared/LoadingSpinner';
 
@@ -90,13 +90,42 @@ export function QuestScreen() {
     const loadQuests = async () => {
       setQuestsLoading(true);
       try {
-        // Get quests from authenticated endpoint
+        // Always try to get quests, let backend handle authentication
         let backendQuests;
-        if (backendAPI.isAuthenticated()) {
+        try {
           backendQuests = await backendAPI.getQuests();
-        } else {
-          console.warn('Not authenticated, cannot load quests');
-          return;
+          console.log('✅ Quests loaded from backend:', backendQuests.length);
+        } catch (error) {
+          console.warn('⚠️ Failed to load quests from backend, using fallback');
+          // Use fallback quests if backend fails
+          backendQuests = [
+            {
+              id: 1,
+              title: 'Follow on Twitter',
+              description: 'Follow our official Twitter account @CedraQuest',
+              type: 'SOCIAL' as const,
+              category: 'social',
+              config: { url: 'https://twitter.com/intent/follow?screen_name=CedraQuest' },
+              reward_amount: 100,
+              reward_type: 'POINT' as const,
+              frequency: 'ONCE' as const,
+              is_active: true,
+              user_status: 'NOT_STARTED' as const,
+            },
+            {
+              id: 6,
+              title: 'Hatch Your Pet Egg',
+              description: 'Enter your birth year and hatch your first pet egg to start your journey',
+              type: 'GAME' as const,
+              category: 'pet',
+              config: { requiresBirthYear: true },
+              reward_amount: 300,
+              reward_type: 'POINT' as const,
+              frequency: 'ONCE' as const,
+              is_active: true,
+              user_status: 'NOT_STARTED' as const,
+            },
+          ];
         }
 
         // Convert to frontend format
@@ -283,20 +312,7 @@ export function QuestScreen() {
       }
 
       // For non-social quests or quests without URLs, try to verify with backend
-      // Check if authenticated before verifying with backend
-      if (!backendAPI.isAuthenticated()) {
-        console.log('⚠️ Not authenticated, marking as claimable locally (demo mode)');
-        // Mark as claimable so user can click Claim
-        updateQuest(questId, { 
-          status: 'claimable', 
-          progress: 100,
-          currentValue: quest.targetValue 
-        });
-        telegramService.triggerHapticFeedback('medium');
-        return;
-      }
-
-      // Try to verify with backend
+      // Always try backend first, fallback to local if needed
       try {
         const result = await backendAPI.verifyQuest(Number(questId));
         
@@ -317,11 +333,14 @@ export function QuestScreen() {
       } catch (error) {
         console.error('Failed to verify quest:', error);
         
-        if (error instanceof BackendAPIError) {
-          console.log('Backend error:', error.message);
-        }
-        
-        telegramService.triggerHapticFeedback('heavy');
+        // Fallback: mark as claimable locally for demo
+        console.log('⚠️ Backend verification failed, marking as claimable locally (demo mode)');
+        updateQuest(questId, { 
+          status: 'claimable', 
+          progress: 100,
+          currentValue: quest.targetValue 
+        });
+        telegramService.triggerHapticFeedback('medium');
       }
     }
   }, [quests, updateQuest, updateBalance, addXP]);

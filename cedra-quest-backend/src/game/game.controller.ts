@@ -152,6 +152,20 @@ export class GameController {
     this.logger.log(`Getting dashboard data for user: ${userId}`);
     
     try {
+      // Helper function to safely convert userId to BigInt
+      const safeToBigInt = (id: string): bigint => {
+        if (!/^\d+$/.test(id)) {
+          let hash = 0;
+          for (let i = 0; i < id.length; i++) {
+            const char = id.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash;
+          }
+          return BigInt(Math.abs(hash) + 1000000000);
+        }
+        return BigInt(id);
+      };
+
       const [petStatus, energyStatus, rankInfo, gameStats, userProfile] = await Promise.all([
         this.petService.getPetStatus(userId).catch(err => {
           this.logger.error('Failed to get pet status', err);
@@ -171,7 +185,7 @@ export class GameController {
         }),
         // Get user profile to include current points
         this.prisma.users.findUnique({
-          where: { telegram_id: BigInt(userId) },
+          where: { telegram_id: safeToBigInt(userId) },
           select: {
             telegram_id: true,
             total_points: true,
@@ -185,12 +199,27 @@ export class GameController {
         }),
       ]);
 
+      this.logger.log(`Dashboard results for user ${userId}:`, {
+        petStatus: !!petStatus,
+        energyStatus: !!energyStatus,
+        rankInfo: !!rankInfo,
+        gameStats: !!gameStats,
+        userProfile: !!userProfile,
+        userPoints: userProfile?.total_points?.toString(),
+      });
+
       return {
         pet: petStatus,
         energy: energyStatus,
         ranking: rankInfo,
         gameStats,
-        user: userProfile,
+        user: userProfile ? {
+          telegram_id: userProfile.telegram_id.toString(),
+          total_points: userProfile.total_points.toString(),
+          lifetime_points: userProfile.lifetime_points?.toString(),
+          current_rank: userProfile.current_rank,
+          username: userProfile.username,
+        } : null,
         success: true,
       };
     } catch (error) {

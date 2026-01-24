@@ -164,7 +164,7 @@ export class BackendAPIService {
     try {
       // Use /auth/verify endpoint as documented
       const response = await this.client.post<AuthResponse>('/auth/verify', {
-        initData: initData || 'test', // Ensure we always send something
+        initData: initData,
       });
 
       // Save token
@@ -175,11 +175,16 @@ export class BackendAPIService {
       console.log('⚠️ Failed to authenticate via backend, using local fallback');
       console.error('Backend auth error:', error);
       
+      // Get real user ID from Telegram if available
+      const telegramUser = (window as any).Telegram?.WebApp?.initDataUnsafe?.user;
+      const userId = telegramUser?.id ? String(telegramUser.id) : 'local_user';
+      const username = telegramUser?.username || telegramUser?.first_name || 'Local User';
+      
       // Return mock auth response for local gameplay
       const mockUser: BackendUser = {
-        id: 'local_user',
-        telegram_id: '123456789',
-        username: 'Local User',
+        id: userId,
+        telegram_id: userId,
+        username: username,
         wallet_address: null,
         is_wallet_connected: false,
         total_points: 0,
@@ -192,6 +197,8 @@ export class BackendAPIService {
       
       // Set local token
       this.setToken('local_token');
+      
+      console.log(`🔧 Created local user for ${userId}:`, mockUser);
       
       return {
         access_token: 'local_token',
@@ -504,9 +511,9 @@ export class BackendAPIService {
       }
 
       if (!userId) {
-        console.error('❌ User ID not available from any source, using test ID');
-        // Use test ID for development
-        userId = '123456789';
+        console.error('❌ User ID not available from any source');
+        // Return fallback data for anonymous users
+        userId = `anon_${Date.now()}`;
       }
 
       console.log(`🎮 Loading game dashboard for user: ${userId}`);
@@ -521,6 +528,18 @@ export class BackendAPIService {
         // If response has success flag and it's true
         if (response.data.success === true) {
           console.log('✅ Game dashboard loaded successfully with success flag');
+          
+          // If user is null but other data exists, it means user doesn't exist in DB yet
+          if (!response.data.user) {
+            console.log('⚠️ User not found in database, will create on next interaction');
+            // Return the response but with a note about missing user
+            return {
+              ...response.data,
+              userExists: false,
+              message: 'User will be created on next interaction'
+            };
+          }
+          
           return response.data;
         }
         // If response has data but no success flag, assume it's valid data
@@ -577,6 +596,7 @@ export class BackendAPIService {
         },
         success: false,
         error: 'Using offline mode - backend not available',
+        userExists: false,
       };
     }
   }
@@ -726,9 +746,20 @@ export class BackendAPIService {
    * Get current user ID from various sources
    */
   private getCurrentUserId(): string {
+    // Development override - chỉ cho development
+    if (process.env.NODE_ENV === 'development' && typeof window !== 'undefined') {
+      const devUserId = localStorage.getItem('dev_user_id');
+      if (devUserId) {
+        console.log(`🔧 Using dev user ID: ${devUserId}`);
+        return devUserId;
+      }
+    }
+    
     // Try to get from Telegram WebApp
     if (typeof window !== 'undefined' && (window as any).Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      return String((window as any).Telegram.WebApp.initDataUnsafe.user.id);
+      const telegramId = String((window as any).Telegram.WebApp.initDataUnsafe.user.id);
+      console.log(`📱 Using Telegram WebApp user ID: ${telegramId}`);
+      return telegramId;
     }
     
     // Try to get from stored user data
@@ -738,6 +769,7 @@ export class BackendAPIService {
         try {
           const parsed = JSON.parse(storedUser);
           if (parsed.state?.user?.telegramId) {
+            console.log(`💾 Using stored user ID: ${parsed.state.user.telegramId}`);
             return parsed.state.user.telegramId;
           }
         } catch (e) {
@@ -746,9 +778,9 @@ export class BackendAPIService {
       }
     }
     
-    // Fallback to test ID
-    console.warn('Using fallback test user ID');
-    return '123456789';
+    // Fallback to anonymous user
+    console.warn('🔧 No user ID found, using anonymous');
+    return `anon_${Date.now()}`;
   }
 }
 

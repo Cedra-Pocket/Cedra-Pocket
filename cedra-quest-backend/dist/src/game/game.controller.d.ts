@@ -64,7 +64,13 @@ export declare class GameController {
         energy: any;
         ranking: any;
         gameStats: any;
-        user: any;
+        user: {
+            telegram_id: any;
+            total_points: any;
+            lifetime_points: any;
+            current_rank: any;
+            username: any;
+        };
         success: boolean;
         error?: undefined;
     } | {

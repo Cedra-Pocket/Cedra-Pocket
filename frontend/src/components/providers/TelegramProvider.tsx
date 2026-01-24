@@ -226,13 +226,32 @@ export function TelegramProvider({ children }: TelegramProviderProps) {
           }
         }
 
+        // Development helper: Check for dev user ID override (chỉ cho development)
+        if (process.env.NODE_ENV === 'development') {
+          const devUserId = localStorage.getItem('dev_user_id');
+          if (devUserId && devUserId !== '123456789') {
+            console.log(`🔧 Development mode: Using override user ID ${devUserId}`);
+            const devUser = {
+              id: parseInt(devUserId),
+              firstName: 'Dev User',
+              lastName: '',
+              username: `user_${devUserId}`,
+            };
+            setTelegramUser(devUser);
+            user = devUser;
+          }
+        } else if (!user) {
+          // No Telegram user available - this should not happen in production
+          console.log('⚠️ No Telegram user available');
+        }
+
         // Get initData for backend authentication
         const initData = getTelegramInitData();
         console.log('🔑 initData available:', !!initData);
 
         if (user) {
-          // Always try to authenticate with backend, even with empty initData for testing
-          const authInitData = initData || 'test'; // Use 'test' as fallback for development
+          // Always try to authenticate with backend using real Telegram data
+          const authInitData = initData || `user_id=${user.id}&first_name=${encodeURIComponent(user.firstName || '')}&username=${encodeURIComponent(user.username || '')}`;
           await authenticateWithBackend(authInitData, user);
         } else {
           // No Telegram user available - create anonymous user with timestamp
