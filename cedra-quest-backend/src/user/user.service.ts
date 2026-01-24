@@ -29,50 +29,77 @@ export class UserService {
   }
 
   /**
-   * Create new user
+   * Create new user with proper wallet
    * @param userData User data to create
    * @returns Created user info
    */
   async createUser(userData: {
     telegram_id: string;
     username?: string | null;
+    first_name?: string | null;
+    last_name?: string | null;
     total_points?: number;
     current_rank?: string;
+    wallet_address?: string;
+    public_key?: string;
   }): Promise<UserInfo> {
     try {
       this.logger.log(`🆕 Creating new user: telegram_id=${userData.telegram_id}, username=${userData.username}`);
       
-      // Generate temporary wallet address and public key for new users
-      const tempWalletAddress = `temp_${userData.telegram_id}_${Date.now()}`;
-      const tempPublicKey = `temp_pk_${userData.telegram_id}_${Date.now()}`;
-      
-      this.logger.log(`🔑 Generated temp wallet: ${tempWalletAddress}`);
+      // Generate wallet if not provided
+      let walletAddress = userData.wallet_address;
+      let publicKey = userData.public_key;
+      let isWalletConnected = false;
+
+      if (!walletAddress) {
+        // Generate proper wallet name based on user info
+        const baseName = userData.username || userData.first_name || `user${userData.telegram_id}`;
+        const cleanName = this.cleanWalletName(baseName);
+        walletAddress = `${cleanName}.hot.tg`;
+        publicKey = `pk_${userData.telegram_id}_${Date.now()}`;
+        isWalletConnected = true;
+        this.logger.log(`🔑 Generated wallet: ${walletAddress}`);
+      }
+
+      // Create display name
+      const displayName = userData.username || 
+                         (userData.first_name && userData.last_name ? 
+                          `${userData.first_name} ${userData.last_name}` : 
+                          userData.first_name) || 
+                         `User${userData.telegram_id}`;
       
       const user = await this.prisma.users.create({
         data: {
           telegram_id: this.safeToBigInt(userData.telegram_id),
-          wallet_address: tempWalletAddress,
-          public_key: tempPublicKey,
-          username: userData.username || null,
+          wallet_address: walletAddress,
+          public_key: publicKey,
+          username: displayName,
+          username_at_creation: userData.username || null,
           total_points: userData.total_points || 0,
-          current_rank: 'BRONZE', // Use valid enum value
+          lifetime_points: userData.total_points || 0,
+          current_rank: 'BRONZE',
           level: 1,
           current_xp: 0,
-          is_wallet_connected: false, // Mark as not connected since it's temporary
+          is_wallet_connected: isWalletConnected,
+          created_at: new Date(),
+          updated_at: new Date(),
         },
         select: {
           telegram_id: true,
           wallet_address: true,
           username: true,
+          username_at_creation: true,
           total_points: true,
+          lifetime_points: true,
           level: true,
           current_xp: true,
           current_rank: true,
+          is_wallet_connected: true,
           created_at: true,
         },
       });
 
-      this.logger.log(`✅ User created successfully in database: ${user.telegram_id.toString()}`);
+      this.logger.log(`✅ User created successfully: ${user.telegram_id.toString()} with wallet ${user.wallet_address}`);
 
       return {
         telegram_id: user.telegram_id.toString(),
@@ -88,6 +115,18 @@ export class UserService {
       this.logger.error(`❌ Failed to create user: ${userData.telegram_id}`, error);
       throw error;
     }
+  }
+
+  /**
+   * Clean wallet name for proper format
+   */
+  private cleanWalletName(name: string): string {
+    return name
+      .toLowerCase()
+      .replace(/[^a-z0-9_]/g, '')
+      .replace(/_{2,}/g, '_')
+      .replace(/^_|_$/g, '')
+      .substring(0, 15) || 'user';
   }
 
   /**

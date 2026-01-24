@@ -8,9 +8,14 @@ export declare class UserService {
     createUser(userData: {
         telegram_id: string;
         username?: string | null;
+        first_name?: string | null;
+        last_name?: string | null;
         total_points?: number;
         current_rank?: string;
+        wallet_address?: string;
+        public_key?: string;
     }): Promise<UserInfo>;
+    private cleanWalletName;
     findUserByTelegramId(telegramId: string): Promise<UserInfo | null>;
     getUserProfile(telegramId: string): Promise<UserInfo | null>;
     checkWalletAddressExists(walletAddress: string): Promise<boolean>;

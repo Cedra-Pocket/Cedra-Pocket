@@ -44,14 +44,16 @@ export class AuthService {
           user: existingUser,
         };
       } else {
-        // Case B: New user - auto create
+        // Case B: New user - auto create with full info
         this.logger.log(`🆕 New user detected, creating account: ${telegramUser.id}`);
         
         try {
-          // Create user in database
+          // Create user with full Telegram info
           const newUser = await this.userService.createUser({
             telegram_id: String(telegramUser.id),
-            username: telegramUser.username || telegramUser.first_name || null,
+            username: telegramUser.username,
+            first_name: telegramUser.first_name,
+            last_name: telegramUser.last_name,
             total_points: 0,
             current_rank: 'BRONZE',
           });

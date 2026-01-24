@@ -10,6 +10,7 @@ exports.WalletModule = void 0;
 const common_1 = require("@nestjs/common");
 const wallet_service_1 = require("./wallet.service");
 const wallet_name_service_1 = require("./wallet-name.service");
+const wallet_controller_1 = require("./wallet.controller");
 const user_module_1 = require("../user/user.module");
 let WalletModule = class WalletModule {
 };
@@ -17,6 +18,7 @@ exports.WalletModule = WalletModule;
 exports.WalletModule = WalletModule = __decorate([
     (0, common_1.Module)({
         imports: [user_module_1.UserModule],
+        controllers: [wallet_controller_1.WalletController],
         providers: [wallet_service_1.WalletService, wallet_name_service_1.WalletNameService],
         exports: [wallet_service_1.WalletService, wallet_name_service_1.WalletNameService],
     })

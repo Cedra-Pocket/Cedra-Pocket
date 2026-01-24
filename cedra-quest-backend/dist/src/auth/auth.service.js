@@ -44,7 +44,9 @@ let AuthService = AuthService_1 = class AuthService {
                 try {
                     const newUser = await this.userService.createUser({
                         telegram_id: String(telegramUser.id),
-                        username: telegramUser.username || telegramUser.first_name || null,
+                        username: telegramUser.username,
+                        first_name: telegramUser.first_name,
+                        last_name: telegramUser.last_name,
                         total_points: 0,
                         current_rank: 'BRONZE',
                     });
